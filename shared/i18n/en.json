@@ -1,0 +1,20 @@
+{
+  "_meta": {
+    "language": "en",
+    "note": "English is the source language. Every other file must mirror these keys, and each entry needs reviewedBy set by a native speaker before that language can ship."
+  },
+  "strings": {
+    "push.remind.title.morning": { "text": "Morning medicine", "reviewedBy": "source" },
+    "push.remind.title.afternoon": { "text": "Afternoon medicine", "reviewedBy": "source" },
+    "push.remind.title.evening": { "text": "Evening medicine", "reviewedBy": "source" },
+    "push.remind.title.night": { "text": "Night medicine", "reviewedBy": "source" },
+    "push.remind.body": { "text": "It is time for your medicine. Tap here when you have taken it.", "reviewedBy": "source" },
+    "push.nudge.body": { "text": "A reminder again: please take your medicine and tap here.", "reviewedBy": "source" },
+    "push.alert.body.missed": { "text": "has not confirmed the medicine. The reminder reached the phone.", "reviewedBy": "source" },
+    "push.alert.body.offline": { "text": "has not confirmed the medicine. The phone seems to be offline.", "reviewedBy": "source" },
+    "push.broadcast.body": { "text": "Nobody has responded to the missed medicine yet.", "reviewedBy": "source" },
+    "push.standDown.body": { "text": "is handling the missed medicine. You can stand down.", "reviewedBy": "source" },
+    "push.tookLate.body": { "text": "has now confirmed the medicine.", "reviewedBy": "source" },
+    "push.refill.body": { "text": "is running low. Please arrange a refill.", "reviewedBy": "source" }
+  }
+}
