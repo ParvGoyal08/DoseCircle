@@ -1,4 +1,5 @@
 export * from "./slots.js";
+export * from "./checks.js";
 export * from "./timings.js";
 export * from "./notation.js";
 export * from "./status.js";

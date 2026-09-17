@@ -8,7 +8,7 @@ export interface DemoClient {
   start(): Promise<DemoSession>;
   state(): Promise<DemoState>;
   sendDose(options: { critical: boolean }): Promise<{ doseId: string }>;
-  taken(doseId: string, options: { keepalive: boolean }): Promise<void>;
+  taken(doseId: string, options: { keepalive: boolean; readings?: { checkId: string; values: Record<string, number> }[] }): Promise<void>;
   claim(doseId: string, asMemberId: string): Promise<"claimed" | "lost">;
   /** What the service worker does on a real phone the moment a push arrives. */
   receipt(item: InboxItem, recipient: string): Promise<void>;
@@ -54,8 +54,8 @@ export function createAwsDemoClient(): DemoClient {
     },
     state: () => api<DemoState>("/demo/state", { auth: "demo" }),
     sendDose: ({ critical }) => api<{ doseId: string }>("/demo/doses", { method: "POST", auth: "demo", body: { critical } }),
-    async taken(doseId, { keepalive }) {
-      await api(`/demo/doses/${encodeURIComponent(doseId)}/taken`, { method: "POST", auth: "demo", keepalive });
+    async taken(doseId, { keepalive, readings }) {
+      await api(`/demo/doses/${encodeURIComponent(doseId)}/taken`, { method: "POST", auth: "demo", keepalive, body: { readings: readings ?? [] } });
     },
     async claim(doseId, asMemberId) {
       try {

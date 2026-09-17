@@ -19,7 +19,12 @@
       "ResultPath": "$.prep",
       "Retry": [
         {
-          "ErrorEquals": ["Lambda.ServiceException", "Lambda.AWSLambdaException", "Lambda.SdkClientException", "Lambda.TooManyRequestsException"],
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException"
+          ],
           "IntervalSeconds": 2,
           "MaxAttempts": 3,
           "BackoffRate": 2
@@ -32,8 +37,14 @@
       "Choices": [
         {
           "Or": [
-            { "Variable": "$.prep.dose.duplicate", "BooleanEquals": true },
-            { "Variable": "$.prep.dose.paused", "BooleanEquals": true }
+            {
+              "Variable": "$.prep.dose.duplicate",
+              "BooleanEquals": true
+            },
+            {
+              "Variable": "$.prep.dose.paused",
+              "BooleanEquals": true
+            }
           ],
           "Next": "SkipDose"
         }
@@ -49,8 +60,14 @@
       "Choices": [
         {
           "Or": [
-            { "Variable": "$.prep.dose.critical", "BooleanEquals": true },
-            { "Variable": "$.prep.dose.consecutiveMisses", "NumericGreaterThanEquals": 1 }
+            {
+              "Variable": "$.prep.dose.critical",
+              "BooleanEquals": true
+            },
+            {
+              "Variable": "$.prep.dose.consecutiveMisses",
+              "NumericGreaterThanEquals": 1
+            }
           ],
           "Next": "UseFastLadder"
         }
@@ -91,7 +108,9 @@
       "ResultPath": "$.resolution",
       "Catch": [
         {
-          "ErrorEquals": ["States.Timeout"],
+          "ErrorEquals": [
+            "States.Timeout"
+          ],
           "ResultPath": "$.timeout",
           "Next": "HasNudge"
         }
@@ -101,7 +120,11 @@
     "HasNudge": {
       "Type": "Choice",
       "Choices": [
-        { "Variable": "$.ladder.timings.nudgeWaitSeconds", "NumericGreaterThan": 0, "Next": "NudgeParent" }
+        {
+          "Variable": "$.ladder.timings.nudgeWaitSeconds",
+          "NumericGreaterThan": 0,
+          "Next": "NudgeParent"
+        }
       ],
       "Default": "GetDoseDelivery"
     },
@@ -121,7 +144,9 @@
       "ResultPath": "$.resolution",
       "Catch": [
         {
-          "ErrorEquals": ["States.Timeout"],
+          "ErrorEquals": [
+            "States.Timeout"
+          ],
           "ResultPath": "$.timeout",
           "Next": "GetDoseDelivery"
         }
@@ -134,11 +159,19 @@
       "Parameters": {
         "TableName": "${TableName}",
         "Key": {
-          "PK": { "S.$": "States.Format('FAM#{}', $.prep.dose.fid)" },
-          "SK": { "S.$": "States.Format('PARENT#{}', $.prep.dose.pid)" }
+          "PK": {
+            "S.$": "States.Format('FAM#{}', $.prep.dose.fid)"
+          },
+          "SK": {
+            "S.$": "States.Format('PARENT#{}', $.prep.dose.pid)"
+          }
         },
         "UpdateExpression": "SET consecutiveMisses = :zero",
-        "ExpressionAttributeValues": { ":zero": { "N": "0" } }
+        "ExpressionAttributeValues": {
+          ":zero": {
+            "N": "0"
+          }
+        }
       },
       "ResultPath": null,
       "Next": "DoseTakenOnTime"
@@ -152,8 +185,12 @@
       "Parameters": {
         "TableName": "${TableName}",
         "Key": {
-          "PK": { "S.$": "States.Format('PARENT#{}', $.prep.dose.pid)" },
-          "SK": { "S.$": "$.prep.dose.doseSk" }
+          "PK": {
+            "S.$": "States.Format('PARENT#{}', $.prep.dose.pid)"
+          },
+          "SK": {
+            "S.$": "$.prep.dose.doseSk"
+          }
         },
         "ProjectionExpression": "deliveredAt",
         "ConsistentRead": true
@@ -165,7 +202,11 @@
       "Type": "Choice",
       "Comment": "A delivery receipt means the reminder reached the phone and was not acted on. No receipt means the phone is probably offline.",
       "Choices": [
-        { "Variable": "$.delivery.Item.deliveredAt", "IsPresent": true, "Next": "MarkLikelyMissed" }
+        {
+          "Variable": "$.delivery.Item.deliveredAt",
+          "IsPresent": true,
+          "Next": "MarkLikelyMissed"
+        }
       ],
       "Default": "MarkPhoneOffline"
     },
@@ -187,24 +228,42 @@
       "Parameters": {
         "TableName": "${TableName}",
         "Key": {
-          "PK": { "S.$": "States.Format('PARENT#{}', $.prep.dose.pid)" },
-          "SK": { "S.$": "$.prep.dose.doseSk" }
+          "PK": {
+            "S.$": "States.Format('PARENT#{}', $.prep.dose.pid)"
+          },
+          "SK": {
+            "S.$": "$.prep.dose.doseSk"
+          }
         },
         "UpdateExpression": "SET #status = :escalating, missClass = :missClass, escalatedAt = :now, GSI2PK = :open, GSI2SK = :now",
         "ConditionExpression": "#status = :pending",
-        "ExpressionAttributeNames": { "#status": "status" },
+        "ExpressionAttributeNames": {
+          "#status": "status"
+        },
         "ExpressionAttributeValues": {
-          ":escalating": { "S": "ESCALATING" },
-          ":pending": { "S": "PENDING" },
-          ":missClass": { "S.$": "$.missClass" },
-          ":now": { "S.$": "$$.State.EnteredTime" },
-          ":open": { "S.$": "States.Format('FAM#{}#OPEN', $.prep.dose.fid)" }
+          ":escalating": {
+            "S": "ESCALATING"
+          },
+          ":pending": {
+            "S": "PENDING"
+          },
+          ":missClass": {
+            "S.$": "$.missClass"
+          },
+          ":now": {
+            "S.$": "$$.State.EnteredTime"
+          },
+          ":open": {
+            "S.$": "States.Format('FAM#{}#OPEN', $.prep.dose.fid)"
+          }
         }
       },
       "ResultPath": null,
       "Catch": [
         {
-          "ErrorEquals": ["DynamoDB.ConditionalCheckFailedException"],
+          "ErrorEquals": [
+            "DynamoDB.ConditionalCheckFailedException"
+          ],
           "ResultPath": "$.raced",
           "Next": "DoseTakenJustInTime"
         }
@@ -220,19 +279,31 @@
       "Parameters": {
         "TableName": "${TableName}",
         "Key": {
-          "PK": { "S.$": "States.Format('FAM#{}', $.prep.dose.fid)" },
-          "SK": { "S.$": "States.Format('PARENT#{}', $.prep.dose.pid)" }
+          "PK": {
+            "S.$": "States.Format('FAM#{}', $.prep.dose.fid)"
+          },
+          "SK": {
+            "S.$": "States.Format('PARENT#{}', $.prep.dose.pid)"
+          }
         },
         "UpdateExpression": "ADD consecutiveMisses :one",
-        "ExpressionAttributeValues": { ":one": { "N": "1" } }
+        "ExpressionAttributeValues": {
+          ":one": {
+            "N": "1"
+          }
+        }
       },
       "ResultPath": null,
-      "Next": "HasNextFamilyMember"
+      "Next": "ShouldAlertFamily"
     },
     "HasNextFamilyMember": {
       "Type": "Choice",
       "Choices": [
-        { "Variable": "$.ladder.index", "NumericLessThanPath": "$.prep.dose.ladderSize", "Next": "AlertFamilyMember" }
+        {
+          "Variable": "$.ladder.index",
+          "NumericLessThanPath": "$.prep.dose.ladderSize",
+          "Next": "AlertFamilyMember"
+        }
       ],
       "Default": "AlertWholeFamily"
     },
@@ -254,7 +325,9 @@
       "ResultPath": "$.resolution",
       "Catch": [
         {
-          "ErrorEquals": ["States.Timeout"],
+          "ErrorEquals": [
+            "States.Timeout"
+          ],
           "ResultPath": "$.timeout",
           "Next": "TryNextFamilyMember"
         }
@@ -287,7 +360,9 @@
       "ResultPath": "$.resolution",
       "Catch": [
         {
-          "ErrorEquals": ["States.Timeout"],
+          "ErrorEquals": [
+            "States.Timeout"
+          ],
           "ResultPath": "$.timeout",
           "Next": "MarkUnresolved"
         }
@@ -300,21 +375,33 @@
       "Parameters": {
         "TableName": "${TableName}",
         "Key": {
-          "PK": { "S.$": "States.Format('PARENT#{}', $.prep.dose.pid)" },
-          "SK": { "S.$": "$.prep.dose.doseSk" }
+          "PK": {
+            "S.$": "States.Format('PARENT#{}', $.prep.dose.pid)"
+          },
+          "SK": {
+            "S.$": "$.prep.dose.doseSk"
+          }
         },
         "UpdateExpression": "SET #status = :unresolved REMOVE GSI2PK, GSI2SK, currentToken",
         "ConditionExpression": "#status = :escalating",
-        "ExpressionAttributeNames": { "#status": "status" },
+        "ExpressionAttributeNames": {
+          "#status": "status"
+        },
         "ExpressionAttributeValues": {
-          ":unresolved": { "S": "UNRESOLVED" },
-          ":escalating": { "S": "ESCALATING" }
+          ":unresolved": {
+            "S": "UNRESOLVED"
+          },
+          ":escalating": {
+            "S": "ESCALATING"
+          }
         }
       },
       "ResultPath": null,
       "Catch": [
         {
-          "ErrorEquals": ["DynamoDB.ConditionalCheckFailedException"],
+          "ErrorEquals": [
+            "DynamoDB.ConditionalCheckFailedException"
+          ],
           "ResultPath": "$.raced",
           "Next": "ResolvedAtTheLastMoment"
         }
@@ -331,8 +418,16 @@
     "HowWasItResolved": {
       "Type": "Choice",
       "Choices": [
-        { "Variable": "$.resolution.outcome", "StringEquals": "CLAIMED", "Next": "TellOthersToStandDown" },
-        { "Variable": "$.resolution.outcome", "StringEquals": "TAKEN", "Next": "TellFamilyParentTookIt" }
+        {
+          "Variable": "$.resolution.outcome",
+          "StringEquals": "CLAIMED",
+          "Next": "TellOthersToStandDown"
+        },
+        {
+          "Variable": "$.resolution.outcome",
+          "StringEquals": "TAKEN",
+          "Next": "TellFamilyParentTookIt"
+        }
       ],
       "Default": "UnexpectedResolution"
     },
@@ -354,7 +449,12 @@
       "ResultPath": null,
       "Retry": [
         {
-          "ErrorEquals": ["Lambda.ServiceException", "Lambda.AWSLambdaException", "Lambda.SdkClientException", "Lambda.TooManyRequestsException"],
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException"
+          ],
           "IntervalSeconds": 2,
           "MaxAttempts": 3,
           "BackoffRate": 2
@@ -378,7 +478,12 @@
       "ResultPath": null,
       "Retry": [
         {
-          "ErrorEquals": ["Lambda.ServiceException", "Lambda.AWSLambdaException", "Lambda.SdkClientException", "Lambda.TooManyRequestsException"],
+          "ErrorEquals": [
+            "Lambda.ServiceException",
+            "Lambda.AWSLambdaException",
+            "Lambda.SdkClientException",
+            "Lambda.TooManyRequestsException"
+          ],
           "IntervalSeconds": 2,
           "MaxAttempts": 3,
           "BackoffRate": 2
@@ -388,6 +493,58 @@
     },
     "ParentTookItLate": {
       "Type": "Succeed"
+    },
+    "ShouldAlertFamily": {
+      "Type": "Choice",
+      "Comment": "Weight-only checks and other quiet reminders end here instead of waking the family.",
+      "Choices": [
+        {
+          "Variable": "$.prep.dose.escalates",
+          "BooleanEquals": true,
+          "Next": "HasNextFamilyMember"
+        }
+      ],
+      "Default": "MarkUnresolvedQuietly"
+    },
+    "MarkUnresolvedQuietly": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::dynamodb:updateItem",
+      "Parameters": {
+        "TableName": "${TableName}",
+        "Key": {
+          "PK": {
+            "S.$": "States.Format('PARENT#{}', $.prep.dose.pid)"
+          },
+          "SK": {
+            "S.$": "$.prep.dose.doseSk"
+          }
+        },
+        "UpdateExpression": "SET #status = :unresolved REMOVE GSI2PK, GSI2SK, currentToken",
+        "ConditionExpression": "#status = :escalating",
+        "ExpressionAttributeNames": {
+          "#status": "status"
+        },
+        "ExpressionAttributeValues": {
+          ":unresolved": {
+            "S": "UNRESOLVED"
+          },
+          ":escalating": {
+            "S": "ESCALATING"
+          }
+        }
+      },
+      "ResultPath": null,
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "DynamoDB.ConditionalCheckFailedException"
+          ],
+          "ResultPath": "$.raced",
+          "Next": "ResolvedAtTheLastMoment"
+        }
+      ],
+      "Next": "NobodyResponded",
+      "Comment": "Nobody is alerted: the dose is simply recorded as not confirmed."
     }
   }
 }

@@ -18,7 +18,9 @@ describe("demo fixtures", () => {
   });
 
   it("writes in a handful of DynamoDB batches", () => {
-    expect(Math.ceil(items.length / 25)).toBeLessThanOrEqual(4);
+    // Seeding a demo session is one burst of BatchWriteItem calls; keeping it small keeps "start the
+    // demo" instant for a judge. 30 days of doses plus their readings is the bulk of it.
+    expect(Math.ceil(items.length / 25)).toBeLessThanOrEqual(6);
   });
 
   it("seeds thirty days of history with misses, offline days and claims by both children", () => {
@@ -40,6 +42,30 @@ describe("demo fixtures", () => {
     const night = items.find((i) => i.SK === "SLOT#2100");
     expect(night?.critical).toBe(true);
     expect(items.some((i) => i.SK.startsWith("MED#") && i.pillsLeft === 6)).toBe(true);
+  });
+
+  it("schedules the morning checks and seeds readings for most, but not all, of the month", () => {
+    const checks = items.filter((i) => i.SK.startsWith("CHECK#")) as unknown as { checkId: string; type: string; escalates: boolean; weekdays: number[] }[];
+    expect(checks.map((c) => c.type).sort()).toEqual(["bp", "glucose", "weight"]);
+    // Sugar and blood pressure alert the family; the weekly weigh-in deliberately does not.
+    expect(checks.find((c) => c.type === "weight")).toMatchObject({ escalates: false, weekdays: [0] });
+    expect(checks.filter((c) => c.escalates).map((c) => c.type).sort()).toEqual(["bp", "glucose"]);
+    // Only the morning reminder asks for them.
+    expect(items.find((i) => i.SK === "SLOT#0800") as unknown as { checkIds: string[] }).toMatchObject({ checkIds: ["chk-sugar", "chk-bp", "chk-weight"] });
+    expect((items.find((i) => i.SK === "SLOT#2100") as unknown as { checkIds: string[] }).checkIds).toEqual([]);
+
+    const readings = items.filter((i) => i.SK.startsWith("READING#")) as unknown as { SK: string; checkId: string; type: string; values: Record<string, number>; doseId: string }[];
+    const sugar = readings.filter((r) => r.checkId === "chk-sugar");
+    expect(sugar.length).toBeGreaterThanOrEqual(24);
+    // Some mornings genuinely have no reading, which is what makes the "written down" count honest.
+    expect(sugar.length).toBeLessThan(30);
+    expect(new Set(sugar.map((r) => r.SK.slice("READING#".length, "READING#".length + 10))).size).toBe(sugar.length);
+    // Every reading is a plausible number tied to that morning's reminder, and nothing else.
+    for (const reading of readings) {
+      expect(reading.doseId).toMatch(/^p-demo0123456789ab_\d{12}$/);
+      for (const value of Object.values(reading.values)) expect(Number.isFinite(value)).toBe(true);
+    }
+    expect(readings.filter((r) => r.checkId === "chk-weight").length).toBeGreaterThan(2);
   });
 
   it("works out IST hours regardless of the machine's time zone", () => {

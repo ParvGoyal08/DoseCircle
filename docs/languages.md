@@ -15,13 +15,19 @@ reviewed (see below).
 2. **Medicine names are never translated or transliterated.** They appear in Latin script exactly as printed
    on the strip, in a Latin font even inside Kannada text. This is where a translation mistake could harm
    someone.
-3. **Nothing ships unreviewed.** Every string records `reviewedBy`. A language appears in the picker only
+   The same applies to **units and ranges**: `mmHg`, `mg/dL`, `kg` and "20–700" are their own UI elements in
+   Latin script beside the box, never spliced into a translated sentence.
+3. **A reminder that is only about a reading never says "medicine".** There is a second set of nine
+   notification strings for check-only reminders, so a family is told "the reading has not been written down
+   yet", not "the medicine has not been confirmed". Whenever a reminder carries both, the medicine wording
+   stands, because the one tap confirms the whole reminder.
+4. **Nothing ships unreviewed.** Every string records `reviewedBy`. A language appears in the picker only
    when *every* string is signed off, and the tests enforce it.
-4. **A missing string falls back to English, never another Indian language.**
-5. **The picker** shows endonyms only (ಕನ್ನಡ, हिन्दी, English), each in its own script with the right `lang`
+5. **A missing string falls back to English, never another Indian language.**
+6. **The picker** shows endonyms only (ಕನ್ನಡ, हिन्दी, English), each in its own script with the right `lang`
    attribute, no flags, and no words like "regional" or "vernacular". It pre-selects a language only if the
    browser explicitly asks for one.
-6. **Layout** assumes Indic strings run long: buttons wrap, nothing is truncated on the parent's screens, and
+7. **Layout** assumes Indic strings run long: buttons wrap, nothing is truncated on the parent's screens, and
    Kannada and Devanagari get taller line heights because their vowel signs sit above and below the line.
 
 ## The review workflow
@@ -36,7 +42,7 @@ pnpm i18n:check              # coverage per language, and the safety rules above
 `reviewedBy` is set only on the rows a reviewer signed. Two reviewers are planned for Kannada, one checking
 the other, and one for Hindi. Reviewers are credited by name in the README with their permission.
 
-Current state: **0 of 325 strings reviewed** in each of Kannada and Hindi (313 app strings and 12 notification strings). The drafts were written with
+Current state: **0 of 404 strings reviewed** in each of Kannada and Hindi (383 app strings and 21 notification strings). The drafts were written with
 Claude Code and are deliberately hidden in production builds until a native speaker signs off. Development
 builds show them, marked as drafts, so the screens can be checked.
 

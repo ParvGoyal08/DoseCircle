@@ -11,7 +11,7 @@ Assume 3 reminder times a day, 90 doses a month, of which about 10 escalate to t
 |---|---|---|---|
 | Step Functions state transitions | ~720 for doses taken on time (8 each) + ~200 for escalations (~20 each) ≈ **920** | $0.0285 per 1,000 | **$0.026** |
 | Verified Permissions `IsAuthorized` | ~300 (taps, dashboard views) | $0.000005 each | $0.0015 |
-| DynamoDB writes | ~900 | $0.71 per million | $0.0006 |
+| DynamoDB writes | ~900, plus ~60 for two daily readings | $0.71 per million | $0.0007 |
 | API Gateway requests | ~300 | $1.05 per million | $0.0003 |
 | Lambda invocations | ~750, 256 MB, short | mostly free tier | ≈$0.0002 |
 | EventBridge Scheduler | 90 invocations | 14M free per month | $0 |
@@ -55,6 +55,10 @@ against the $25 budget the stack creates. The budget emails at 50%, 80% and a fo
 
 - **One workflow per dose, not a polling loop.** Polling every minute would cost far more in invocations and
   transitions than an execution that sleeps for free.
+- **Daily checks ride on the existing reminder.** Asking for blood sugar and blood pressure every morning
+  adds no schedule, no execution and no notification — just two DynamoDB writes a day, under a hundredth of
+  a cent a month. A check asked for on Sundays only still uses the daily schedule, because the weekday is
+  decided when the dose is prepared.
 - **Scheduler starts Step Functions directly,** so there is no Lambda hop per dose.
 - **`DetectDocumentText`, not Textract's form or query APIs,** which cost several times more and answer a
   question we don't need to ask.

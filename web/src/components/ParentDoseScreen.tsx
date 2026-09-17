@@ -5,6 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useT } from "../i18n";
 import { formatCount, formatTime } from "../lib/format";
 import type { DoseView } from "../lib/types";
+import { readingProblems, ReadingEntry, readyReadings, type ReadingDraft } from "./ReadingEntry";
 import { cx, SLOT_ICONS } from "./ui";
 
 export const UNDO_SECONDS = 10;
@@ -59,8 +60,11 @@ function useVoiceClip(src: string) {
 
 export interface ParentDoseScreenProps {
   dose: DoseView;
-  /** Records Taken on the server. `keepalive` is set when the page is closing during the undo window. */
-  onTaken: (options: { keepalive: boolean }) => Promise<void>;
+  /**
+   * Records Taken on the server, together with any readings typed on this screen. `keepalive` is set
+   * when the page is closing during the undo window.
+   */
+  onTaken: (options: { keepalive: boolean; readings: { checkId: string; values: Record<string, number> }[] }) => Promise<void>;
   /** Try to play the reminder phrase when the screen opens (installed Android apps usually allow it). */
   autoPlay?: boolean;
   /** Inside the demo's phone frame the layout is slightly tighter. */
@@ -79,8 +83,12 @@ export function ParentDoseScreen({ dose, onTaken, autoPlay = false, framed = fal
   const [secondsLeft, setSecondsLeft] = useState(UNDO_SECONDS);
   const [lateConfirmation, setLateConfirmation] = useState(dose.status === "TAKEN_LATE");
   const [failed, setFailed] = useState(false);
+  const [readings, setReadings] = useState<ReadingDraft>({});
   const statusAtTap = useRef(dose.status);
   const sent = useRef(false);
+  // Read through a ref so the flush on `pagehide` sends whatever was typed, not a stale copy.
+  const readingsRef = useRef(readings);
+  readingsRef.current = readings;
 
   const reminder = useVoiceClip(dose.voice.src);
   const thanks = useVoiceClip(dose.voice.thanks);
@@ -101,7 +109,7 @@ export function ParentDoseScreen({ dose, onTaken, autoPlay = false, framed = fal
       if (sent.current) return;
       sent.current = true;
       try {
-        await onTaken({ keepalive });
+        await onTaken({ keepalive, readings: readyReadings(dose.checks, readingsRef.current) });
         setLateConfirmation(statusAtTap.current === "ESCALATING" || statusAtTap.current === "CLAIMED");
         setPhase("sent");
         setFailed(false);
@@ -111,7 +119,7 @@ export function ParentDoseScreen({ dose, onTaken, autoPlay = false, framed = fal
         setPhase("ready");
       }
     },
-    [onTaken],
+    [onTaken, dose.checks],
   );
 
   useEffect(() => {
@@ -147,6 +155,7 @@ export function ParentDoseScreen({ dose, onTaken, autoPlay = false, framed = fal
 
   const pad = framed ? "px-5" : "px-6";
   const SlotIcon = SLOT_ICONS[dose.slotName];
+  const blocked = readingProblems(dose.checks, readings).length > 0;
 
   return (
     <div className="relative flex h-full min-h-0 flex-col bg-paper">
@@ -216,6 +225,10 @@ export function ParentDoseScreen({ dose, onTaken, autoPlay = false, framed = fal
             </li>
           ))}
         </ul>
+
+        {phase !== "closed" && (
+          <ReadingEntry checks={dose.checks} draft={readings} onChange={setReadings} lang={dose.parent.lang} framed={framed} disabled={phase === "sent"} />
+        )}
         </div>
       </div>
 
@@ -231,9 +244,13 @@ export function ParentDoseScreen({ dose, onTaken, autoPlay = false, framed = fal
               <button
                 type="button"
                 onClick={tapTaken}
+                // A reading the server would refuse blocks the tap, so a typo is corrected here rather
+                // than silently losing the confirmation.
+                disabled={blocked}
                 className={cx(
                   "pressable flex w-full flex-col items-center justify-center gap-2 rounded-[22px] bg-taken px-4 text-white shadow-[0_12px_28px_-12px_rgb(3_87_63/0.7)]",
                   framed ? "min-h-32" : "min-h-40",
+                  blocked && "opacity-45 shadow-none",
                 )}
               >
                 <span className="grid size-12 place-items-center rounded-full bg-white/18 text-white">

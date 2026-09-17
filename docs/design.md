@@ -78,6 +78,27 @@ Choices that came from research rather than taste:
 Charts are hand-built SVG (no charting library), so they inherit the palette, respect the dark theme, and add
 nothing to the download beyond a few kilobytes.
 
+### The reading charts have no target line, on purpose
+
+The adherence chart draws the 80% line because that threshold is published and is about *behaviour*. A
+"normal" band for blood sugar or blood pressure is a clinical judgement about a particular person, so
+drawing one would be the app quietly giving medical advice. The daily-check panels therefore show:
+
+- the line, scaled to the data that actually exists;
+- the days it was written down out of the days it was asked for;
+- lowest, middle and highest — descriptions of the data, not verdicts on it.
+
+Days with no reading are never filled in. Consecutive days join with a solid line and a jump across missing
+days is drawn dashed, so a weekly weigh-in still reads as a trend while the gap stays visible.
+
+### Typing a number on the parent's screen
+
+One full-width box per value, at least 64px tall, centred 30px digits, `inputMode="decimal"`. The unit sits
+in the label and the plausible range underneath, both in Latin script as their own elements — never inside a
+translated sentence. A value outside the range turns the border red, says so in one whole sentence, and
+**disables the confirm button**, so a typo is corrected on the phone rather than losing the confirmation to
+a rejected request.
+
 ## Motion
 
 Short and purposeful: the alert travelling along the family circle, the claim sliding in, the confirm tick.

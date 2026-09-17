@@ -1,4 +1,4 @@
-import { SLOT_NAMES, toCompactTime, type SlotName } from "@dosecircle/shared";
+import { isCheckDueAt, SLOT_NAMES, toCompactTime, type PlannedCheck, type SlotName } from "@dosecircle/shared";
 
 /** Pure planning for dose schedules, kept separate from AWS calls so it can be unit-tested. */
 
@@ -16,6 +16,7 @@ export interface DesiredSlot {
   compactTime: string;
   slotName: SlotName;
   medIds: string[];
+  checkIds: string[];
   critical: boolean;
 }
 
@@ -24,20 +25,28 @@ export function isDueAt(medicine: PlannedMedicine, slotName: SlotName, todayIst:
   return medicine.active && !medicine.asNeeded && (!medicine.endDate || medicine.endDate >= todayIst) && (medicine.slots[slotName] ?? 0) > 0;
 }
 
-/** One reminder per time of day, grouping every medicine due then. Critical if any of them is. */
+/**
+ * One reminder per time of day, grouping every medicine and daily check asked for then.
+ * Critical if any medicine is. A check that only runs on some weekdays still needs a daily schedule:
+ * the workflow decides on the day whether it is actually due.
+ */
 export function desiredSlots(
   medicines: readonly PlannedMedicine[],
+  checks: readonly PlannedCheck[],
   slotTimes: Readonly<Record<SlotName, string>>,
   todayIst: string,
 ): DesiredSlot[] {
   const slots: DesiredSlot[] = [];
   for (const slotName of SLOT_NAMES) {
     const due = medicines.filter((m) => isDueAt(m, slotName, todayIst));
-    if (due.length === 0) continue;
+    // Any weekday, because the schedule is daily and the day is checked when the dose is prepared.
+    const dueChecks = checks.filter((c) => c.active && c.slots.includes(slotName) && (!c.endDate || c.endDate >= todayIst));
+    if (due.length === 0 && dueChecks.length === 0) continue;
     slots.push({
       compactTime: toCompactTime(slotTimes[slotName]),
       slotName,
       medIds: due.map((m) => m.medId).sort(),
+      checkIds: dueChecks.map((c) => c.checkId).sort(),
       critical: due.some((m) => m.critical),
     });
   }
@@ -48,6 +57,8 @@ export interface ExistingSlot {
   compactTime: string;
   slotName: SlotName;
   medIds: string[];
+  /** Missing on slots written before daily checks existed, which is treated as none. */
+  checkIds?: string[];
   critical: boolean;
 }
 
@@ -68,7 +79,7 @@ export function diffSlots(existing: readonly ExistingSlot[], desired: readonly D
   for (const slot of desired) {
     const current = byTime.get(slot.compactTime);
     if (!current) create.push(slot);
-    else if (current.slotName !== slot.slotName || current.critical !== slot.critical || current.medIds.join() !== slot.medIds.join()) update.push(slot);
+    else if (current.slotName !== slot.slotName || current.critical !== slot.critical || current.medIds.join() !== slot.medIds.join() || (current.checkIds ?? []).join() !== slot.checkIds.join()) update.push(slot);
   }
   const remove = existing.filter((s) => !wanted.has(s.compactTime));
   return { create, update, remove };
@@ -91,4 +102,14 @@ export function dailyCron(compactTime: string): string {
 /** Today's date in India as "yyyy-MM-dd". */
 export function istDate(date = new Date()): string {
   return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kolkata", year: "numeric", month: "2-digit", day: "2-digit" }).format(date);
+}
+
+const IST_WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+/** The day of the week in India, 0 = Sunday, for checks that only run on some days. */
+export function istWeekday(date = new Date()): number {
+  const short = new Intl.DateTimeFormat("en-US", { timeZone: "Asia/Kolkata", weekday: "short" }).format(date);
+  const index = IST_WEEKDAYS.indexOf(short);
+  if (index < 0) throw new Error(`Unrecognised weekday "${short}"`);
+  return index;
 }

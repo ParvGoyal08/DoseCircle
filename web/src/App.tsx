@@ -4,8 +4,10 @@ import { FamilyProvider } from "./lib/family";
 import { DemoPage } from "./routes/demo/DemoPage";
 import { DemoPrescriptionPage } from "./routes/demo/DemoPrescriptionPage";
 import { InviteAcceptPage, OnboardingPage, SignInPage } from "./routes/family/AuthPages";
+import { ChecksPage } from "./routes/family/ChecksPage";
 import { AlertPage, HomePage } from "./routes/family/HomePage";
 import { MedicinesPage } from "./routes/family/MedicinesPage";
+import { PeoplePage } from "./routes/family/PeoplePage";
 import { PrescriptionPage } from "./routes/family/PrescriptionPage";
 import { ReportPage } from "./routes/family/ReportPage";
 import { MySettingsPage, ParentSettingsPage } from "./routes/family/SettingsPages";
@@ -37,6 +39,8 @@ const router = createBrowserRouter([
       { path: "/home", element: <HomePage /> },
       { path: "/alerts/:doseId", element: <AlertPage /> },
       { path: "/parents/:pid/medicines", element: <MedicinesPage /> },
+      { path: "/parents/:pid/checks", element: <ChecksPage /> },
+      { path: "/people", element: <PeoplePage /> },
       { path: "/parents/:pid/prescription", element: <PrescriptionPage /> },
       { path: "/parents/:pid/report", element: <ReportPage /> },
       { path: "/parents/:pid/settings", element: <ParentSettingsPage /> },

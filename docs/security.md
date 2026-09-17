@@ -13,9 +13,16 @@ scenario-tested offline (`backend/test/cedar.test.ts`), including cases that mus
 - **Only a member who was actually alerted** can claim a dose, and only while it is escalating:
   `status == "ESCALATING" && alertedMembers.contains(principal)`.
 - Only a parent's **own** paired phone can confirm that parent's dose.
+- A parent's phone can record and read **only that parent's own readings**, and the revoked-phone rule still
+  overrides that.
 - Two `forbid` rules override everything else: a **revoked phone can do nothing**, and a **demo session can
   never touch a real family** (or a real session a demo family).
-- Owners, not every member, can change the family or its escalation order.
+- Owners, not every member, can change the family or its escalation order, add or remove people, or delete
+  the family. Anybody may leave a family they are in, owner or not.
+
+Three rules the server enforces regardless of what the UI sends: a family keeps **at least one owner**, the
+**last person cannot be removed**, and a parent's escalation order is never emptied — a parent nobody would
+be told about is worse than no app at all.
 
 The policy ids that allowed an action are stored with the event and shown in the app's timeline, so a family
 can see *why* they were alerted and what permitted each step.
@@ -52,11 +59,18 @@ can see *why* they were alerted and what permitted each step.
 | Data | Kept |
 |---|---|
 | Doses and events | 120 days, for the doctor report |
+| Readings from daily checks | 400 days, because a trend is what a doctor asks about |
 | Prescription photos | 7 days in a private, encrypted S3 bucket, then deleted by lifecycle rule |
 | Prescription drafts | 7 days unless confirmed |
 | Demo families | 2 hours, then removed by TTL |
 | Invite codes | 48 hours, single use |
 | Logs | 14 days |
+
+**Deletion is real, not a flag.** Deleting a family removes its parents, medicines, daily checks, readings,
+doses, dose events, prescriptions, paired phones, every member's push subscriptions and the EventBridge
+schedules (`backend/src/lib/purge.ts`). It asks for the family's name to be typed and the server checks it
+again. Removing one person deletes their membership, their push subscriptions and the lock that ties them to
+one family, so they can join or start another.
 
 Notification payloads carry only what the phone needs to show: a title, one reviewed sentence, the dose id,
 and the signature. No diagnosis, no dose amounts.
@@ -76,6 +90,10 @@ and the signature. No diagnosis, no dose amounts.
 ## What we do not do
 
 - No medical advice, dosage suggestions or interaction warnings, anywhere, in any language.
+- **No interpretation of a reading.** There is no target or reference range in the codebase, no "high" or
+  "low" label, and a reading never raises an alert on its own. The only limits are wide enough to catch a
+  typo (a systolic of 50–300) and exist so a slip does not reach the doctor's report. The dashboard shows
+  lowest, middle and highest — descriptions of the numbers, never a verdict on them.
 - No SMS or voice calls (India's TRAI DLT registration), and no native app.
 - No public sharing links for reports, and no email of medical data.
 - No per-family dimensions on metrics, so operational dashboards cannot become a list of patients.
@@ -84,7 +102,11 @@ and the signature. No diagnosis, no dose amounts.
 
 Honest list, for anyone reading the code:
 
-- Removing a family member, leaving a family, and deleting a family's data are not implemented yet.
+- Deletion walks the family's items one at a time rather than in batches. A family is small, so this is
+  fast enough and much easier to reason about than a partially failed batch — but it is not built for a
+  family with years of history.
+- A removed person's own Cognito account still exists; only their membership is deleted. Deleting the
+  account itself belongs with a real account-management screen.
 - Production use in India would need a legal review under the DPDP Act and its rules, and a proper privacy
   notice and consent record. This is a hackathon build, not a product.
 - Push delivery on Android can be delayed by battery savers; the app tells the family "the phone seems

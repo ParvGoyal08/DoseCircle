@@ -95,10 +95,32 @@ describe("who can do what", () => {
   });
 
   it("lets any member care for the family's parents", () => {
-    for (const action of ["ViewParent", "ManageMedicines", "PauseReminders", "SendTestReminder", "ViewReport"] as const) {
+    for (const action of ["ViewParent", "ManageMedicines", "ManageChecks", "RecordReading", "ViewReadings", "PauseReminders", "SendTestReminder", "ViewReport"] as const) {
       expect(decide(request(rohan, action, mother)).allowed, action).toBe(true);
       expect(decide(request(stranger, action, mother)).allowed, action).toBe(false);
     }
+  });
+
+  it("lets a parent's phone record and read its own readings, and nobody else's", () => {
+    for (const action of ["RecordReading", "ViewReadings"] as const) {
+      expect(decide(request(phone, action, mother)).allowed, action).toBe(true);
+      expect(decide(request(phone, action, otherParent)).allowed, action).toBe(false);
+      expect(decide(request(revokedPhone, action, mother)).allowed, action).toBe(false);
+    }
+  });
+
+  it("lets only an owner add, remove or re-rank family members, or delete the family", () => {
+    for (const action of ["ManageMembers", "DeleteFamily"] as const) {
+      expect(decide(request(asha, action, family)).allowed, action).toBe(true);
+      expect(decide(request(rohan, action, family)).allowed, action).toBe(false);
+      expect(decide(request(stranger, action, family)).allowed, action).toBe(false);
+    }
+  });
+
+  it("lets anybody leave their own family, owner or not", () => {
+    expect(decide(request(rohan, "LeaveFamily", family)).allowed).toBe(true);
+    expect(decide(request(asha, "LeaveFamily", family)).allowed).toBe(true);
+    expect(decide(request(stranger, "LeaveFamily", family)).allowed).toBe(false);
   });
 
   it("limits a parent's phone to that parent", () => {

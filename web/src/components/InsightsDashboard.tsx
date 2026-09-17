@@ -5,7 +5,7 @@ import type { ReactNode } from "react";
 import { useT } from "../i18n";
 import { formatAgo, formatDay, formatNumber } from "../lib/format";
 import type { Highlight, Insights } from "../lib/types";
-import { CalendarHeatmap, DaysLeftGauge, rollingAdherence, Columns, OutcomeBar, ReachStrip, ShareBars, Swatch, TimingScatter, TrendArea, WeekdayHeatmap } from "./charts/Charts";
+import { CalendarHeatmap, DaysLeftGauge, rollingAdherence, Columns, OutcomeBar, ReachStrip, ReadingTrend, ShareBars, Swatch, TimingScatter, TrendArea, WeekdayHeatmap, type ReadingLine } from "./charts/Charts";
 import { Avatar, cx } from "./ui";
 
 export function Panel({ title, subtitle, action, children, className }: { title: ReactNode; subtitle?: ReactNode; action?: ReactNode; children: ReactNode; className?: string }) {
@@ -397,6 +397,91 @@ export function InsightsGrid({ insights, lang: viewerLang }: { insights: Insight
           )}
         </p>
       </Panel>
+
+      {insights.readings.map((series) => (
+        <ReadingPanel key={series.checkId} series={series} dates={dates} t={t} lang={lang} />
+      ))}
+
+      {insights.readings.length > 0 && (
+        <p lang={lang} className="lg:col-span-12 text-[13px] text-muted">
+          {t("checks.notAdvice")}
+        </p>
+      )}
     </div>
+  );
+}
+
+/** Two series at most per check, so blood pressure reads as one pair of lines rather than two panels. */
+const READING_STROKES = ["var(--color-indigo-soft)", "var(--color-haldi-deep)"];
+
+function ReadingPanel({ series, dates, t, lang }: { series: Insights["readings"][number]; dates: string[]; t: TFunction; lang: string }) {
+  const byDate = new Map(series.points.map((p) => [p.date, p]));
+  const keys = [series.chart.primary, series.chart.secondary].filter((k): k is string => Boolean(k));
+  const lines: ReadingLine[] = keys.map((key, index) => ({
+    key,
+    label: t(`field.${key}`),
+    values: dates.map((date) => byDate.get(date)?.values[key] ?? null),
+    stroke: READING_STROKES[index] ?? READING_STROKES[0]!,
+  }));
+  const unit = series.fields.find((f) => f.key === series.chart.primary)?.unit ?? "";
+
+  return (
+    <Panel
+      title={<span lang={lang}>{t(`check.${series.type}`)}</span>}
+      subtitle={
+        <span>
+          <span lang={lang}>{t("checks.writtenDown")}</span> <span className="tabular font-semibold text-ink">{formatNumber(series.recordedDays, lang)}</span>
+          <span aria-hidden> / </span>
+          <span className="tabular">{formatNumber(series.askedDays, lang)}</span>
+          {!series.escalates && (
+            <>
+              {" · "}
+              <span lang={lang}>{t("checks.quiet")}</span>
+            </>
+          )}
+        </span>
+      }
+      className="lg:col-span-6"
+      action={
+        series.latest && (
+          <span className="shrink-0 text-right">
+            <span lang={lang} className="block text-[12.5px] text-muted">
+              {t("checks.latest")}
+            </span>
+            <span lang="en" className="tabular text-[19px] font-semibold text-ink">
+              {series.latest.text}
+            </span>
+          </span>
+        )
+      }
+    >
+      {series.points.length === 0 ? (
+        <p lang={lang} className="grid h-full min-h-24 place-items-center text-[14px] text-muted">
+          {t("checks.noReadings")}
+        </p>
+      ) : (
+        <>
+          <ReadingTrend lines={lines} dates={dates} lang={lang} />
+          <dl className="mt-4 grid grid-cols-3 gap-2">
+            {(["lowest", "middle", "highest"] as const).map((which) => {
+              const spread = series.spread.find((s) => s.key === series.chart.primary);
+              return (
+                <div key={which} className="rounded-xl bg-paper p-2.5">
+                  <dt lang={lang} className="text-[12.5px] text-muted">
+                    {t(`checks.${which}`)}
+                  </dt>
+                  <dd className="tabular mt-0.5 text-[17px] font-semibold">
+                    {spread ? formatNumber(spread[which], lang) : "–"}
+                    <span lang="en" className="ml-1 text-[12.5px] font-medium text-muted">
+                      {unit}
+                    </span>
+                  </dd>
+                </div>
+              );
+            })}
+          </dl>
+        </>
+      )}
+    </Panel>
   );
 }

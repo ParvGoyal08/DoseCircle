@@ -364,8 +364,8 @@ function ParentPane({ session, state, offline }: { session: DemoSession; state: 
   });
 
   const onTaken = useCallback(
-    async ({ keepalive }: { keepalive: boolean }) => {
-      if (doseId) await client.taken(doseId, { keepalive });
+    async ({ keepalive, readings }: { keepalive: boolean; readings: { checkId: string; values: Record<string, number> }[] }) => {
+      if (doseId) await client.taken(doseId, { keepalive, readings });
     },
     [client, doseId],
   );

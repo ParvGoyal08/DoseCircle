@@ -1,6 +1,7 @@
 import { buildDemoSeed } from "../../../backend/src/demo/fixtures";
-import type { DoseItem, MedicineItem } from "../../../backend/src/lib/model";
+import type { CheckItem, DoseItem, MedicineItem, ReadingItem } from "../../../backend/src/lib/model";
 import { buildInsights, istDateOf } from "../../../backend/src/views/insights";
+import { buildReadingSeries } from "../../../backend/src/views/readings";
 import type { Insights } from "./types";
 
 /**
@@ -11,18 +12,23 @@ export function demoInsights(days: 7 | 30, now = Date.now()): Insights {
   const seed = buildDemoSeed({ sid: "s-simulated00", now, ttl: Math.floor(now / 1000) + 7200 });
   const doses = seed.items.filter((i) => String(i.SK).startsWith("DOSE#")) as unknown as DoseItem[];
   const medicines = seed.items.filter((i) => String(i.SK).startsWith("MED#")) as unknown as MedicineItem[];
+  const checks = seed.items.filter((i) => String(i.SK).startsWith("CHECK#")) as unknown as CheckItem[];
+  const readings = seed.items.filter((i) => String(i.SK).startsWith("READING#")) as unknown as ReadingItem[];
   const to = istDateOf(now - 86_400_000);
   const from = istDateOf(Date.parse(`${to}T12:00:00+05:30`) - (days - 1) * 86_400_000);
-  return buildInsights({
-    doses: doses.filter((d) => istDateOf(d.scheduledAt) >= from),
-    previousDoses: doses.filter((d) => istDateOf(d.scheduledAt) < from),
-    medicines,
-    ladder: [
-      { mid: seed.sonId, displayName: "Arjun" },
-      { mid: seed.daughterId, displayName: "Meera" },
-    ],
-    to,
-    days,
-    now,
-  });
+  return {
+    ...buildInsights({
+      doses: doses.filter((d) => istDateOf(d.scheduledAt) >= from),
+      previousDoses: doses.filter((d) => istDateOf(d.scheduledAt) < from),
+      medicines,
+      ladder: [
+        { mid: seed.sonId, displayName: "Arjun" },
+        { mid: seed.daughterId, displayName: "Meera" },
+      ],
+      to,
+      days,
+      now,
+    }),
+    readings: buildReadingSeries({ readings, checks, from, to }),
+  };
 }

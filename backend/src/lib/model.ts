@@ -1,4 +1,4 @@
-import type { DoseStatus, LanguageCode, MissClass, NotationResult, SlotCounts } from "@dosecircle/shared";
+import type { CheckType, DoseStatus, LanguageCode, MissClass, NotationResult, ReadingValues, SlotCounts, SlotName } from "@dosecircle/shared";
 import type { ExtractedMedicine } from "../ai/schema.js";
 import type { OcrLineWithBox } from "../ai/textract.js";
 
@@ -85,6 +85,8 @@ export interface SlotItem {
   compactTime: string;
   slotName: "morning" | "afternoon" | "evening" | "night";
   medIds: string[];
+  /** Daily checks asked for at this time of day. */
+  checkIds?: string[];
   critical: boolean;
   scheduleName?: string;
   ttl?: number;
@@ -100,6 +102,10 @@ export interface DoseItem {
   pid: string;
   slotName: SlotItem["slotName"];
   medIds: string[];
+  /** Daily checks asked for in this reminder. */
+  checkIds?: string[];
+  /** Whether a miss alerts the family: always for medicines, only if switched on for checks. */
+  escalates?: boolean;
   status: DoseStatus;
   critical: boolean;
   missClass?: MissClass;
@@ -172,5 +178,41 @@ export interface PrescriptionItem {
   confirmedAt?: string;
   confirmedBy?: string;
   medIds?: string[];
+  ttl?: number;
+}
+
+/** A daily check the family asks a parent to do at one or more times of day. */
+export interface CheckItem {
+  PK: string;
+  SK: string;
+  pid: string;
+  checkId: string;
+  type: CheckType;
+  slots: SlotName[];
+  /** Days of the week (0 = Sunday). Empty or missing means every day. */
+  weekdays?: number[];
+  /** Whether a missed check alerts the family. */
+  escalates: boolean;
+  active: boolean;
+  endDate?: string;
+  createdAt: string;
+  createdBy: string;
+  stoppedAt?: string;
+  ttl?: number;
+}
+
+/** One recorded measurement. Values are numbers only; DoseCircle never interprets them. */
+export interface ReadingItem {
+  PK: string;
+  SK: string;
+  pid: string;
+  checkId: string;
+  type: CheckType;
+  values: ReadingValues;
+  /** When the measurement was taken (IST-aware ISO instant). */
+  at: string;
+  /** The dose reminder it was recorded against, when it came from one. */
+  doseId?: string;
+  recordedBy: { kind: "parent" | "member"; id: string };
   ttl?: number;
 }

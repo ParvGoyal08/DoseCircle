@@ -86,6 +86,100 @@ export function TrendArea({ values, target = 0.8, height = 96, tone = "light", m
   );
 }
 
+export interface ReadingLine {
+  key: string;
+  label: string;
+  /** One value per day in `dates`; null where nothing was written down. */
+  values: (number | null)[];
+  stroke: string;
+}
+
+/**
+ * A daily-check trend: one or two lines over the period.
+ *
+ * Deliberately has **no target band and no reference line**. The dose chart draws the 80% adherence
+ * benchmark because that threshold is published and about behaviour; a "normal" range for blood sugar
+ * or blood pressure is a clinical judgement, and drawing one here would be the app giving advice.
+ * The axis is scaled to the data that exists, padded a little so a flat month is still readable.
+ *
+ * Days with no reading are never invented. Consecutive days join with a solid line; a jump across
+ * missing days is drawn dashed, so a weekly weigh-in still reads as a trend while the gap stays visible.
+ */
+export function ReadingTrend({ lines, dates, height = 110, lang }: { lines: ReadingLine[]; dates: string[]; height?: number; lang: string }) {
+  const clip = useId();
+  const width = 1000;
+  const step = dates.length > 1 ? width / (dates.length - 1) : 0;
+  const numbers = lines.flatMap((l) => l.values).filter((v): v is number => v !== null);
+  if (numbers.length === 0) return null;
+  const lowest = Math.min(...numbers);
+  const highest = Math.max(...numbers);
+  // A flat series would otherwise be a line through the middle with no sense of scale.
+  const pad = Math.max((highest - lowest) * 0.2, 0.5);
+  const top = highest + pad;
+  const bottom = lowest - pad;
+  const y = (v: number) => ((top - v) / (top - bottom)) * height;
+
+  /** Every hop between two readings, marked as adjacent days or a jump over missing ones. */
+  const hops = (values: (number | null)[]) => {
+    const recorded = values.map((value, index) => ({ value, index })).filter((p): p is { value: number; index: number } => p.value !== null);
+    return recorded.slice(1).map((point, i) => {
+      const previous = recorded[i]!;
+      return { d: `M${previous.index * step} ${y(previous.value)} L${point.index * step} ${y(point.value)}`, gap: point.index - previous.index > 1 };
+    });
+  };
+
+  return (
+    <div>
+      <div className="relative" style={{ height }}>
+        <svg viewBox={`0 0 ${width} ${height}`} className="absolute inset-0 h-full w-full overflow-visible" preserveAspectRatio="none" aria-hidden>
+          <defs>
+            <clipPath id={clip}>
+              <rect x="0" y="0" width={width} height={height} />
+            </clipPath>
+          </defs>
+          {lines.map((line) => (
+            <g key={line.key} clipPath={`url(#${clip})`}>
+              {hops(line.values).map((hop, index) => (
+                <path
+                  key={index}
+                  d={hop.d}
+                  fill="none"
+                  stroke={line.stroke}
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeOpacity={hop.gap ? 0.45 : 1}
+                  strokeDasharray={hop.gap ? "4 5" : undefined}
+                  vectorEffect="non-scaling-stroke"
+                />
+              ))}
+              {line.values.map((value, index) =>
+                value === null ? null : <circle key={index} cx={index * step} cy={y(value)} r="3" fill={line.stroke} vectorEffect="non-scaling-stroke" />,
+              )}
+            </g>
+          ))}
+        </svg>
+        {/* The two labels sit at the values they name, not at the edges of the padded axis. */}
+        <span aria-hidden className="tabular absolute left-0 -translate-y-1/2 bg-surface pr-1 text-[11.5px] font-medium text-muted" style={{ top: `${(y(highest) / height) * 100}%` }}>
+          {formatNumber(highest, lang)}
+        </span>
+        <span aria-hidden className="tabular absolute left-0 -translate-y-1/2 bg-surface pr-1 text-[11.5px] font-medium text-muted" style={{ top: `${(y(lowest) / height) * 100}%` }}>
+          {formatNumber(lowest, lang)}
+        </span>
+      </div>
+      {lines.length > 1 && (
+        <ul className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-[12.5px] text-muted">
+          {lines.map((line) => (
+            <li key={line.key} className="inline-flex items-center gap-1.5">
+              <span aria-hidden className="h-0.5 w-4 rounded-full" style={{ background: line.stroke }} />
+              {line.label}
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
+
 /** Where doses ended up, as one stacked bar (the Dexcom time-in-range pattern). */
 export function OutcomeBar({ counts, labels, lang }: { counts: Record<keyof typeof OUTCOME_FILL, number>; labels: Record<keyof typeof OUTCOME_FILL, string>; lang: string }) {
   const hatch = useId();

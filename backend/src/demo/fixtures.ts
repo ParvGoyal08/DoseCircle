@@ -1,5 +1,5 @@
-import { DEFAULT_SLOT_TIMES, istDoseStamp, keys, makeDoseId, type DoseStatus, type LanguageCode, type MissClass, type SlotName } from "@dosecircle/shared";
-import type { DoseItem, FamilyItem, MedicineItem, MemberItem, ParentItem, SlotItem } from "../lib/model.js";
+import { DEFAULT_SLOT_TIMES, istDoseStamp, keys, makeDoseId, roundReading, type DoseStatus, type LanguageCode, type MissClass, type SlotName } from "@dosecircle/shared";
+import type { CheckItem, DoseItem, FamilyItem, MedicineItem, MemberItem, ParentItem, ReadingItem, SlotItem } from "../lib/model.js";
 
 /**
  * The fictional demo family. Every name here is invented. A Kannada-speaking mother in Mysuru, her
@@ -111,8 +111,38 @@ export function buildDemoSeed(input: { sid: string; now: number; ttl: number }):
     medicine("med-lantus", { nameAsPrinted: "Lantus", strength: "10 units", slots: { night: 1 }, food: null, critical: true, asNeeded: false, pillsLeft: null }),
   ];
 
-  const slot = (slotName: SlotName, compactTime: string, medIds: string[], critical: boolean): SlotItem => ({ ...keys.slot(pid, compactTime), pid, compactTime, slotName, medIds, critical, ttl });
-  const slots = [slot("morning", "0800", ["med-glycomet", "med-telma"], false), slot("night", "2100", ["med-glycomet", "med-lantus"], true)];
+  // Daily checks: blood sugar and blood pressure every morning (the family asked to be told if one
+  // is forgotten), and a weekly weigh-in on Sundays that stays quiet.
+  const check = (checkId: string, fields: Omit<CheckItem, "PK" | "SK" | "pid" | "checkId" | "active" | "createdAt" | "createdBy">): CheckItem => ({
+    ...keys.check(pid, checkId),
+    pid,
+    checkId,
+    active: true,
+    createdAt: new Date(input.now - HISTORY_DAYS * DAY).toISOString(),
+    createdBy: sonId,
+    ttl,
+    ...fields,
+  });
+  const checks: CheckItem[] = [
+    check("chk-sugar", { type: "glucose", slots: ["morning"], weekdays: [], escalates: true, ttl }),
+    check("chk-bp", { type: "bp", slots: ["morning"], weekdays: [], escalates: true, ttl }),
+    check("chk-weight", { type: "weight", slots: ["morning"], weekdays: [0], escalates: false, ttl }),
+  ];
+
+  const slot = (slotName: SlotName, compactTime: string, medIds: string[], checkIds: string[], critical: boolean): SlotItem => ({
+    ...keys.slot(pid, compactTime),
+    pid,
+    compactTime,
+    slotName,
+    medIds,
+    checkIds,
+    critical,
+    ttl,
+  });
+  const slots = [
+    slot("morning", "0800", ["med-glycomet", "med-telma"], ["chk-sugar", "chk-bp", "chk-weight"], false),
+    slot("night", "2100", ["med-glycomet", "med-lantus"], [], true),
+  ];
 
   // Thirty past days, so every chart on the dashboard and the doctor report tells a believable story:
   // mornings are steady, evening doses slip in the last week, the phone is offline twice, and both
@@ -153,7 +183,47 @@ export function buildDemoSeed(input: { sid: string; now: number; ttl: number }):
     }
   }
 
-  return { fid, pid, sonId, daughterId, items: [family, ...members, parent, ...medicines, ...slots, ...history] as unknown as Record<string, unknown>[] };
+  // Readings for the morning checks, from a separate seeded stream so adding or changing a check can
+  // never shift the dose history. The numbers drift gently and are never interpreted anywhere in the
+  // app: they exist so the trend panels and the doctor report have something real-looking to draw.
+  const readings: ReadingItem[] = [];
+  const readingRandom = seeded(20260918);
+  for (let dayOffset = HISTORY_DAYS; dayOffset >= 1; dayOffset--) {
+    const scheduledMs = istTime(input.now - dayOffset * DAY, 8);
+    const doseStamp = istDoseStamp(new Date(scheduledMs));
+    const doseId = makeDoseId(pid, doseStamp);
+    // A morning nobody ever confirmed has no reading either: that is what makes "written down on
+    // 26 of 30 days" an honest number rather than a decoration.
+    const morningDose = history.find((d) => d.doseId === doseId);
+    if (morningDose?.status === "UNRESOLVED" || readingRandom() <= 0.1) continue;
+    const at = new Date(scheduledMs + Math.round(5 + readingRandom() * 25) * 60_000).toISOString();
+    const reading = (checkId: string, type: ReadingItem["type"], values: Record<string, number>): ReadingItem => ({
+      ...keys.reading(pid, at, checkId),
+      pid,
+      checkId,
+      type,
+      values: roundReading(type, values),
+      at,
+      doseId,
+      recordedBy: { kind: "parent", id: `parent-${pid}` },
+      ttl,
+    });
+
+    const wobble = (spread: number) => (readingRandom() - 0.5) * spread;
+    // Fasting sugar easing down over the month, blood pressure steady with the odd higher morning.
+    readings.push(reading("chk-sugar", "glucose", { glucose: 108 + dayOffset * 0.9 + wobble(14) }));
+    readings.push(reading("chk-bp", "bp", { systolic: 128 + wobble(16), diastolic: 80 + wobble(8), pulse: 74 + wobble(10) }));
+    // The Sunday weigh-in only. 08:00 IST is 02:30 UTC the same day, so the UTC weekday is the Indian one.
+    if (new Date(scheduledMs).getUTCDay() === 0) readings.push(reading("chk-weight", "weight", { weight: 61.5 + dayOffset * 0.04 + wobble(0.5) }));
+  }
+
+  return {
+    fid,
+    pid,
+    sonId,
+    daughterId,
+    items: [family, ...members, parent, ...medicines, ...checks, ...slots, ...history, ...readings] as unknown as Record<string, unknown>[],
+  };
 }
 
 /** Epoch ms for hour:00 IST on the Indian day containing `epochMs`. */

@@ -62,6 +62,7 @@ const SHOWCASE_DOSE: DoseView = {
     { medId: "a", nameAsPrinted: "Glycomet GP 1", strength: null, count: 1, food: "after", critical: false },
     { medId: "b", nameAsPrinted: "Telma 40", strength: "40 mg", count: 0.5, food: null, critical: false },
   ],
+  checks: [],
   voice: { src: "", thanks: "" },
 };
 const showcaseAlert = (status: OpenAlert["status"]): OpenAlert => ({

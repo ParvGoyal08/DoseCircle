@@ -11,7 +11,7 @@ import { DeleteCommand, PutCommand, QueryCommand } from "@aws-sdk/lib-dynamodb";
 import { DEFAULT_SLOT_TIMES, isDemoFamily, keys, type SlotName } from "@dosecircle/shared";
 import { ddb, logger } from "../lib/aws.js";
 import { env, requireEnv } from "../lib/env.js";
-import type { MedicineItem, ParentItem, SlotItem } from "../lib/model.js";
+import type { CheckItem, MedicineItem, ParentItem, SlotItem } from "../lib/model.js";
 import { getParent } from "../lib/repository.js";
 import { dailyCron, desiredSlots, diffSlots, istDate, scheduleName, type DesiredSlot } from "./plan.js";
 
@@ -37,6 +37,7 @@ async function listByPrefix<T>(pk: string, prefix: string): Promise<T[]> {
 
 export const listMedicines = (pid: string) => listByPrefix<MedicineItem>(`PARENT#${pid}`, "MED#");
 export const listSlots = (pid: string) => listByPrefix<SlotItem>(`PARENT#${pid}`, "SLOT#");
+export const listChecks = (pid: string) => listByPrefix<CheckItem>(`PARENT#${pid}`, "CHECK#");
 
 function scheduleInput(parent: ParentItem, slot: DesiredSlot): CreateScheduleCommandInput {
   return {
@@ -79,12 +80,20 @@ export async function syncSlots(fid: string, pid: string): Promise<DesiredSlot[]
   const parent = await getParent(fid, pid);
   if (!parent) throw new Error(`Parent ${pid} not found`);
   const slotTimes = { ...DEFAULT_SLOT_TIMES, ...parent.slotTimes } as Record<SlotName, string>;
-  const [medicines, existing] = await Promise.all([listMedicines(pid), listSlots(pid)]);
-  const desired = desiredSlots(medicines, slotTimes, istDate());
+  const [medicines, checks, existing] = await Promise.all([listMedicines(pid), listChecks(pid), listSlots(pid)]);
+  const desired = desiredSlots(medicines, checks, slotTimes, istDate());
   const changes = diffSlots(existing, desired);
 
   for (const slot of [...changes.create, ...changes.update]) {
-    const item: SlotItem = { ...keys.slot(pid, slot.compactTime), pid, compactTime: slot.compactTime, slotName: slot.slotName, medIds: slot.medIds, critical: slot.critical };
+    const item: SlotItem = {
+      ...keys.slot(pid, slot.compactTime),
+      pid,
+      compactTime: slot.compactTime,
+      slotName: slot.slotName,
+      medIds: slot.medIds,
+      checkIds: slot.checkIds,
+      critical: slot.critical,
+    };
     // Demo families never get real schedules: the demo starts executions on demand.
     if (!isDemoFamily(fid)) item.scheduleName = scheduleName(pid, slot.compactTime);
     await ddb.send(new PutCommand({ TableName: env.tableName, Item: item }));

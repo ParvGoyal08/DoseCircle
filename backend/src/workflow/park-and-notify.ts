@@ -90,7 +90,7 @@ export async function handler(event: ParkInput): Promise<void> {
         step: event.step,
         attempt,
         recipient,
-        notification: notificationFor(event, recipient, parent.displayName, dose.slotName),
+        notification: notificationFor(event, recipient, parent.displayName, dose),
         url: appUrl(recipient.kind === "parent" ? `/parent/dose/${dose.doseId}` : `/alerts/${dose.doseId}`),
         ttlSeconds: Math.max(60, event.ttlSeconds),
       }),
@@ -122,14 +122,21 @@ async function resolveRecipients(event: ParkInput, dose: DoseItem, parent: Paren
   return members.map((m) => ({ id: m.mid, lang: m.lang, kind: "family" as const }));
 }
 
-function notificationFor(event: ParkInput, recipient: Recipient, parentName: string, slotName: DoseItem["slotName"]) {
+function notificationFor(event: ParkInput, recipient: Recipient, parentName: string, dose: DoseItem) {
+  // A reminder with no tablets in it is only about a measurement, so it must not say "medicine".
+  // When it carries both, the medicine wording stands: the one tap confirms the whole reminder.
+  const suffix = dose.medIds.length === 0 ? ".check" : "";
   if (event.step === "REMIND" || event.step === "NUDGE") {
-    const titleKey = `push.remind.title.${slotName}`;
-    const bodyKey = event.step === "REMIND" ? "push.remind.body" : "push.nudge.body";
+    const titleKey = suffix ? `push.remind.title.check.${dose.slotName}` : `push.remind.title.${dose.slotName}`;
+    const bodyKey = `${event.step === "REMIND" ? "push.remind.body" : "push.nudge.body"}${suffix}`;
     return { title: message(recipient.lang, titleKey), body: message(recipient.lang, bodyKey), lang: messageLanguage(recipient.lang, bodyKey) };
   }
   const bodyKey =
-    event.step === "BROADCAST" ? "push.broadcast.body" : event.missClass === "OFFLINE" ? "push.alert.body.offline" : "push.alert.body.missed";
+    event.step === "BROADCAST"
+      ? `push.broadcast.body${suffix}`
+      : event.missClass === "OFFLINE"
+        ? `push.alert.body${suffix}.offline`
+        : `push.alert.body${suffix}.missed`;
   // Names only ever go in the title; the regional sentence in the body is never modified.
   return { title: parentName, body: message(recipient.lang, bodyKey), lang: messageLanguage(recipient.lang, bodyKey) };
 }

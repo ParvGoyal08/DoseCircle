@@ -1,9 +1,10 @@
 import { UpdateCommand } from "@aws-sdk/lib-dynamodb";
 import { canMarkTaken, takenStatusFor } from "@dosecircle/shared";
+import { z } from "zod";
 import { ddb, metrics } from "../../lib/aws.js";
 import { env } from "../../lib/env.js";
 import { recordDoseEvent } from "../../lib/events.js";
-import { HttpError, json, pathParam, principalFrom, withErrors } from "../../lib/http.js";
+import { HttpError, json, parseBody, pathParam, principalFrom, withErrors } from "../../lib/http.js";
 import type { DoseItem } from "../../lib/model.js";
 import { doseKey, getDose } from "../../lib/repository.js";
 import { completeTask } from "../../lib/task-token.js";
@@ -12,6 +13,12 @@ import { applyPillCount } from "../../lib/pills.js";
 import { authorize } from "../../authz/avp.js";
 import { doseEntity, familyEntity, parentEntity } from "../../authz/entities.js";
 import { devicePrincipal } from "../../authz/principal-entity.js";
+import { recordReading } from "../family/checks.js";
+
+/** Measurements the parent filled in on the same screen, sent with the one confirming tap. */
+const TakenSchema = z
+  .object({ readings: z.array(z.object({ checkId: z.string().min(1).max(40), values: z.record(z.string().min(1).max(20), z.number()) })).max(5).default([]) })
+  .default({ readings: [] });
 
 /**
  * The parent confirms a dose. The app only sends this after its 10-second on-device Undo window,
@@ -29,6 +36,21 @@ export const handler = withErrors(async (event) => {
     resource: doseEntity(dose),
     entities: [familyEntity(dose.fid), parentEntity({ pid: dose.pid, fid: dose.fid })],
   });
+  const body = parseBody(event, TakenSchema);
+
+  // Readings are stored before the status flips, so a measurement is never lost to a lost race.
+  // A bad number fails the whole request, so the parent can correct it and tap again.
+  for (const reading of body.readings) {
+    await recordReading({
+      pid: dose.pid,
+      checkId: reading.checkId,
+      values: reading.values,
+      doseId,
+      recordedBy: { kind: "parent", id: phone.uid.id },
+      demo: dose.channel === "inbox",
+    });
+  }
+  if (body.readings.length > 0) metrics.addMetric("ReadingsRecorded", "Count", body.readings.length);
 
   if (!canMarkTaken(dose.status)) return json(200, { status: dose.status });
 

@@ -1,6 +1,26 @@
-import { SLOT_NAMES, type LanguageCode, type SlotName } from "@dosecircle/shared";
+import { CHECK_DEFINITIONS, checkDefinition, formatReading, isCheckDueAt, roundReading, SLOT_NAMES, validateReading, type LanguageCode, type SlotName } from "@dosecircle/shared";
 import { ApiError } from "./api";
-import type { Dashboard, DoseView, MedicineInput, MedicineLine, MedicineView, Me, OpenAlert, ParentCard, ParentToday, Prescription, Report, Timeline, TimelineItem } from "./types";
+import type {
+  CheckCatalogue,
+  CheckInput,
+  CheckLine,
+  CheckView,
+  Dashboard,
+  DoseView,
+  FamilyMember,
+  MedicineInput,
+  MedicineLine,
+  MedicineView,
+  Me,
+  OpenAlert,
+  ParentCard,
+  ParentToday,
+  Prescription,
+  RecordedReading,
+  Report,
+  Timeline,
+  TimelineItem,
+} from "./types";
 
 /**
  * Development only: a small in-memory backend so every screen and button can be used without AWS.
@@ -23,11 +43,43 @@ interface Store {
   members: Dashboard["members"];
   parent: Omit<ParentCard, "today" | "week" | "refills" | "slots" | "myLadderPosition">;
   medicines: MedicineView[];
+  checks: CheckView[];
+  readings: { checkId: string; type: CheckView["type"]; values: Record<string, number>; at: string; doseId: string | null }[];
   dose: { doseId: string; slotName: SlotName; scheduledAt: string; status: DoseView["status"]; missClass: "MISSED" | "OFFLINE" | null; claimedBy: string | null; alerted: string[] };
   timeline: Omit<TimelineItem, "sincePreviousSeconds">[];
   devices: { deviceId: string; pairedAt: string | null; lang: LanguageCode }[];
   testDosesToday: number;
   prescriptions: Record<string, { pid: string; confirmed: boolean }>;
+}
+
+function toCheck(input: CheckInput, checkId = id("chk")): CheckView {
+  const definition = checkDefinition(input.type);
+  return {
+    checkId,
+    type: input.type,
+    slots: input.slots,
+    weekdays: input.weekdays,
+    escalates: input.escalates ?? definition.escalatesByDefault,
+    endDate: input.endDate,
+    active: true,
+    fields: definition.fields,
+    chart: definition.chart,
+  };
+}
+
+/** Thirty days of plausible morning readings, so the trend panels have something to draw. */
+function mockReadings(): Store["readings"] {
+  const readings: Store["readings"] = [];
+  for (let dayOffset = 30; dayOffset >= 1; dayOffset--) {
+    if (dayOffset % 9 === 4) continue; // some mornings genuinely have no reading
+    const day = new Date(now() - dayOffset * 86_400_000);
+    const at = new Date(Date.parse(`${istDate(day.getTime())}T08:12:00+05:30`)).toISOString();
+    const wave = Math.sin(dayOffset / 3.1);
+    readings.push({ checkId: "chk-sugar", type: "glucose", values: { glucose: Math.round(112 + dayOffset * 0.8 + wave * 9) }, at, doseId: null });
+    readings.push({ checkId: "chk-bp", type: "bp", values: { systolic: Math.round(128 + wave * 8), diastolic: Math.round(81 + wave * 4), pulse: Math.round(74 + wave * 5) }, at, doseId: null });
+    if (day.getUTCDay() === 0) readings.push({ checkId: "chk-weight", type: "weight", values: { weight: Math.round((61.5 + dayOffset * 0.04) * 10) / 10 }, at, doseId: null });
+  }
+  return readings;
 }
 
 function initialStore(): Store {
@@ -57,6 +109,12 @@ function initialStore(): Store {
       { medId: "med-telma", nameAsPrinted: "Telma 40", strength: "40 mg", slots: { morning: 1 }, food: null, critical: false, asNeeded: false, pillsLeft: 24, refillThresholdDays: 5, needsRecount: false, endDate: null, active: true },
       { medId: "med-lantus", nameAsPrinted: "Lantus", strength: "10 units", slots: { night: 1 }, food: null, critical: true, asNeeded: false, pillsLeft: null, refillThresholdDays: 5, needsRecount: false, endDate: null, active: true },
     ],
+    checks: [
+      toCheck({ type: "glucose", slots: ["morning"], weekdays: [], escalates: true, endDate: null }, "chk-sugar"),
+      toCheck({ type: "bp", slots: ["morning"], weekdays: [], escalates: true, endDate: null }, "chk-bp"),
+      toCheck({ type: "weight", slots: ["morning"], weekdays: [0], escalates: false, endDate: null }, "chk-weight"),
+    ],
+    readings: mockReadings(),
     dose: { doseId: "p-demo_mock_morning", slotName: "morning", scheduledAt, status: "ESCALATING", missClass: "MISSED", claimedBy: null, alerted: ["m-son"] },
     timeline: [
       { at: iso(34), kind: "reminder_sent", stateName: "RemindParent" },
@@ -109,7 +167,68 @@ function medicineLine(m: MedicineView, slot: SlotName): MedicineLine {
 }
 
 function slotsInUse(): SlotName[] {
-  return SLOT_NAMES.filter((slot) => db().medicines.some((m) => m.active && !m.asNeeded && (m.slots[slot] ?? 0) > 0));
+  return SLOT_NAMES.filter(
+    (slot) =>
+      db().medicines.some((m) => m.active && !m.asNeeded && (m.slots[slot] ?? 0) > 0) || db().checks.some((c) => c.active && c.slots.includes(slot)),
+  );
+}
+
+const checkLine = (check: CheckView): CheckLine => ({ checkId: check.checkId, type: check.type, fields: check.fields });
+
+/** Checks actually asked for at this time of day, today. */
+function checksDueAt(slot: SlotName): CheckView[] {
+  const today = istDate(now());
+  const weekday = new Date(`${today}T12:00:00+05:30`).getDay();
+  return db().checks.filter((c) => isCheckDueAt({ ...c, endDate: c.endDate ?? undefined }, slot, today, weekday));
+}
+
+function recordedToday(checkId: string): RecordedReading | null {
+  const today = istDate(now());
+  const match = db()
+    .readings.filter((r) => r.checkId === checkId && istDate(Date.parse(r.at)) === today)
+    .sort((a, b) => b.at.localeCompare(a.at))[0];
+  return match ? { at: match.at, values: match.values, text: formatReading(match.type, match.values) } : null;
+}
+
+/** Same shape as backend/src/views/readings.ts, built from the mock store. */
+function readingSeries(days: number) {
+  const from = istDate(now() - (days - 1) * 86_400_000);
+  const to = istDate(now());
+  const middle = (values: number[]) => {
+    const sorted = [...values].sort((a, b) => a - b);
+    const mid = Math.floor(sorted.length / 2);
+    return sorted.length % 2 === 1 ? sorted[mid]! : (sorted[mid - 1]! + sorted[mid]!) / 2;
+  };
+  return db()
+    .checks.filter((c) => c.active)
+    .map((check) => {
+      const points = db()
+        .readings.filter((r) => r.checkId === check.checkId && istDate(Date.parse(r.at)) >= from && istDate(Date.parse(r.at)) <= to)
+        .sort((a, b) => a.at.localeCompare(b.at))
+        .map((r) => ({ date: istDate(Date.parse(r.at)), at: r.at, values: r.values, text: formatReading(r.type, r.values) }));
+      const dates = Array.from({ length: days }, (_, i) => istDate(now() - (days - 1 - i) * 86_400_000));
+      const askedDays = dates.filter((date) =>
+        check.slots.some((slot) => isCheckDueAt({ ...check, endDate: check.endDate ?? undefined }, slot, date, new Date(`${date}T12:00:00+05:30`).getDay())),
+      ).length;
+      const spread = check.fields
+        .map((field) => {
+          const numbers = points.map((p) => p.values[field.key]).filter((v): v is number => typeof v === "number");
+          return numbers.length === 0 ? null : { key: field.key, unit: field.unit, lowest: Math.min(...numbers), highest: Math.max(...numbers), middle: middle(numbers) };
+        })
+        .filter((s): s is NonNullable<typeof s> => s !== null);
+      return {
+        checkId: check.checkId,
+        type: check.type,
+        fields: check.fields,
+        chart: check.chart,
+        escalates: check.escalates,
+        askedDays,
+        recordedDays: new Set(points.map((p) => p.date)).size,
+        points,
+        latest: points[points.length - 1] ?? null,
+        spread,
+      };
+    });
 }
 
 function doseView(): DoseView {
@@ -122,6 +241,7 @@ function doseView(): DoseView {
     critical: s.medicines.some((m) => m.active && m.critical && (m.slots[s.dose.slotName] ?? 0) > 0),
     parent: { displayName: s.parent.displayName, lang: s.parent.lang },
     medicines: s.medicines.filter((m) => m.active && (m.slots[s.dose.slotName] ?? 0) > 0).map((m) => medicineLine(m, s.dose.slotName)),
+    checks: checksDueAt(s.dose.slotName).map(checkLine),
     voice: { src: `/audio/${s.parent.lang}/remind_${s.dose.slotName}.mp3`, thanks: `/audio/${s.parent.lang}/taken_thanks.mp3` },
   };
 }
@@ -217,7 +337,33 @@ function report(): Report {
         }),
       ) as Report["report"]["grid"],
     },
+    readings: readingSeries(7),
   };
+}
+
+/** Validates and stores one reading, exactly as the real API does. */
+function saveReading(input: Record<string, unknown>): RecordedReading & { checkId: string; type: CheckView["type"] } {
+  const s = db();
+  const checkId = String(input.checkId);
+  const check = s.checks.find((c) => c.checkId === checkId);
+  if (!check) throw new ApiError(404, { message: "Check not found" });
+  const values = input.values as Record<string, number>;
+  const problems = validateReading(check.type, values);
+  if (problems.length > 0) {
+    const first = problems[0]!;
+    const field = check.fields.find((f) => f.key === first.field);
+    const message =
+      first.reason === "missing"
+        ? `${first.field} is needed`
+        : first.reason === "unknown_field"
+          ? `${first.field} is not part of this check`
+          : `${first.field} must be between ${field?.min} and ${field?.max} ${field?.unit}`;
+    throw new ApiError(400, { message });
+  }
+  const rounded = roundReading(check.type, values) as Record<string, number>;
+  const at = typeof input.at === "string" ? input.at : new Date().toISOString();
+  s.readings = [...s.readings.filter((r) => !(r.checkId === checkId && istDate(Date.parse(r.at)) === istDate(Date.parse(at)))), { checkId, type: check.type, values: rounded, at, doseId: (input.doseId as string) ?? null }];
+  return { checkId, type: check.type, values: rounded, at, text: formatReading(check.type, rounded) };
 }
 
 function toMedicine(input: MedicineInput, medId = id("med")): MedicineView {
@@ -316,7 +462,95 @@ async function handle(pathWithQuery: string, method: string, body: Body): Promis
   if (/^GET \/families\/[^/]+\/parents\/[^/]+\/report$/.test(route)) return report();
   if (/^GET \/families\/[^/]+\/parents\/[^/]+\/insights$/.test(route)) {
     const { demoInsights } = await import("./demo-insights");
-    return demoInsights(params.get("days") === "7" ? 7 : 30);
+    const days = params.get("days") === "7" ? 7 : 30;
+    return { ...demoInsights(days), readings: readingSeries(days) };
+  }
+
+  // Daily checks and readings
+  if (/^GET \/families\/[^/]+\/parents\/[^/]+\/checks$/.test(route)) {
+    return { checks: s.checks.filter((c) => c.active), types: Object.values(CHECK_DEFINITIONS) } satisfies CheckCatalogue;
+  }
+  if (/^POST \/families\/[^/]+\/parents\/[^/]+\/checks$/.test(route)) {
+    const input = body as unknown as CheckInput;
+    if (s.checks.some((c) => c.active && c.type === input.type)) throw new ApiError(409, { message: "That check is already scheduled. Change the existing one instead." });
+    const check = toCheck(input);
+    s.checks.push(check);
+    return { check };
+  }
+  if (/^PATCH \/families\/[^/]+\/parents\/[^/]+\/checks\/[^/]+$/.test(route)) {
+    const checkId = path!.split("/").pop()!;
+    const current = s.checks.find((c) => c.checkId === checkId && c.active);
+    if (!current) throw new ApiError(404, { message: "Check not found" });
+    Object.assign(current, body);
+    return { check: current };
+  }
+  if (/^DELETE \/families\/[^/]+\/parents\/[^/]+\/checks\/[^/]+$/.test(route)) {
+    const checkId = path!.split("/").pop()!;
+    s.checks = s.checks.map((c) => (c.checkId === checkId ? { ...c, active: false } : c));
+    return { checkId, active: false };
+  }
+  if (/^GET \/families\/[^/]+\/parents\/[^/]+\/readings$/.test(route)) {
+    const days = Number(params.get("days") ?? 30);
+    return {
+      from: new Date(now() - days * 86_400_000).toISOString(),
+      to: new Date().toISOString(),
+      checks: s.checks,
+      readings: s.readings.map((r) => ({ ...r, text: formatReading(r.type, r.values) })),
+    };
+  }
+  if (/^POST \/families\/[^/]+\/parents\/[^/]+\/readings$/.test(route)) return { reading: saveReading(body!) };
+  if (/^DELETE \/families\/[^/]+\/parents\/[^/]+\/readings\/[^/]+\/[^/]+$/.test(route)) {
+    const [at, checkId] = path!.split("/").slice(-2) as [string, string];
+    s.readings = s.readings.filter((r) => !(r.checkId === checkId && r.at === decodeURIComponent(at)));
+    return { deleted: true };
+  }
+
+  // Who is in the family
+  if (/^GET \/families\/[^/]+\/members$/.test(route)) {
+    return {
+      members: s.members.map((m) => ({
+        ...m,
+        joined: true,
+        ladderPositions: s.parent.ladder.some((l) => l.mid === m.mid) ? [{ pid: s.parent.pid, position: s.parent.ladder.findIndex((l) => l.mid === m.mid) + 1 }] : [],
+      })) satisfies FamilyMember[],
+    };
+  }
+  if (/^PATCH \/families\/[^/]+\/members\/[^/]+$/.test(route)) {
+    const mid = path!.split("/").pop()!;
+    const member = s.members.find((m) => m.mid === mid);
+    if (!member) throw new ApiError(404, { message: "That person is not in this family" });
+    if (body!.role === "member" && member.role === "owner" && s.members.filter((m) => m.role === "owner").length === 1) {
+      throw new ApiError(409, { message: "A family needs at least one owner" });
+    }
+    Object.assign(member, body);
+    if (mid === s.me.mid) s.me = { ...s.me, ...(body as Partial<typeof s.me>) };
+    return { member: { ...member, joined: true } };
+  }
+  if (/^DELETE \/families\/[^/]+\/members\/[^/]+$/.test(route)) {
+    const mid = path!.split("/").pop()!;
+    if (mid === s.me.mid) throw new ApiError(400, { message: "Use leave instead of removing yourself" });
+    if (!s.members.some((m) => m.mid === mid)) throw new ApiError(404, { message: "That person is not in this family" });
+    if (s.parent.ladder.length === 1 && s.parent.ladder[0]!.mid === mid) {
+      throw new ApiError(409, { message: "Add someone else to the alert order first, so there is still somebody to tell" });
+    }
+    s.members = s.members.filter((m) => m.mid !== mid);
+    s.parent.ladder = s.parent.ladder.filter((l) => l.mid !== mid);
+    s.dose.alerted = s.dose.alerted.filter((a) => a !== mid);
+    return { mid, removed: true };
+  }
+  if (/^POST \/families\/[^/]+\/leave$/.test(route)) {
+    if (s.members.length === 1) throw new ApiError(409, { message: "The last person in a family cannot leave. Delete the family instead." });
+    if (s.me.role === "owner" && s.members.filter((m) => m.role === "owner").length === 1) throw new ApiError(409, { message: "Make someone else an owner first" });
+    s.members = s.members.filter((m) => m.mid !== s.me.mid);
+    s.parent.ladder = s.parent.ladder.filter((l) => l.mid !== s.me.mid);
+    s.hasFamily = false;
+    return { left: true };
+  }
+  if (/^DELETE \/families\/[^/]+$/.test(route)) {
+    if (String(body?.confirmName ?? "").trim() !== `${s.parent.displayName}'s family`) throw new ApiError(400, { message: "The name does not match" });
+    store = initialStore();
+    store.hasFamily = false;
+    return { deleted: true, items: 0, schedules: 0 };
   }
   if (/^POST \/families\/[^/]+\/prescriptions$/.test(route)) {
     const rxId = id("rx");
@@ -362,12 +596,16 @@ async function handle(pathWithQuery: string, method: string, body: Body): Promis
         slotName: slot,
         time: s.parent.slotTimes[slot],
         medicines: s.medicines.filter((m) => m.active && (m.slots[slot] ?? 0) > 0).map((m) => medicineLine(m, slot)),
+        checks: checksDueAt(slot).map((c) => ({ ...checkLine(c), recorded: recordedToday(c.checkId) })),
         dose: slot === view.slotName ? { doseId: view.doseId, status: view.status } : null,
       })),
     } satisfies ParentToday;
   }
   if (/^GET \/parent\/doses\/[^/]+$/.test(route)) return doseView();
+  if (route === "POST /parent/readings") return { reading: saveReading(body!) };
   if (/^POST \/parent\/doses\/[^/]+\/taken$/.test(route)) {
+    // Readings typed on the reminder screen are stored before the status flips, as on the server.
+    for (const reading of (body?.readings as Record<string, unknown>[] | undefined) ?? []) saveReading({ ...reading, doseId: s.dose.doseId });
     const late = s.dose.status === "ESCALATING" || s.dose.status === "CLAIMED";
     if (s.dose.status === "PENDING" || late) {
       s.dose.status = late ? "TAKEN_LATE" : "TAKEN";

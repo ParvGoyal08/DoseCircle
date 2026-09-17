@@ -32,6 +32,9 @@ Built for WeMakeDevs × AWS **First Commit** (Bharat Builds Tour), 17–20 Septe
 | Missed vs "phone seems offline", told apart from a delivery receipt the phone sends back | Built |
 | Family escalation ladder: person 1, then person 2, then everyone; claim and stand-down | Built |
 | Faster ladder for a critical medicine or a repeat miss | Built |
+| **Daily checks** — blood sugar, blood pressure, weight, oxygen, temperature — asked for on the same reminder, schedulable per time of day and per weekday | Built |
+| **Readings** typed on the parent's own screen with the confirming tap, plus trends and a doctor's table | Built |
+| **Family management** — invite, remove, promote, leave, and a real delete of everything | Built |
 | "Why am I seeing this?" timeline, built from the workflow's own history | Built |
 | Family analytics: adherence against the 80% benchmark, dose calendar, timing drift, who responds, refill run-out | Built |
 | Prescription photo → Textract → Claude on Bedrock → a person confirms every line before anything is saved | Built |
@@ -40,6 +43,22 @@ Built for WeMakeDevs × AWS **First Commit** (Bharat Builds Tour), 17–20 Septe
 | Judge demo mode: fictional family, 60× speed, reset | Built |
 | Voice clips for the reminder screen | Waiting on native recordings |
 | Kannada and Hindi text | Drafted; hidden until a native speaker signs off |
+
+### Daily checks, without pretending to be a doctor
+
+A family can ask for a measurement at the same times as a reminder. DoseCircle **records the numbers and
+never interprets them**: there is no target range anywhere in the code, no "high" or "low" label, and a
+reading never raises an alert on its own. The dashboard and the doctor report show the readings with only
+lowest, middle and highest beside them, so the conversation with the doctor is easier, not pre-empted.
+
+The wide limits that *are* in the code (a systolic of 50–300, a weight of 15–350 kg) exist to catch a
+slipped finger, so a typo never reaches the report.
+
+A missed medicine always alerts the family. A missed **check** only does so if the family asked it to — one
+extra branch in the state machine — so a forgotten weekly weigh-in is recorded quietly instead of waking
+someone at night.
+
+![Scheduling daily checks](docs/images/daily-checks.png)
 
 ## How a missed dose travels
 
@@ -76,8 +95,9 @@ flowchart LR
 - **Races converge.** Every status change is a conditional write, and a workflow step that finds the dose
   already resolved completes itself. Two people tapping "I'll handle it" at the same moment yields one
   winner and a clear "someone else got there first" for the other.
-- **Every action is authorised.** 13 Cedar policies in Amazon Verified Permissions decide who may see a
-  parent or claim a dose, and the policy that allowed each action is recorded and shown in the timeline.
+- **Every action is authorised.** 16 Cedar policies in Amazon Verified Permissions decide who may see a
+  parent, claim a dose, record a reading or remove a family member, and the policy that allowed each action
+  is recorded and shown in the timeline.
 
 ![The judge demo](docs/images/demo.png)
 
@@ -127,7 +147,8 @@ Each person picks their own language, and Kannada is first-class.
 The dashboard is built from the app's own dose records: adherence with the change from the previous period
 and the 80% clinical benchmark, current and best streak, the family's typical response time, a 30-day dose
 calendar, how many minutes after each reminder the dose was taken, misses by weekday and time of day,
-adherence per medicine, who resolved each escalation and how fast, and when each medicine runs out.
+adherence per medicine, who resolved each escalation and how fast, and when each medicine runs out — plus a
+trend panel per daily check, with the days it was written down out of the days it was asked for.
 
 The choices behind it (light theme, one meaning per colour, the 80% line, showing timing and not just
 taken-or-not) come from published guidance and research, cited in [docs/design.md](docs/design.md).
@@ -138,12 +159,12 @@ taken-or-not) come from published guidance and research, cited in [docs/design.m
 
 | Path | What |
 |---|---|
-| `shared/` | Domain logic used by backend and web: dose statuses, ladder timings, prescription shorthand, refill maths |
+| `shared/` | Domain logic used by backend and web: dose statuses, ladder timings, prescription shorthand, refill maths, daily-check fields and limits |
 | `shared/i18n/` | Notification strings, with a reviewer recorded per string |
 | `backend/` | Lambda handlers, workflow steps, authorizer, analytics, scripts |
 | `infra/` | AWS CDK app, the state machine definition, and its tests |
 | `web/` | React PWA: parent screens, family app, judge demo, service worker |
-| `cedar/` | Cedar schema and the 13 authorization policies |
+| `cedar/` | Cedar schema and the 16 authorization policies |
 | `docs/` | Architecture, cost, security, languages, design, demo script, learning log |
 | `scripts/` | Deployment, translation review tooling, voice clip helpers |
 
@@ -160,7 +181,7 @@ pnpm --filter @dosecircle/web dev     # http://localhost:5173
 Then open `/` , `/demo`, `/home` and `/parent`.
 
 ```bash
-pnpm test         # 144 tests: domain rules, workflow shape, Cedar policies, analytics, i18n gate
+pnpm test         # 173 tests: domain rules, workflow shape, Cedar policies, analytics, i18n gate
 pnpm typecheck
 pnpm synth        # build the CloudFormation template offline (bundles every Lambda)
 pnpm i18n:check   # translation coverage and safety rules

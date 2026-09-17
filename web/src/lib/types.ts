@@ -1,4 +1,4 @@
-import type { DoseStatus, LanguageCode, MissClass, NotationResult, ReportOutcome, SlotName } from "@dosecircle/shared";
+import type { CheckField, CheckType, DoseStatus, LanguageCode, MissClass, NotationResult, ReadingValues, ReportOutcome, SlotName } from "@dosecircle/shared";
 
 /** Response shapes of the DoseCircle API (backend/src/api). Kept in one place so screens and the demo simulator agree. */
 
@@ -11,6 +11,19 @@ export interface MedicineLine {
   critical: boolean;
 }
 
+/** One measurement the parent is asked for, and the boxes to type it into. */
+export interface CheckLine {
+  checkId: string;
+  type: CheckType;
+  fields: readonly CheckField[];
+}
+
+export interface RecordedReading {
+  at: string;
+  values: ReadingValues;
+  text: string;
+}
+
 export interface DoseView {
   doseId: string;
   status: DoseStatus;
@@ -19,12 +32,44 @@ export interface DoseView {
   critical: boolean;
   parent: { displayName: string; lang: LanguageCode };
   medicines: MedicineLine[];
+  checks: CheckLine[];
   voice: { src: string; thanks: string };
 }
 
 export interface ParentToday {
   parent: { displayName: string; lang: LanguageCode; paused: boolean };
-  slots: { slotName: SlotName; time: string; medicines: MedicineLine[]; dose: { doseId: string; status: DoseStatus } | null }[];
+  slots: {
+    slotName: SlotName;
+    time: string;
+    medicines: MedicineLine[];
+    checks: (CheckLine & { recorded: RecordedReading | null })[];
+    dose: { doseId: string; status: DoseStatus } | null;
+  }[];
+}
+
+export interface CheckView {
+  checkId: string;
+  type: CheckType;
+  slots: SlotName[];
+  weekdays: number[];
+  escalates: boolean;
+  endDate: string | null;
+  active: boolean;
+  fields: readonly CheckField[];
+  chart: { primary: string; secondary?: string };
+}
+
+export interface CheckInput {
+  type: CheckType;
+  slots: SlotName[];
+  weekdays: number[];
+  escalates?: boolean;
+  endDate: string | null;
+}
+
+export interface CheckCatalogue {
+  checks: CheckView[];
+  types: { type: CheckType; fields: readonly CheckField[]; escalatesByDefault: boolean; chart: { primary: string; secondary?: string } }[];
 }
 
 export interface OpenAlert {
@@ -69,6 +114,12 @@ export interface Member {
   relation: string | null;
   role: "owner" | "member";
   lang: LanguageCode;
+}
+
+/** GET /families/{fid}/members — with where each person sits in every parent's alert order. */
+export interface FamilyMember extends Member {
+  joined: boolean;
+  ladderPositions: { pid: string; position: number }[];
 }
 
 export interface Dashboard {
@@ -156,6 +207,7 @@ export interface Report {
     misses: { doseStamp: string; outcome: "missed" | "unknown"; medicineNames: string[]; handledBy: string | null }[];
     grid: Record<string, Record<string, ReportOutcome>>;
   };
+  readings: ReadingSeries[];
 }
 
 export interface OcrLine {
@@ -235,5 +287,12 @@ export interface DemoState {
   openAlertsByMember: Record<string, OpenAlert[]>;
 }
 
-// The analytics shape is defined once, next to the code that builds it.
-export type { Highlight, Insights } from "../../../backend/src/views/insights";
+// The analytics shapes are defined once, next to the code that builds them.
+export type { Highlight, Insights as DoseInsights } from "../../../backend/src/views/insights";
+export type { ReadingSeries, ReadingSeriesPoint } from "../../../backend/src/views/readings";
+
+import type { Insights as DoseInsightsShape } from "../../../backend/src/views/insights";
+import type { ReadingSeries } from "../../../backend/src/views/readings";
+
+/** What GET …/insights returns: the dose analytics plus one series per daily check. */
+export type Insights = DoseInsightsShape & { readings: ReadingSeries[] };

@@ -166,6 +166,47 @@ function ReportView({ fid, pid, myLang }: { fid: string; pid: string; myLang: st
             )}
           </section>
 
+          {data.readings.some((series) => series.points.length > 0) && (
+            <section className="mt-8 break-inside-avoid">
+              <h2 className="mb-2 text-lg font-semibold">{t("checks.readings")}</h2>
+              {/* Every reading, in order, with no verdict attached. The doctor reads the numbers. */}
+              <table className="w-full border-collapse text-left text-[14px]">
+                <thead>
+                  <tr className="border-b border-ink/60 text-[13px] uppercase tracking-wide text-muted">
+                    <th className="py-2 pr-2 font-semibold">{t("report.grid")}</th>
+                    {data.readings
+                      .filter((series) => series.points.length > 0)
+                      .map((series) => (
+                        <th key={series.checkId} className="px-2 py-2 text-right font-semibold">
+                          {t(`check.${series.type}`)}
+                        </th>
+                      ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {[...new Set(data.readings.flatMap((series) => series.points.map((p) => p.date)))]
+                    .sort()
+                    .map((date) => (
+                      <tr key={date} className="border-b border-line">
+                        <td className="tabular py-2 pr-2 font-semibold">{formatDay(date, lang, { weekday: "short", day: "numeric", month: "short" })}</td>
+                        {data.readings
+                          .filter((series) => series.points.length > 0)
+                          .map((series) => {
+                            const point = series.points.find((p) => p.date === date);
+                            return (
+                              <td key={series.checkId} lang="en" className="tabular px-2 py-2 text-right">
+                                {point?.text ?? "–"}
+                              </td>
+                            );
+                          })}
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
+              <p className="mt-2 text-[12.5px] text-muted">{t("checks.notAdvice")}</p>
+            </section>
+          )}
+
           <footer className="mt-8 border-t border-line pt-3 text-[12px] text-muted">{t("app.notMedicalAdvice")}</footer>
         </article>
       )}

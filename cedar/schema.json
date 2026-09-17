@@ -5,7 +5,9 @@
         "shape": {
           "type": "Record",
           "attributes": {
-            "demo": { "type": "Boolean" }
+            "demo": {
+              "type": "Boolean"
+            }
           }
         }
       },
@@ -13,8 +15,13 @@
         "shape": {
           "type": "Record",
           "attributes": {
-            "family": { "type": "Entity", "name": "Family" },
-            "role": { "type": "String" }
+            "family": {
+              "type": "Entity",
+              "name": "Family"
+            },
+            "role": {
+              "type": "String"
+            }
           }
         }
       },
@@ -22,7 +29,10 @@
         "shape": {
           "type": "Record",
           "attributes": {
-            "family": { "type": "Entity", "name": "Family" }
+            "family": {
+              "type": "Entity",
+              "name": "Family"
+            }
           }
         }
       },
@@ -30,9 +40,17 @@
         "shape": {
           "type": "Record",
           "attributes": {
-            "family": { "type": "Entity", "name": "Family" },
-            "parent": { "type": "Entity", "name": "Parent" },
-            "revoked": { "type": "Boolean" }
+            "family": {
+              "type": "Entity",
+              "name": "Family"
+            },
+            "parent": {
+              "type": "Entity",
+              "name": "Parent"
+            },
+            "revoked": {
+              "type": "Boolean"
+            }
           }
         }
       },
@@ -40,10 +58,24 @@
         "shape": {
           "type": "Record",
           "attributes": {
-            "family": { "type": "Entity", "name": "Family" },
-            "parent": { "type": "Entity", "name": "Parent" },
-            "status": { "type": "String" },
-            "alertedMembers": { "type": "Set", "element": { "type": "Entity", "name": "Member" } }
+            "family": {
+              "type": "Entity",
+              "name": "Family"
+            },
+            "parent": {
+              "type": "Entity",
+              "name": "Parent"
+            },
+            "status": {
+              "type": "String"
+            },
+            "alertedMembers": {
+              "type": "Set",
+              "element": {
+                "type": "Entity",
+                "name": "Member"
+              }
+            }
           }
         }
       },
@@ -51,53 +83,298 @@
         "shape": {
           "type": "Record",
           "attributes": {
-            "family": { "type": "Entity", "name": "Family" }
+            "family": {
+              "type": "Entity",
+              "name": "Family"
+            }
           }
         }
       }
     },
     "actions": {
       "ViewFamily": {
-        "appliesTo": { "principalTypes": ["Member"], "resourceTypes": ["Family"], "context": { "type": "Record", "attributes": {} } }
+        "appliesTo": {
+          "principalTypes": [
+            "Member"
+          ],
+          "resourceTypes": [
+            "Family"
+          ],
+          "context": {
+            "type": "Record",
+            "attributes": {}
+          }
+        }
       },
       "ManageFamily": {
-        "appliesTo": { "principalTypes": ["Member"], "resourceTypes": ["Family"], "context": { "type": "Record", "attributes": {} } }
+        "appliesTo": {
+          "principalTypes": [
+            "Member"
+          ],
+          "resourceTypes": [
+            "Family"
+          ],
+          "context": {
+            "type": "Record",
+            "attributes": {}
+          }
+        }
       },
       "UploadPrescription": {
-        "appliesTo": { "principalTypes": ["Member"], "resourceTypes": ["Family"], "context": { "type": "Record", "attributes": {} } }
+        "appliesTo": {
+          "principalTypes": [
+            "Member"
+          ],
+          "resourceTypes": [
+            "Family"
+          ],
+          "context": {
+            "type": "Record",
+            "attributes": {}
+          }
+        }
       },
       "ReviewPrescription": {
-        "appliesTo": { "principalTypes": ["Member"], "resourceTypes": ["Prescription"], "context": { "type": "Record", "attributes": {} } }
+        "appliesTo": {
+          "principalTypes": [
+            "Member"
+          ],
+          "resourceTypes": [
+            "Prescription"
+          ],
+          "context": {
+            "type": "Record",
+            "attributes": {}
+          }
+        }
       },
       "ViewParent": {
-        "appliesTo": { "principalTypes": ["Member", "ParentDevice"], "resourceTypes": ["Parent"], "context": { "type": "Record", "attributes": {} } }
+        "appliesTo": {
+          "principalTypes": [
+            "Member",
+            "ParentDevice"
+          ],
+          "resourceTypes": [
+            "Parent"
+          ],
+          "context": {
+            "type": "Record",
+            "attributes": {}
+          }
+        }
       },
       "ManageMedicines": {
-        "appliesTo": { "principalTypes": ["Member"], "resourceTypes": ["Parent"], "context": { "type": "Record", "attributes": {} } }
+        "appliesTo": {
+          "principalTypes": [
+            "Member"
+          ],
+          "resourceTypes": [
+            "Parent"
+          ],
+          "context": {
+            "type": "Record",
+            "attributes": {}
+          }
+        }
       },
       "PauseReminders": {
-        "appliesTo": { "principalTypes": ["Member"], "resourceTypes": ["Parent"], "context": { "type": "Record", "attributes": {} } }
+        "appliesTo": {
+          "principalTypes": [
+            "Member"
+          ],
+          "resourceTypes": [
+            "Parent"
+          ],
+          "context": {
+            "type": "Record",
+            "attributes": {}
+          }
+        }
       },
       "SendTestReminder": {
-        "appliesTo": { "principalTypes": ["Member"], "resourceTypes": ["Parent"], "context": { "type": "Record", "attributes": {} } }
+        "appliesTo": {
+          "principalTypes": [
+            "Member"
+          ],
+          "resourceTypes": [
+            "Parent"
+          ],
+          "context": {
+            "type": "Record",
+            "attributes": {}
+          }
+        }
       },
       "ViewReport": {
-        "appliesTo": { "principalTypes": ["Member"], "resourceTypes": ["Parent"], "context": { "type": "Record", "attributes": {} } }
+        "appliesTo": {
+          "principalTypes": [
+            "Member"
+          ],
+          "resourceTypes": [
+            "Parent"
+          ],
+          "context": {
+            "type": "Record",
+            "attributes": {}
+          }
+        }
       },
       "ManageDevices": {
-        "appliesTo": { "principalTypes": ["Member"], "resourceTypes": ["Parent"], "context": { "type": "Record", "attributes": {} } }
+        "appliesTo": {
+          "principalTypes": [
+            "Member"
+          ],
+          "resourceTypes": [
+            "Parent"
+          ],
+          "context": {
+            "type": "Record",
+            "attributes": {}
+          }
+        }
       },
       "ViewDose": {
-        "appliesTo": { "principalTypes": ["Member", "ParentDevice"], "resourceTypes": ["Dose"], "context": { "type": "Record", "attributes": {} } }
+        "appliesTo": {
+          "principalTypes": [
+            "Member",
+            "ParentDevice"
+          ],
+          "resourceTypes": [
+            "Dose"
+          ],
+          "context": {
+            "type": "Record",
+            "attributes": {}
+          }
+        }
       },
       "ViewTimeline": {
-        "appliesTo": { "principalTypes": ["Member"], "resourceTypes": ["Dose"], "context": { "type": "Record", "attributes": {} } }
+        "appliesTo": {
+          "principalTypes": [
+            "Member"
+          ],
+          "resourceTypes": [
+            "Dose"
+          ],
+          "context": {
+            "type": "Record",
+            "attributes": {}
+          }
+        }
       },
       "MarkTaken": {
-        "appliesTo": { "principalTypes": ["ParentDevice"], "resourceTypes": ["Dose"], "context": { "type": "Record", "attributes": {} } }
+        "appliesTo": {
+          "principalTypes": [
+            "ParentDevice"
+          ],
+          "resourceTypes": [
+            "Dose"
+          ],
+          "context": {
+            "type": "Record",
+            "attributes": {}
+          }
+        }
       },
       "ClaimDose": {
-        "appliesTo": { "principalTypes": ["Member"], "resourceTypes": ["Dose"], "context": { "type": "Record", "attributes": {} } }
+        "appliesTo": {
+          "principalTypes": [
+            "Member"
+          ],
+          "resourceTypes": [
+            "Dose"
+          ],
+          "context": {
+            "type": "Record",
+            "attributes": {}
+          }
+        }
+      },
+      "ManageChecks": {
+        "appliesTo": {
+          "principalTypes": [
+            "Member"
+          ],
+          "resourceTypes": [
+            "Parent"
+          ],
+          "context": {
+            "type": "Record",
+            "attributes": {}
+          }
+        }
+      },
+      "RecordReading": {
+        "appliesTo": {
+          "principalTypes": [
+            "Member",
+            "ParentDevice"
+          ],
+          "resourceTypes": [
+            "Parent"
+          ],
+          "context": {
+            "type": "Record",
+            "attributes": {}
+          }
+        }
+      },
+      "ViewReadings": {
+        "appliesTo": {
+          "principalTypes": [
+            "Member",
+            "ParentDevice"
+          ],
+          "resourceTypes": [
+            "Parent"
+          ],
+          "context": {
+            "type": "Record",
+            "attributes": {}
+          }
+        }
+      },
+      "ManageMembers": {
+        "appliesTo": {
+          "principalTypes": [
+            "Member"
+          ],
+          "resourceTypes": [
+            "Family"
+          ],
+          "context": {
+            "type": "Record",
+            "attributes": {}
+          }
+        }
+      },
+      "LeaveFamily": {
+        "appliesTo": {
+          "principalTypes": [
+            "Member"
+          ],
+          "resourceTypes": [
+            "Family"
+          ],
+          "context": {
+            "type": "Record",
+            "attributes": {}
+          }
+        }
+      },
+      "DeleteFamily": {
+        "appliesTo": {
+          "principalTypes": [
+            "Member"
+          ],
+          "resourceTypes": [
+            "Family"
+          ],
+          "context": {
+            "type": "Record",
+            "attributes": {}
+          }
+        }
       }
     }
   }

@@ -236,6 +236,21 @@ export function ParentHomePage() {
                       </span>
                     </li>
                   ))}
+                  {slot.checks.map((check) => (
+                    <li
+                      key={check.checkId}
+                      className={cx("inline-flex items-center gap-2 rounded-full py-1 pl-3 pr-3 text-lg", check.recorded ? "bg-taken-tint text-taken" : "bg-paper")}
+                    >
+                      <span lang={lang} className="font-semibold">
+                        {t(`check.${check.type}`)}
+                      </span>
+                      {check.recorded && (
+                        <span lang="en" className="tabular font-semibold">
+                          {check.recorded.text}
+                        </span>
+                      )}
+                    </li>
+                  ))}
                 </ul>
               </>
             );
@@ -284,8 +299,8 @@ export function ParentDosePage() {
       <ParentDoseScreen
         dose={dose.data}
         autoPlay
-        onTaken={async ({ keepalive }) => {
-          await api(`/parent/doses/${encodeURIComponent(doseId)}/taken`, { method: "POST", auth: "device", keepalive });
+        onTaken={async ({ keepalive, readings }) => {
+          await api(`/parent/doses/${encodeURIComponent(doseId)}/taken`, { method: "POST", auth: "device", keepalive, body: { readings } });
         }}
       />
     </div>

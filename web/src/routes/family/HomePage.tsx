@@ -1,5 +1,5 @@
 import type { SlotName } from "@dosecircle/shared";
-import { BellRing, ChevronRight, CirclePause, FileText, Loader2, Pill, Settings, Smartphone, UserPlus } from "lucide-react";
+import { Activity, BellRing, ChevronRight, CirclePause, FileText, Loader2, Pill, Settings, Smartphone, UserPlus, Users } from "lucide-react";
 import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router";
 import { FamilyAlert } from "../../components/FamilyAlert";
@@ -182,8 +182,10 @@ function TodayCard({ parent, fid, myLang }: { parent: ParentCard; fid: string; m
       <nav className="grid grid-cols-2 gap-2 border-t border-line bg-paper/60 p-3">
         {[
           { to: `${base}/medicines`, icon: Pill, label: t("action.medicines") },
+          { to: `${base}/checks`, icon: Activity, label: t("action.checks") },
           { to: `${base}/report`, icon: FileText, label: t("action.report") },
           { to: `${base}/settings`, icon: Settings, label: t("action.settings") },
+          { to: "/people", icon: Users, label: t("action.people") },
         ].map(({ to, icon: Icon, label }) => (
           <Link key={to} to={to} className="pressable inline-flex min-h-11 items-center gap-2 rounded-xl bg-surface px-3 text-[14.5px] font-semibold ring-1 ring-line hover:ring-line-strong">
             <Icon aria-hidden className="size-4.5 text-indigo-soft dark:text-ink" strokeWidth={2.25} />

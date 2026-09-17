@@ -45,6 +45,26 @@ Three lines a day: what was new, what broke, how we fixed it. This becomes the "
 - **A development-only mock must be excluded deliberately.** Guarding it with a constant wasn't enough; the
   bundler still emitted the chunk until the dynamic import itself was wrapped in `import.meta.env.DEV`.
 
+**Adding daily checks and family management**
+- **A Choice state was the whole feature.** Generalising "reminder about medicines" to "reminder about
+  medicines and readings" needed one new branch, `ShouldAlertFamily`, so a forgotten weigh-in is recorded
+  without paging anybody. Everything else — the waits, the ladder, the claim, the timeline — was already
+  about a reminder rather than a tablet.
+- **The weekday belongs at dose time, not schedule time.** "Weigh yourself on Sundays" could have meant a
+  weekly cron per check. Instead the schedule stays daily and `PrepareDose` decides, which means adding a
+  check costs no new AWS resource at all.
+- **A DynamoDB sort key of UTC instants and a period in Indian dates do not line up.** A reading taken at
+  6 a.m. IST carries the previous UTC date, so every range query widens by a day and the filtering happens
+  on the IST date afterwards. Found by reasoning about the key rather than from a failing test — the sort of
+  bug that would have quietly dropped one morning's readings.
+- **Not building the obvious feature was the harder decision.** Every consumer health app draws a green
+  "normal" band behind a blood-pressure chart. A normal range is a clinical judgement about one person, so
+  drawing one would be the app giving medical advice. The panels show lowest, middle and highest instead,
+  and a test asserts the response contains no verdict words.
+- **"Remove a member" is five writes, not one.** The membership, their push subscriptions, their place in
+  every parent's escalation order, and the lock that ties a person to one family. Miss the lock and they can
+  never join another family; miss the ladder and a parent is left with nobody to alert.
+
 **Domain detail we didn't know**
 - **Irregular dose timing predicts missed doses:** in pill-bottle monitoring, the people whose dose times
   varied most were 9.3× more likely to fall below 95% of doses taken. That turned "when did she take it"

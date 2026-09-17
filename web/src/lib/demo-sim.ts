@@ -1,10 +1,10 @@
-import { chooseLadder, timingsFor, type DoseStatus, type LanguageCode, type MissClass, type SlotName } from "@dosecircle/shared";
+import { checkDefinition, chooseLadder, timingsFor, type DoseStatus, type LanguageCode, type MissClass, type SlotName } from "@dosecircle/shared";
 import en from "../../../shared/i18n/en.json";
 import hi from "../../../shared/i18n/hi.json";
 import kn from "../../../shared/i18n/kn.json";
 import { config } from "./config";
 import type { DemoClient } from "./demo-client";
-import type { DemoSession, DemoState, InboxItem, MedicineLine, OpenAlert, Prescription, Timeline, TimelineItem, TimelineKind } from "./types";
+import type { CheckLine, DemoSession, DemoState, InboxItem, MedicineLine, OpenAlert, Prescription, Timeline, TimelineItem, TimelineKind } from "./types";
 
 /**
  * An in-browser stand-in for the AWS demo, used only when no API is configured (local development).
@@ -30,6 +30,12 @@ const MEDICINES: Record<string, MedicineLine> = {
   lantus: { medId: "med-lantus", nameAsPrinted: "Lantus", strength: "10 units", count: 1, food: null, critical: true },
 };
 
+/** The morning reminder also asks for blood sugar and blood pressure, as in the demo fixtures. */
+const MORNING_CHECKS: CheckLine[] = [
+  { checkId: "chk-sugar", type: "glucose", fields: checkDefinition("glucose").fields },
+  { checkId: "chk-bp", type: "bp", fields: checkDefinition("bp").fields },
+];
+
 interface SimDose {
   doseId: string;
   slotName: SlotName;
@@ -41,6 +47,7 @@ interface SimDose {
   deliveredAt: string | null;
   alerted: string[];
   medicines: MedicineLine[];
+  checks: CheckLine[];
 }
 
 export function createSimulatedDemoClient(): DemoClient {
@@ -54,6 +61,8 @@ export function createSimulatedDemoClient(): DemoClient {
   let events: Omit<TimelineItem, "sincePreviousSeconds">[] = [];
   let inbox: Record<string, InboxItem[]> = {};
   let wake: (() => void) | null = null;
+  /** Readings typed on the demo parent's pane, so the trend panels update while a judge watches. */
+  let simulatedReadings: { checkId: string; values: Record<string, number>; at: string }[] = [];
 
   const people = () => session!.members;
   const parentRecipient = () => `parent-${session!.parent.pid}`;
@@ -194,6 +203,7 @@ export function createSimulatedDemoClient(): DemoClient {
               critical: dose.critical,
               parent: { displayName: session!.parent.displayName, lang: session!.parent.lang },
               medicines: dose.medicines,
+              checks: dose.checks,
               voice: { src: `/audio/${session!.parent.lang}/remind_${dose.slotName}.mp3`, thanks: `/audio/${session!.parent.lang}/taken_thanks.mp3` },
               missClass: dose.missClass,
               claimedBy: dose.claimedBy,
@@ -221,13 +231,16 @@ export function createSimulatedDemoClient(): DemoClient {
         deliveredAt: null,
         alerted: [],
         medicines: critical || istHour() >= 15 || istHour() < 4 ? [MEDICINES.glycomet!, MEDICINES.lantus!] : [MEDICINES.glycomet!, MEDICINES.telma!],
+        checks: critical || istHour() >= 15 || istHour() < 4 ? [] : MORNING_CHECKS,
       };
       running = true;
       void run(generation);
       return delay({ doseId: dose.doseId });
     },
-    async taken(doseId) {
+    async taken(doseId, { readings }) {
       if (!dose || dose.doseId !== doseId) return;
+      // Readings ride along with the confirming tap, as they do on the server.
+      for (const reading of readings ?? []) simulatedReadings.push({ ...reading, at: now() });
       if (dose.status === "PENDING") dose.status = "TAKEN";
       else if (dose.status === "ESCALATING" || dose.status === "CLAIMED") dose.status = "TAKEN_LATE";
       else return;
@@ -273,7 +286,22 @@ export function createSimulatedDemoClient(): DemoClient {
     },
     async insights(days) {
       const { demoInsights } = await import("./demo-insights");
-      return delay(demoInsights(days));
+      const insights = demoInsights(days);
+      if (simulatedReadings.length === 0) return delay(insights);
+      // Today's readings are added to the fixture's history, so a judge sees their own entry appear.
+      const { formatReading } = await import("@dosecircle/shared");
+      const istDate = (iso: string) => new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kolkata" }).format(new Date(iso));
+      return delay({
+        ...insights,
+        readings: insights.readings.map((series) => {
+          const extra = simulatedReadings
+            .filter((r) => r.checkId === series.checkId)
+            .map((r) => ({ date: istDate(r.at), at: r.at, values: r.values, text: formatReading(series.type, r.values) }));
+          if (extra.length === 0) return series;
+          const points = [...series.points, ...extra];
+          return { ...series, points, latest: points[points.length - 1]!, recordedDays: new Set(points.map((p) => p.date)).size };
+        }),
+      });
     },
     async reset() {
       generation++;
@@ -284,6 +312,7 @@ export function createSimulatedDemoClient(): DemoClient {
       inbox = {};
       runs = 0;
       consecutiveMisses = 0;
+      simulatedReadings = [];
       session = null;
     },
   };

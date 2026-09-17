@@ -1,5 +1,5 @@
 import { PutCommand, QueryCommand, TransactWriteCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
-import { keys, voicePhrasePath, type LanguageCode, type SlotName } from "@dosecircle/shared";
+import { checkDefinition, formatReading, isCheckDueAt, keys, voicePhrasePath, type LanguageCode, type SlotName } from "@dosecircle/shared";
 import type { APIGatewayProxyEventV2 } from "aws-lambda";
 import { z } from "zod";
 import { authorize } from "../../authz/avp.js";
@@ -10,14 +10,15 @@ import { newDeviceToken, normaliseInviteCode, sha256Hex } from "../../lib/crypto
 import { env } from "../../lib/env.js";
 import { HttpError, json, parseBody, pathParam, principalFrom } from "../../lib/http.js";
 import { newId } from "../../lib/ids.js";
-import type { DeviceItem, DoseItem, InviteItem, MedicineItem, ParentItem } from "../../lib/model.js";
+import type { CheckItem, DeviceItem, DoseItem, InviteItem, MedicineItem, ParentItem } from "../../lib/model.js";
 import { PushSubscriptionSchema } from "../../lib/push-endpoints.js";
 import { takeFromBudget } from "../../lib/rate-limit.js";
 import { get, getDose, getParent, listDoses } from "../../lib/repository.js";
 import { router } from "../../lib/router.js";
-import { LanguageSchema } from "../../lib/schemas.js";
-import { istDate } from "../../scheduling/plan.js";
-import { listMedicines, listSlots } from "../../scheduling/sync-slots.js";
+import { LanguageSchema, ReadingInputSchema } from "../../lib/schemas.js";
+import { istDate, istWeekday } from "../../scheduling/plan.js";
+import { listChecks, listMedicines, listSlots } from "../../scheduling/sync-slots.js";
+import { listReadings, recordReading } from "../family/checks.js";
 
 const PairSchema = z.object({ code: z.string().min(6).max(20) });
 
@@ -90,6 +91,11 @@ function medicineLine(m: MedicineItem, slotName: SlotName) {
   return { medId: m.medId, nameAsPrinted: m.nameAsPrinted, strength: m.strength, count: m.slots[slotName] ?? null, food: m.food, critical: m.critical };
 }
 
+/** What the parent's screen needs to ask for one measurement: the boxes to fill, and their limits. */
+function checkLine(check: CheckItem) {
+  return { checkId: check.checkId, type: check.type, fields: checkDefinition(check.type).fields };
+}
+
 async function requireParent(event: APIGatewayProxyEventV2): Promise<{ parent: ParentItem; principal: Awaited<ReturnType<typeof principalFrom>> }> {
   const principal = await principalFrom(event);
   if (principal.kind !== "device") throw new HttpError(403, "Only a paired phone can do this");
@@ -99,12 +105,23 @@ async function requireParent(event: APIGatewayProxyEventV2): Promise<{ parent: P
   return { parent, principal };
 }
 
-/** GET /parent/today — the parent's calm "today" screen. */
+/** GET /parent/today — the parent's calm "today" screen: tablets and measurements, time of day by time of day. */
 async function today(event: APIGatewayProxyEventV2) {
   const { parent } = await requireParent(event);
-  const date = istDate().replaceAll("-", "");
-  const [slots, medicines, doses] = await Promise.all([listSlots(parent.pid), listMedicines(parent.pid), listDoses(parent.pid, `${date}0000`, `${date}2359`)]);
+  const todayIst = istDate();
+  const date = todayIst.replaceAll("-", "");
+  const weekday = istWeekday();
+  const [slots, medicines, checks, doses, readings] = await Promise.all([
+    listSlots(parent.pid),
+    listMedicines(parent.pid),
+    listChecks(parent.pid),
+    listDoses(parent.pid, `${date}0000`, `${date}2359`),
+    // 00:00 IST today is 18:30Z yesterday, so the window starts a day earlier; the readings are
+    // then matched to today's doses by doseId rather than by date.
+    listReadings(parent.pid, `${istDate(new Date(Date.now() - 86_400_000))}T00:00:00.000Z`, new Date().toISOString()),
+  ]);
   const byId = new Map(medicines.map((m) => [m.medId, m]));
+  const checkById = new Map(checks.map((c) => [c.checkId, c]));
   const realDoses = doses.filter((d) => d.SK.split("#").length === 2);
 
   return json(200, {
@@ -113,10 +130,17 @@ async function today(event: APIGatewayProxyEventV2) {
       .sort((a, b) => a.compactTime.localeCompare(b.compactTime))
       .map((slot) => {
         const dose = realDoses.find((d) => d.slotName === slot.slotName);
+        const dueChecks = (slot.checkIds ?? [])
+          .map((id) => checkById.get(id))
+          .filter((c): c is CheckItem => Boolean(c) && isCheckDueAt(c!, slot.slotName, todayIst, weekday));
         return {
           slotName: slot.slotName,
           time: `${slot.compactTime.slice(0, 2)}:${slot.compactTime.slice(2)}`,
           medicines: slot.medIds.map((id) => byId.get(id)).filter((m): m is MedicineItem => Boolean(m)).map((m) => medicineLine(m, slot.slotName)),
+          checks: dueChecks.map((c) => {
+            const recorded = readings.find((r) => r.checkId === c.checkId && (dose ? r.doseId === dose.doseId : false));
+            return { ...checkLine(c), recorded: recorded ? { at: recorded.at, values: recorded.values, text: formatReading(c.type, recorded.values) } : null };
+          }),
           dose: dose ? { doseId: dose.doseId, status: dose.status } : null,
         };
       }),
@@ -133,7 +157,7 @@ async function doseScreen(event: APIGatewayProxyEventV2) {
 }
 
 export async function doseView(dose: DoseItem) {
-  const [parent, medicines] = await Promise.all([getParent(dose.fid, dose.pid), listMedicines(dose.pid)]);
+  const [parent, medicines, checks] = await Promise.all([getParent(dose.fid, dose.pid), listMedicines(dose.pid), listChecks(dose.pid)]);
   const lang = (parent?.lang ?? "en") as LanguageCode;
   return {
     doseId: dose.doseId,
@@ -143,6 +167,7 @@ export async function doseView(dose: DoseItem) {
     critical: dose.critical,
     parent: { displayName: parent?.displayName ?? "", lang },
     medicines: dose.medIds.map((id) => medicines.find((m) => m.medId === id)).filter((m): m is MedicineItem => Boolean(m)).map((m) => medicineLine(m, dose.slotName)),
+    checks: (dose.checkIds ?? []).map((id) => checks.find((c) => c.checkId === id)).filter((c): c is CheckItem => Boolean(c)).map(checkLine),
     voice: { src: voicePhrasePath(lang, `remind_${dose.slotName}`), thanks: voicePhrasePath(lang, "taken_thanks") },
   };
 }
@@ -186,10 +211,38 @@ async function setLanguage(event: APIGatewayProxyEventV2) {
   return json(200, { lang });
 }
 
+/**
+ * POST /parent/readings — the parent types in a measurement. It is stored as a number and nothing
+ * more: the app never tells them what the reading means, and a reading never raises an alert.
+ */
+async function addParentReading(event: APIGatewayProxyEventV2) {
+  const { parent, principal } = await requireParent(event);
+  if (principal.kind !== "device") throw new HttpError(403, "Only a paired phone can do this");
+  const input = parseBody(event, ReadingInputSchema);
+  await authorize({
+    principal: devicePrincipal(principal, parent.pid),
+    action: "RecordReading",
+    resource: parentEntity(parent),
+    entities: [familyEntity(parent.fid)],
+  });
+  const reading = await recordReading({
+    pid: parent.pid,
+    checkId: input.checkId,
+    values: input.values,
+    at: input.at,
+    doseId: input.doseId,
+    recordedBy: { kind: "parent", id: principal.deviceId },
+  });
+  metrics.addMetric("ReadingsRecorded", "Count", 1);
+  metrics.publishStoredMetrics();
+  return json(201, { reading: { checkId: reading.checkId, type: reading.type, values: reading.values, at: reading.at, text: formatReading(reading.type, reading.values) } });
+}
+
 export const PARENT_ROUTES = {
   "POST /parent/pair": pair,
   "GET /parent/today": today,
   "GET /parent/doses/{doseId}": doseScreen,
+  "POST /parent/readings": addParentReading,
   "POST /parent/push/subscription": saveSubscription,
   "PUT /parent/lang": setLanguage,
 } as const;

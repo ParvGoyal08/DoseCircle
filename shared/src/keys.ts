@@ -21,6 +21,10 @@ export const keys = {
   dose: (pid: string, doseStamp: string) => ({ PK: `PARENT#${pid}`, SK: `DOSE#${doseStamp}` }),
   event: (doseId: string, isoTime: string, type: string) => ({ PK: `DOSE#${doseId}`, SK: `EVT#${isoTime}#${type}` }),
   prescription: (fid: string, rxId: string) => ({ PK: `FAM#${fid}`, SK: `RX#${rxId}` }),
+  /** A daily check (blood sugar, blood pressure, weight…) the family asks a parent to do. */
+  check: (pid: string, checkId: string) => ({ PK: `PARENT#${pid}`, SK: `CHECK#${checkId}` }),
+  /** One recorded measurement. Sorted by time, so a range query reads a period. */
+  reading: (pid: string, at: string, checkId: string) => ({ PK: `PARENT#${pid}`, SK: `READING#${at}#${checkId}` }),
   demoSession: (sid: string) => ({ PK: `DEMO#${sid}`, SK: "META" }),
 } as const;
 
