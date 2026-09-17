@@ -260,6 +260,7 @@
     "settings.connectAnother": {"text": "फ़ोन जोड़ें", "reviewedBy": null},
     "settings.myLanguage": {"text": "मेरी भाषा", "reviewedBy": null},
     "settings.saved": {"text": "सहेज लिया गया", "reviewedBy": null},
-    "rx.guardrailRemoved": {"text": "सुरक्षा जाँच ने एक टिप्पणी हटा दी जो चिकित्सा सलाह जैसी लग रही थी।", "reviewedBy": null}
+    "rx.guardrailRemoved": {"text": "सुरक्षा जाँच ने एक टिप्पणी हटा दी जो चिकित्सा सलाह जैसी लग रही थी।", "reviewedBy": null},
+    "voice.pressGreen": {"text": "दवा लेने के बाद हरा बटन दबाएँ।", "reviewedBy": null}
   }
 }

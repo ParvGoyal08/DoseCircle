@@ -27,6 +27,7 @@
     "zod": "^4.6.5"
   },
   "devDependencies": {
+    "@aws-sdk/client-polly": "^3.1133.0",
     "@cedar-policy/cedar-wasm": "4.13.0",
     "@types/aws-lambda": "^8.10.163",
     "@types/node": "^24.13.5",

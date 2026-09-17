@@ -260,6 +260,7 @@
     "settings.connectAnother": {"text": "Connect a phone", "reviewedBy": "source"},
     "settings.myLanguage": {"text": "My language", "reviewedBy": "source"},
     "settings.saved": {"text": "Saved", "reviewedBy": "source"},
-    "rx.guardrailRemoved": {"text": "A safety check removed a note that looked like medical advice.", "reviewedBy": "source"}
+    "rx.guardrailRemoved": {"text": "A safety check removed a note that looked like medical advice.", "reviewedBy": "source"},
+    "voice.pressGreen": {"text": "When you have taken it, press the green button.", "reviewedBy": "source"}
   }
 }

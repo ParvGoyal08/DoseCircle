@@ -260,6 +260,7 @@
     "settings.connectAnother": {"text": "ಫೋನ್ ಸಂಪರ್ಕಿಸಿ", "reviewedBy": null},
     "settings.myLanguage": {"text": "ನನ್ನ ಭಾಷೆ", "reviewedBy": null},
     "settings.saved": {"text": "ಉಳಿಸಲಾಗಿದೆ", "reviewedBy": null},
-    "rx.guardrailRemoved": {"text": "ವೈದ್ಯಕೀಯ ಸಲಹೆಯಂತೆ ಕಾಣುತ್ತಿದ್ದ ಒಂದು ಟಿಪ್ಪಣಿಯನ್ನು ಸುರಕ್ಷತಾ ಪರಿಶೀಲನೆ ತೆಗೆದುಹಾಕಿದೆ.", "reviewedBy": null}
+    "rx.guardrailRemoved": {"text": "ವೈದ್ಯಕೀಯ ಸಲಹೆಯಂತೆ ಕಾಣುತ್ತಿದ್ದ ಒಂದು ಟಿಪ್ಪಣಿಯನ್ನು ಸುರಕ್ಷತಾ ಪರಿಶೀಲನೆ ತೆಗೆದುಹಾಕಿದೆ.", "reviewedBy": null},
+    "voice.pressGreen": {"text": "ತೆಗೆದುಕೊಂಡ ನಂತರ ಹಸಿರು ಬಟನ್ ಒತ್ತಿ.", "reviewedBy": null}
   }
 }
