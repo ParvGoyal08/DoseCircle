@@ -39,6 +39,14 @@ export const handler = withErrors(async (event) => {
           ExpressionAttributeValues: { ":now": now, ":recipient": receipt.recipient },
         }),
       );
+      await ddb.send(
+        new UpdateCommand({
+          TableName: env.tableName,
+          Key: { PK: `FAM#${dose.fid}`, SK: `PARENT#${dose.pid}` },
+          UpdateExpression: "SET lastReceiptAt = :now",
+          ExpressionAttributeValues: { ":now": now },
+        }),
+      );
       metrics.addMetric("ReceiptsDelivered", "Count", 1);
       metrics.addMetric("DeliveryLatencyMs", "Milliseconds", Date.parse(now) - Date.parse(dose.scheduledAt));
     } catch (error) {

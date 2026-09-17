@@ -23,7 +23,7 @@ export const handler = withErrors(async (event) => {
   const dose = await getDose(doseId);
   if (!dose) throw new HttpError(404, "Dose not found");
   const phone = devicePrincipal(principal, dose.pid);
-  await authorize({
+  const decision = await authorize({
     principal: phone,
     action: "MarkTaken",
     resource: doseEntity(dose),
@@ -61,7 +61,7 @@ export const handler = withErrors(async (event) => {
     throw error;
   }
 
-  await recordDoseEvent({ doseId, type: "TAKEN", at: now, ttl: dose.ttl });
+  await recordDoseEvent({ doseId, type: "TAKEN", at: now, detail: { authorizedBy: decision.determiningPolicies }, ttl: dose.ttl });
   metrics.addMetric(next === "TAKEN" ? "TakenOnTime" : "TakenLate", "Count", 1);
 
   if (previous.status === "CLAIMED") {

@@ -27,7 +27,7 @@ export const handler = withErrors(async (event) => {
   if (dose.claimedBy) return alreadyClaimed(dose);
 
   // Cedar: only a member who was actually alerted, while the dose is escalating.
-  await authorize({ principal: entity, action: "ClaimDose", resource, entities });
+  const decision = await authorize({ principal: entity, action: "ClaimDose", resource, entities });
 
   const now = new Date().toISOString();
   let claimed: DoseItem;
@@ -52,7 +52,7 @@ export const handler = withErrors(async (event) => {
     return json(409, { message: "This dose is not waiting for anyone", status: current?.status });
   }
 
-  await recordDoseEvent({ doseId, type: "CLAIMED", at: now, detail: { memberId: member.mid }, ttl: dose.ttl });
+  await recordDoseEvent({ doseId, type: "CLAIMED", at: now, detail: { memberId: member.mid, authorizedBy: decision.determiningPolicies }, ttl: dose.ttl });
   metrics.addMetric("Claims", "Count", 1);
 
   const completed = await completeTask(claimed.currentToken, { outcome: "CLAIMED", by: member.mid });
