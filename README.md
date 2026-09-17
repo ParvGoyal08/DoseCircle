@@ -63,9 +63,9 @@ pnpm synth       # synthesise the CloudFormation template (bundles every Lambda)
 
 ```bash
 aws configure sso                                    # profile "saathi", region ap-south-1
-npx aws-cdk bootstrap aws://<ACCOUNT_ID>/ap-south-1 --profile saathi
+pnpm --filter @saathi/infra exec cdk bootstrap aws://<ACCOUNT_ID>/ap-south-1 --profile saathi
 AWS_PROFILE=saathi pnpm secrets:init -- you@example.com
-AWS_PROFILE=saathi pnpm deploy
+pnpm cdk:deploy --profile saathi --context sesFromEmail=<sender> --context appOrigin=<web origin>
 ```
 
 ## AI tools used

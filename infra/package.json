@@ -7,8 +7,7 @@
     "typecheck": "tsc -p tsconfig.json",
     "test": "vitest run",
     "synth": "cdk synth --quiet",
-    "diff": "cdk diff",
-    "deploy": "cdk deploy --require-approval broadening"
+    "diff": "cdk diff"
   },
   "dependencies": {
     "aws-cdk-lib": "^2.269.0",

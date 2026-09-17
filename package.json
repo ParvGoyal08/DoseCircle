@@ -14,7 +14,7 @@
     "build": "pnpm -r build",
     "synth": "pnpm --filter @saathi/infra synth",
     "secrets:init": "pnpm --filter @saathi/backend secrets:init",
-    "deploy": "pnpm --filter @saathi/infra deploy"
+    "cdk:deploy": "pnpm --filter @saathi/infra exec cdk deploy"
   },
   "devDependencies": {
     "esbuild": "^0.28.2"
