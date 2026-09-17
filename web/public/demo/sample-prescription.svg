@@ -9,7 +9,7 @@
   </defs>
   <rect width="1000" height="1300" fill="#fffdf8" filter="url(#paper)"/>
   <g font-family="Georgia, 'Times New Roman', serif" fill="#1f2a44">
-    <text x="80" y="104" font-size="38" font-weight="700">Dr. Kavya Rao, MBBS, MD (General Medicine)</text>
+    <text x="80" y="104" font-size="34" font-weight="700">Dr. Kavya Rao, MBBS, MD (General Medicine)</text>
     <text x="80" y="158" font-size="28" fill="#44506b">Sample Clinic, Mysuru · Reg. No. SAMPLE-0000</text>
     <line x1="80" y1="200" x2="920" y2="200" stroke="#1f2a44" stroke-width="3"/>
     <text x="80" y="283" font-size="30">Name: Shantha   Age/Sex: 68/F   Date: 12/09/2026</text>

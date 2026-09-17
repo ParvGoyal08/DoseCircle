@@ -8,7 +8,7 @@ import { Logo } from "../../components/Logo";
 import { ParentDoseScreen } from "../../components/ParentDoseScreen";
 import { Button, cx, SLOT_ICONS } from "../../components/ui";
 import { useT } from "../../i18n";
-import { api, ApiError } from "../../lib/api";
+import { api, ApiError, mockApiEnabled } from "../../lib/api";
 import { pairedDevice, pairPhone, updateStoredLanguage } from "../../lib/device";
 import { formatCount } from "../../lib/format";
 import { enableReminders, isStandalone, pushSupport } from "../../lib/push";
@@ -150,7 +150,7 @@ export function JoinPage() {
 
 /** /parent — the calm "today" screen. */
 export function ParentHomePage() {
-  const device = pairedDevice();
+  const device = pairedDevice() ?? (mockApiEnabled ? { token: "mock", displayName: "Shantha", lang: "kn" as const } : null);
   const [changingLanguage, setChangingLanguage] = useState(false);
   const today = useApi(device ? () => api<ParentToday>("/parent/today", { auth: "device" }) : null, [], 60_000);
   const { t, lang } = useT(today.data?.parent.lang ?? device?.lang ?? "en");
@@ -166,14 +166,16 @@ export function ParentHomePage() {
 
   return (
     <main className="mx-auto flex min-h-dvh max-w-xl flex-col gap-5 px-4 pb-10 pt-6">
-      <header className="flex items-center justify-between gap-3">
-        <h1 lang={lang} className="text-[32px] font-semibold tracking-tight">
+      <header>
+        <div className="flex justify-end">
+          <button type="button" onClick={() => setChangingLanguage((v) => !v)} aria-expanded={changingLanguage} className="inline-flex min-h-12 items-center gap-2 rounded-full border border-line-strong bg-surface px-3.5 text-[16px] font-semibold">
+            <Globe aria-hidden className="size-5" strokeWidth={2.25} />
+            <span lang={lang}>{t("parent.home.changeLanguage")}</span>
+          </button>
+        </div>
+        <h1 lang={lang} className="mt-2 text-[34px] font-semibold leading-tight tracking-tight">
           {t("parent.today.title")}
         </h1>
-        <button type="button" onClick={() => setChangingLanguage((v) => !v)} className="inline-flex min-h-14 items-center gap-2 rounded-full border-2 border-line-strong bg-surface px-4 text-lg font-semibold">
-          <Globe aria-hidden className="size-5" strokeWidth={2.25} />
-          <span lang={lang}>{t("parent.home.changeLanguage")}</span>
-        </button>
       </header>
 
       {changingLanguage && <LanguagePicker value={(today.data?.parent.lang ?? device.lang) as LanguageCode} onChange={setLanguage} large />}
@@ -256,7 +258,7 @@ export function ParentHomePage() {
 /** /parent/dose/:doseId — opened from the reminder notification. */
 export function ParentDosePage() {
   const { doseId = "" } = useParams();
-  const device = pairedDevice();
+  const device = pairedDevice() ?? (mockApiEnabled ? { token: "mock" } : null);
   const dose = useApi(device ? () => api<DoseView>(`/parent/doses/${encodeURIComponent(doseId)}`, { auth: "device" }) : null, [doseId], 15_000);
 
   useEffect(() => {

@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
 import { Navigate, useLocation } from "react-router";
-import { api } from "./api";
+import { api, mockApiEnabled } from "./api";
 import { authConfigured, isSignedIn } from "./auth";
 import type { Me } from "./types";
 
@@ -13,10 +13,10 @@ type FamilyState =
 const FamilyContext = createContext<{ state: FamilyState; reload: () => Promise<void> }>({ state: { status: "loading" }, reload: async () => {} });
 
 export function FamilyProvider({ children }: { children: ReactNode }) {
-  const [state, setState] = useState<FamilyState>({ status: authConfigured ? "loading" : "signedOut" });
+  const [state, setState] = useState<FamilyState>({ status: authConfigured || mockApiEnabled ? "loading" : "signedOut" });
 
   const reload = useCallback(async () => {
-    if (!(await isSignedIn())) return setState({ status: "signedOut" });
+    if (!mockApiEnabled && !(await isSignedIn())) return setState({ status: "signedOut" });
     try {
       const me = await api<Me>("/me", { auth: "family" });
       setState(me.member ? { status: "ready", me: me.member } : { status: "noFamily" });
@@ -26,7 +26,7 @@ export function FamilyProvider({ children }: { children: ReactNode }) {
   }, []);
 
   useEffect(() => {
-    if (authConfigured) void reload();
+    if (authConfigured || mockApiEnabled) void reload();
   }, [reload]);
 
   return <FamilyContext.Provider value={{ state, reload }}>{children}</FamilyContext.Provider>;
