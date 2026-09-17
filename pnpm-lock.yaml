@@ -32,7 +32,7 @@ importers:
       '@aws-sdk/lib-dynamodb':
         specifier: ^3.1133.0
         version: 3.1133.0(@aws-sdk/client-dynamodb@3.1133.0)
-      '@saathi/shared':
+      '@dosecircle/shared':
         specifier: workspace:*
         version: link:../shared
       web-push:

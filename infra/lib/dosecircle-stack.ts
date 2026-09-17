@@ -13,9 +13,9 @@ import { Queue } from "aws-cdk-lib/aws-sqs";
 import { DefinitionBody, LogLevel, StateMachine, StateMachineType } from "aws-cdk-lib/aws-stepfunctions";
 import type { Construct } from "constructs";
 import { fileURLToPath } from "node:url";
-import { saathiFunction } from "./functions.js";
+import { doseCircleFunction } from "./functions.js";
 
-export interface SaathiStackProps extends StackProps {
+export interface DoseCircleStackProps extends StackProps {
   /** Public origin of the web app (Amplify URL), used for CORS and notification links. */
   appOrigin: string;
   /** SSM Parameter Store prefix holding VAPID keys and secrets (created by scripts/init-secrets.ts). */
@@ -24,8 +24,8 @@ export interface SaathiStackProps extends StackProps {
   sesFromEmail?: string;
 }
 
-export class SaathiStack extends Stack {
-  constructor(scope: Construct, id: string, props: SaathiStackProps) {
+export class DoseCircleStack extends Stack {
+  constructor(scope: Construct, id: string, props: DoseCircleStackProps) {
     super(scope, id, props);
 
     // ── Data ────────────────────────────────────────────────────────────────
@@ -68,7 +68,7 @@ export class SaathiStack extends Stack {
       accountRecovery: AccountRecovery.EMAIL_ONLY,
       passwordPolicy: { minLength: 10, requireSymbols: false },
       email: props.sesFromEmail
-        ? UserPoolEmail.withSES({ fromEmail: props.sesFromEmail, fromName: "Saathi", sesRegion: "ap-south-1" })
+        ? UserPoolEmail.withSES({ fromEmail: props.sesFromEmail, fromName: "DoseCircle", sesRegion: "ap-south-1" })
         : UserPoolEmail.withCognito(),
       removalPolicy: RemovalPolicy.RETAIN,
     });
@@ -96,9 +96,9 @@ export class SaathiStack extends Stack {
     };
 
     // ── Escalation workflow ─────────────────────────────────────────────────
-    const prepareDose = saathiFunction(this, "PrepareDose", "workflow/prepare-dose.ts", { environment: baseEnv });
-    const parkAndNotify = withSecrets(saathiFunction(this, "ParkAndNotify", "workflow/park-and-notify.ts", { environment: baseEnv, timeout: Duration.seconds(20) }));
-    const notifyResolution = withSecrets(saathiFunction(this, "NotifyResolution", "workflow/notify-resolution.ts", { environment: baseEnv, timeout: Duration.seconds(20) }));
+    const prepareDose = doseCircleFunction(this, "PrepareDose", "workflow/prepare-dose.ts", { environment: baseEnv });
+    const parkAndNotify = withSecrets(doseCircleFunction(this, "ParkAndNotify", "workflow/park-and-notify.ts", { environment: baseEnv, timeout: Duration.seconds(20) }));
+    const notifyResolution = withSecrets(doseCircleFunction(this, "NotifyResolution", "workflow/notify-resolution.ts", { environment: baseEnv, timeout: Duration.seconds(20) }));
     table.grantReadWriteData(prepareDose);
     table.grantReadWriteData(parkAndNotify);
     table.grantReadWriteData(notifyResolution);
@@ -142,7 +142,7 @@ export class SaathiStack extends Stack {
     schedulerDlq.grantSendMessages(schedulerRole);
 
     // ── HTTP API ────────────────────────────────────────────────────────────
-    const deviceOrDemoAuthorizerFn = withSecrets(saathiFunction(this, "DeviceDemoAuthorizer", "authorizers/device-demo.ts", { environment: baseEnv }));
+    const deviceOrDemoAuthorizerFn = withSecrets(doseCircleFunction(this, "DeviceDemoAuthorizer", "authorizers/device-demo.ts", { environment: baseEnv }));
     table.grantReadData(deviceOrDemoAuthorizerFn);
     const deviceOrDemo = new HttpLambdaAuthorizer("DeviceOrDemo", deviceOrDemoAuthorizerFn, {
       responseTypes: [HttpLambdaResponseType.SIMPLE],
@@ -162,7 +162,7 @@ export class SaathiStack extends Stack {
 
     const apiEnv = { ...baseEnv, STATE_MACHINE_ARN: stateMachine.stateMachineArn };
     const route = (id: string, method: HttpMethod, path: string, entry: string, authorizer?: HttpLambdaAuthorizer | HttpUserPoolAuthorizer) => {
-      const fn = withSecrets(saathiFunction(this, id, entry, { environment: apiEnv }));
+      const fn = withSecrets(doseCircleFunction(this, id, entry, { environment: apiEnv }));
       table.grantReadWriteData(fn);
       fn.addToRolePolicy(taskResponse);
       api.addRoutes({ path, methods: [method], integration: new HttpLambdaIntegration(`${id}Integration`, fn), authorizer });

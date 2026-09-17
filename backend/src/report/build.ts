@@ -5,7 +5,7 @@ import {
   type DoseStatus,
   type MissClass,
   type ReportOutcome,
-} from "@saathi/shared";
+} from "@dosecircle/shared";
 
 export interface ReportDose {
   doseId: string;

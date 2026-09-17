@@ -1,4 +1,4 @@
-# Saathi (working name)
+# DoseCircle
 
 **When a parent misses their medicine, the right person in the family knows.**
 
@@ -62,10 +62,10 @@ pnpm synth       # synthesise the CloudFormation template (bundles every Lambda)
 ## Deploy (Mumbai, ap-south-1)
 
 ```bash
-aws configure sso                                    # profile "saathi", region ap-south-1
-pnpm --filter @saathi/infra exec cdk bootstrap aws://<ACCOUNT_ID>/ap-south-1 --profile saathi
-AWS_PROFILE=saathi pnpm secrets:init -- you@example.com
-pnpm cdk:deploy --profile saathi --context sesFromEmail=<sender> --context appOrigin=<web origin>
+aws configure sso                                    # profile "dosecircle", region ap-south-1
+pnpm --filter @dosecircle/infra exec cdk bootstrap aws://<ACCOUNT_ID>/ap-south-1 --profile dosecircle
+AWS_PROFILE=dosecircle pnpm secrets:init -- you@example.com
+pnpm cdk:deploy --profile dosecircle --context sesFromEmail=<sender> --context appOrigin=<web origin>
 ```
 
 ## AI tools used

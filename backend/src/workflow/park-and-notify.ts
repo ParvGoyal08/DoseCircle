@@ -1,5 +1,5 @@
 import { UpdateCommand } from "@aws-sdk/lib-dynamodb";
-import { parseDoseId, type MissClass } from "@saathi/shared";
+import { parseDoseId, type MissClass } from "@dosecircle/shared";
 import { ddb, logger, metrics } from "../lib/aws.js";
 import { appUrl, deliver, type Recipient } from "../lib/deliver.js";
 import { env } from "../lib/env.js";

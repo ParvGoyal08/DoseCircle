@@ -1,5 +1,5 @@
 import { PutCommand } from "@aws-sdk/lib-dynamodb";
-import { keys } from "@saathi/shared";
+import { keys } from "@dosecircle/shared";
 import { ddb } from "./aws.js";
 import { env } from "./env.js";
 

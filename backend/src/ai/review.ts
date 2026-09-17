@@ -1,4 +1,4 @@
-import { interpretNotation, type NotationResult } from "@saathi/shared";
+import { interpretNotation, type NotationResult } from "@dosecircle/shared";
 import type { ExtractedMedicine } from "./schema.js";
 
 export interface OcrLine {

@@ -1,7 +1,7 @@
 /**
  * Creates the SSM parameters the backend reads. Run once per AWS account, after `aws configure sso`:
  *
- *   AWS_PROFILE=saathi pnpm secrets:init -- you@example.com
+ *   AWS_PROFILE=dosecircle pnpm secrets:init -- you@example.com
  *
  * Existing parameters are never overwritten: rotating VAPID keys would silently break every
  * push subscription already saved on family members' and parents' phones.
@@ -11,7 +11,7 @@ import { GetParameterCommand, ParameterType, PutParameterCommand, SSMClient } fr
 import webpush from "web-push";
 
 const REGION = "ap-south-1";
-const PREFIX = process.env.SSM_PREFIX ?? "/saathi";
+const PREFIX = process.env.SSM_PREFIX ?? "/dosecircle";
 const subjectEmail = process.argv.slice(2).find((arg) => arg.includes("@"));
 
 if (!subjectEmail) {

@@ -1,5 +1,5 @@
 import { PutCommand } from "@aws-sdk/lib-dynamodb";
-import type { LanguageCode } from "@saathi/shared";
+import type { LanguageCode } from "@dosecircle/shared";
 import { ddb, metrics, secret, ttlInHours } from "./aws.js";
 import { signReceipt, pushTopic } from "./crypto.js";
 import { env } from "./env.js";

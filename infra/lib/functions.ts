@@ -11,7 +11,7 @@ const repoRoot = fileURLToPath(new URL("../../", import.meta.url));
  * Every Lambda: Node.js 24 on arm64 (nodejs20.x has been deprecated since 30 Apr 2026),
  * X-Ray tracing, and a log group with 14-day retention (CloudWatch keeps logs forever by default).
  */
-export function saathiFunction(
+export function doseCircleFunction(
   scope: Construct,
   id: string,
   entry: string,
@@ -44,7 +44,7 @@ export function saathiFunction(
     ...props,
     environment: {
       NODE_OPTIONS: "--enable-source-maps",
-      POWERTOOLS_SERVICE_NAME: "saathi",
+      POWERTOOLS_SERVICE_NAME: "dosecircle",
       ...props.environment,
     },
   });

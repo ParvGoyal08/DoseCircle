@@ -8,7 +8,7 @@
     "@aws-cdk/core:checkSecretUsage": true,
     "@aws-cdk/aws-iam:minimizePolicies": true,
     "appOrigin": "http://localhost:5173",
-    "ssmPrefix": "/saathi",
+    "ssmPrefix": "/dosecircle",
     "sesFromEmail": ""
   }
 }

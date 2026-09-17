@@ -13,9 +13,9 @@ export const ddb = DynamoDBDocumentClient.from(new DynamoDBClient({}), {
 export const sfn = new SFNClient({});
 const ssm = new SSMClient({});
 
-export const logger = new Logger({ serviceName: "saathi" });
+export const logger = new Logger({ serviceName: "dosecircle" });
 /** EMF metrics. No per-family dimensions: each dimension combination is a billed custom metric. */
-export const metrics = new Metrics({ namespace: "Saathi", serviceName: "saathi" });
+export const metrics = new Metrics({ namespace: "DoseCircle", serviceName: "dosecircle" });
 
 const secretCache = new Map<string, string>();
 

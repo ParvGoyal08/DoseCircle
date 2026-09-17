@@ -2,7 +2,7 @@ import { App } from "aws-cdk-lib";
 import { Match, Template } from "aws-cdk-lib/assertions";
 import { readFileSync } from "node:fs";
 import { beforeAll, describe, expect, it } from "vitest";
-import { SaathiStack } from "../lib/saathi-stack.js";
+import { DoseCircleStack } from "../lib/dosecircle-stack.js";
 
 interface AslState {
   Type: string;
@@ -49,16 +49,16 @@ describe("dose escalation state machine", () => {
   });
 });
 
-describe("SaathiStack", () => {
+describe("DoseCircleStack", () => {
   let template: Template;
 
   beforeAll(() => {
     // Skip Lambda bundling in unit tests; `pnpm synth` exercises it.
     const app = new App({ context: { "aws:cdk:bundling-stacks": [] } });
-    const stack = new SaathiStack(app, "Test", {
+    const stack = new DoseCircleStack(app, "Test", {
       env: { account: "111111111111", region: "ap-south-1" },
       appOrigin: "https://example.test",
-      ssmPrefix: "/saathi",
+      ssmPrefix: "/dosecircle",
     });
     template = Template.fromStack(stack);
   });

@@ -1,5 +1,5 @@
 import { PutCommand } from "@aws-sdk/lib-dynamodb";
-import { istDoseStamp, makeDoseId, doseSortKey, timingsFor, toCompactTime, type LadderTimings } from "@saathi/shared";
+import { istDoseStamp, makeDoseId, doseSortKey, timingsFor, toCompactTime, type LadderTimings } from "@dosecircle/shared";
 import { ddb, logger, ttlInDays, ttlInHours } from "../lib/aws.js";
 import { env } from "../lib/env.js";
 import type { DoseItem } from "../lib/model.js";

@@ -1,5 +1,5 @@
 import { UpdateCommand } from "@aws-sdk/lib-dynamodb";
-import { canMarkTaken, takenStatusFor } from "@saathi/shared";
+import { canMarkTaken, takenStatusFor } from "@dosecircle/shared";
 import { ddb, metrics } from "../../lib/aws.js";
 import { env } from "../../lib/env.js";
 import { recordDoseEvent } from "../../lib/events.js";

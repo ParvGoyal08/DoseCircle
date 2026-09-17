@@ -1,5 +1,5 @@
 {
-  "name": "@saathi/backend",
+  "name": "@dosecircle/backend",
   "version": "0.1.0",
   "private": true,
   "type": "module",
@@ -15,7 +15,7 @@
     "@aws-sdk/client-sfn": "^3.1133.0",
     "@aws-sdk/client-ssm": "^3.1133.0",
     "@aws-sdk/lib-dynamodb": "^3.1133.0",
-    "@saathi/shared": "workspace:*",
+    "@dosecircle/shared": "workspace:*",
     "web-push": "3.6.7",
     "zod": "^4.6.5"
   },

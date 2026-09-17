@@ -1,5 +1,5 @@
 {
-  "name": "saathi",
+  "name": "dosecircle",
   "private": true,
   "version": "0.1.0",
   "description": "Family medicine escalation: when a parent misses a dose, the right family member knows.",
@@ -12,9 +12,9 @@
     "typecheck": "pnpm -r typecheck",
     "test": "pnpm -r test",
     "build": "pnpm -r build",
-    "synth": "pnpm --filter @saathi/infra synth",
-    "secrets:init": "pnpm --filter @saathi/backend secrets:init",
-    "cdk:deploy": "pnpm --filter @saathi/infra exec cdk deploy"
+    "synth": "pnpm --filter @dosecircle/infra synth",
+    "secrets:init": "pnpm --filter @dosecircle/backend secrets:init",
+    "cdk:deploy": "pnpm --filter @dosecircle/infra exec cdk deploy"
   },
   "devDependencies": {
     "esbuild": "^0.28.2"

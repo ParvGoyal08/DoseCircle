@@ -11,7 +11,7 @@ export const env = {
   get stateMachineArn() {
     return requireEnv("STATE_MACHINE_ARN");
   },
-  /** SSM parameter path prefix, e.g. "/saathi". */
+  /** SSM parameter path prefix, e.g. "/dosecircle". */
   get ssmPrefix() {
     return requireEnv("SSM_PREFIX");
   },

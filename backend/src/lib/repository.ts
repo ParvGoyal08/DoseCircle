@@ -1,5 +1,5 @@
 import { GetCommand, QueryCommand } from "@aws-sdk/lib-dynamodb";
-import { doseSortKey, keys, parseDoseId } from "@saathi/shared";
+import { doseSortKey, keys, parseDoseId } from "@dosecircle/shared";
 import { ddb, isExpired } from "./aws.js";
 import { env } from "./env.js";
 import type { DeviceItem, DoseItem, MedicineItem, MemberItem, ParentItem, SlotItem } from "./model.js";

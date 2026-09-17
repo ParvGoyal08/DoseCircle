@@ -1,5 +1,5 @@
 import { UpdateCommand } from "@aws-sdk/lib-dynamodb";
-import { dailyUse, decrementPills, shouldWarnRefill } from "@saathi/shared";
+import { dailyUse, decrementPills, shouldWarnRefill } from "@dosecircle/shared";
 import { ddb, logger, metrics } from "./aws.js";
 import { appUrl, deliver } from "./deliver.js";
 import { env } from "./env.js";

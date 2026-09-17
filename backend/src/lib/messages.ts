@@ -1,4 +1,4 @@
-import { FALLBACK_LANGUAGE, isLanguageCode, type LanguageCode } from "@saathi/shared";
+import { FALLBACK_LANGUAGE, isLanguageCode, type LanguageCode } from "@dosecircle/shared";
 import en from "../../../shared/i18n/en.json" with { type: "json" };
 
 interface CatalogueFile {

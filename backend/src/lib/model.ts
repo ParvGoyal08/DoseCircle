@@ -1,6 +1,6 @@
-import type { DoseStatus, LanguageCode, MissClass, SlotCounts } from "@saathi/shared";
+import type { DoseStatus, LanguageCode, MissClass, SlotCounts } from "@dosecircle/shared";
 
-/** DynamoDB item shapes. Keys are built only through @saathi/shared `keys`. */
+/** DynamoDB item shapes. Keys are built only through @dosecircle/shared `keys`. */
 
 export interface ParentItem {
   PK: string;

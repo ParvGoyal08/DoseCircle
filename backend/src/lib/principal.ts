@@ -1,4 +1,4 @@
-import { isDemoFamily } from "@saathi/shared";
+import { isDemoFamily } from "@dosecircle/shared";
 
 /** Who is calling, resolved by an authorizer. Every data access checks it against the item. */
 export type Principal =

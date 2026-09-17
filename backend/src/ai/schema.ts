@@ -2,7 +2,7 @@ import { z } from "zod";
 
 /**
  * What the model returns for each medicine line. It transcribes only; the meaning of shorthand is
- * decided later by @saathi/shared interpretNotation, never by the model.
+ * decided later by @dosecircle/shared interpretNotation, never by the model.
  */
 export const ExtractedMedicineSchema = z.object({
   lineRefs: z.array(z.string()).describe("Ids of the OCR lines this medicine was read from, e.g. [\"L3\",\"L4\"]"),
