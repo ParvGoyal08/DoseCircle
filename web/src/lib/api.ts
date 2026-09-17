@@ -34,7 +34,7 @@ export async function api<T>(path: string, options: RequestOptions): Promise<T> 
   if (mockApiEnabled) {
     const { mockApi } = await import("./mock-api");
     const query = new URLSearchParams(Object.entries(options.query ?? {}).filter((entry): entry is [string, string] => entry[1] !== undefined)).toString();
-    return (await mockApi(query ? `${path}?${query}` : path, options.method ?? "GET")) as T;
+    return (await mockApi(query ? `${path}?${query}` : path, options.method ?? "GET", options.body as Record<string, unknown> | undefined)) as T;
   }
   const headers: Record<string, string> = {};
   if (options.body !== undefined) headers["content-type"] = "application/json";

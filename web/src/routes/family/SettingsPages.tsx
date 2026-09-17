@@ -243,8 +243,9 @@ function MySettings({ fid, myLang, isOwner }: { fid: string; myLang: LanguageCod
           tone="quiet"
           onClick={async () => {
             await signOut();
+            // Leave the signed-in area first, so it doesn't redirect to the sign-in page on the way out.
+            navigate("/", { replace: true });
             await reload();
-            navigate("/");
           }}
         >
           <LogOut aria-hidden className="size-5" />

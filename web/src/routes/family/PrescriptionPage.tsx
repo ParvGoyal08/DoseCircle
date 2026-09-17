@@ -33,6 +33,8 @@ async function toJpeg(file: File, edge: number, maxBytes: number): Promise<Blob>
 }
 
 async function upload(post: PresignedPost, blob: Blob) {
+  // The local preview has no S3 bucket to upload to.
+  if (post.url.startsWith("mock://")) return;
   const form = new FormData();
   for (const [key, value] of Object.entries(post.fields)) form.append(key, value);
   form.append("file", blob, "photo.jpg");

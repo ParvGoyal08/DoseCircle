@@ -1,4 +1,5 @@
 import { createBrowserRouter, Navigate, Outlet, RouterProvider } from "react-router";
+import { ErrorToaster } from "./components/ErrorToaster";
 import { FamilyProvider } from "./lib/family";
 import { DemoPage } from "./routes/demo/DemoPage";
 import { DemoPrescriptionPage } from "./routes/demo/DemoPrescriptionPage";
@@ -48,5 +49,10 @@ const router = createBrowserRouter([
 ]);
 
 export function App() {
-  return <RouterProvider router={router} />;
+  return (
+    <>
+      <RouterProvider router={router} />
+      <ErrorToaster />
+    </>
+  );
 }

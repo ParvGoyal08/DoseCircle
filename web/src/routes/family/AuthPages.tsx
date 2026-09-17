@@ -8,7 +8,7 @@ import { defaultLanguage, LanguagePicker } from "../../components/LanguagePicker
 import { Logo } from "../../components/Logo";
 import { Button } from "../../components/ui";
 import { useT } from "../../i18n";
-import { api, ApiError } from "../../lib/api";
+import { api, ApiError, mockApiEnabled } from "../../lib/api";
 import { authConfigured, confirmAccount, createAccount, signInWithEmail } from "../../lib/auth";
 import { useFamily } from "../../lib/family";
 import { enableReminders, pushSupport } from "../../lib/push";
@@ -88,7 +88,7 @@ export function SignInPage() {
     }
   };
 
-  if (!authConfigured)
+  if (!authConfigured && !mockApiEnabled)
     return (
       <AuthLayout>
         <p lang={lang} className="mt-10 rounded-[var(--radius-card)] bg-offline-tint p-4 text-lg text-offline">

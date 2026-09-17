@@ -7,10 +7,10 @@ import {
   resendSignUpCode,
   resetPassword,
   signIn,
-  signOut,
+  signOut as amplifySignOut,
   signUp,
 } from "aws-amplify/auth";
-import { setTokenProvider } from "./api";
+import { mockApiEnabled, setTokenProvider } from "./api";
 import { config } from "./config";
 
 /** Family members sign in with Cognito. Parents never do: their phone is paired with a one-time code. */
@@ -39,7 +39,13 @@ setTokenProvider("family", async () => {
   }
 });
 
+/** In the local preview (no AWS), sign-in is simulated so every screen can be tried. */
+async function mock() {
+  return import("./mock-api");
+}
+
 export async function isSignedIn(): Promise<boolean> {
+  if (mockApiEnabled) return true;
   if (!authConfigured) return false;
   try {
     await getCurrentUser();
@@ -52,6 +58,10 @@ export async function isSignedIn(): Promise<boolean> {
 export type SignInResult = "done" | "confirm";
 
 export async function signInWithEmail(email: string, password: string): Promise<SignInResult> {
+  if (mockApiEnabled) {
+    (await mock()).mockSignIn();
+    return "done";
+  }
   const result = await signIn({ username: email, password });
   if (result.isSignedIn) return "done";
   if (result.nextStep.signInStep === "CONFIRM_SIGN_UP") {
@@ -62,13 +72,26 @@ export async function signInWithEmail(email: string, password: string): Promise<
 }
 
 export async function createAccount(email: string, password: string): Promise<SignInResult> {
+  if (mockApiEnabled) return "confirm";
   const result = await signUp({ username: email, password, options: { userAttributes: { email } } });
   return result.isSignUpComplete ? "done" : "confirm";
 }
 
 export async function confirmAccount(email: string, password: string, code: string): Promise<void> {
+  if (mockApiEnabled) {
+    (await mock()).mockSignIn();
+    return;
+  }
   await confirmSignUp({ username: email, confirmationCode: code.trim() });
   await signIn({ username: email, password });
 }
 
-export { confirmResetPassword, resetPassword, signOut };
+export async function signOut(): Promise<void> {
+  if (mockApiEnabled) {
+    (await mock()).mockSignOut();
+    return;
+  }
+  await amplifySignOut();
+}
+
+export { confirmResetPassword, resetPassword };

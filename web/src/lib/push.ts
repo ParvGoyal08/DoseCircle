@@ -1,4 +1,4 @@
-import { api, type AuthKind } from "./api";
+import { api, mockApiEnabled, type AuthKind } from "./api";
 import { config } from "./config";
 
 export type PushSupport = "supported" | "needs-install" | "unsupported";
@@ -35,7 +35,11 @@ function urlBase64ToUint8Array(base64: string): Uint8Array<ArrayBuffer> {
 export async function enableReminders(who: Extract<AuthKind, "device" | "family">): Promise<NotificationPermission> {
   const permission = await Notification.requestPermission();
   if (permission !== "granted") return permission;
-  const registration = await navigator.serviceWorker.ready;
+  // The local preview has no service worker or push keys; permission alone is enough to try the flow.
+  if (mockApiEnabled) return permission;
+  const registration = await navigator.serviceWorker.getRegistration();
+  if (!registration) throw new Error("Reminders need the installed app. Please reload the page and try again.");
+  if (!config.vapidPublicKey) throw new Error("Reminders are not configured for this copy of the app.");
   const subscription =
     (await registration.pushManager.getSubscription()) ??
     (await registration.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlBase64ToUint8Array(config.vapidPublicKey) }));
