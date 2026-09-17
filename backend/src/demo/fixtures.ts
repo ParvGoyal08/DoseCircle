@@ -14,6 +14,50 @@ export const DEMO_PEOPLE = {
 
 const HOUR = 3600 * 1000;
 const DAY = 24 * HOUR;
+export const HISTORY_DAYS = 30;
+
+/** Small deterministic generator (mulberry32) so the demo history is identical every time. */
+function seeded(seed: number) {
+  let a = seed;
+  return () => {
+    a |= 0;
+    a = (a + 0x6d2b79f5) | 0;
+    let t = Math.imul(a ^ (a >>> 15), 1 | a);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
+
+interface DoseStory {
+  status: DoseStatus;
+  missClass?: MissClass;
+  offline?: boolean;
+  /** Minutes after the reminder that Taken was tapped. */
+  takenAfter?: number;
+  alerted?: ("son" | "daughter")[];
+  claimedBy?: "son" | "daughter";
+  /** Minutes after escalation that the claim came in. */
+  claimAfter?: number;
+}
+
+function storyFor(dayOffset: number, slot: "morning" | "night", random: () => number): DoseStory {
+  const jitter = (min: number, max: number) => Math.round(min + random() * (max - min));
+  // Specific days that give the charts something to say.
+  if (slot === "morning" && dayOffset === 26) return { status: "UNRESOLVED", missClass: "MISSED", alerted: ["son", "daughter"] };
+  if (slot === "night" && dayOffset === 23) return { status: "CLAIMED", missClass: "OFFLINE", offline: true, alerted: ["son"], claimedBy: "son", claimAfter: 4 };
+  if (slot === "night" && dayOffset === 16) return { status: "CLAIMED", missClass: "MISSED", alerted: ["son", "daughter"], claimedBy: "daughter", claimAfter: 19 };
+  if (slot === "morning" && dayOffset === 12) return { status: "TAKEN_LATE", missClass: "MISSED", takenAfter: 41, alerted: ["son"] };
+  if (slot === "night" && dayOffset === 9) return { status: "CLAIMED", missClass: "MISSED", alerted: ["son"], claimedBy: "son", claimAfter: 6 };
+  if (slot === "morning" && dayOffset === 5) return { status: "CLAIMED", missClass: "OFFLINE", offline: true, alerted: ["son", "daughter"], claimedBy: "daughter", claimAfter: 17 };
+  // Evenings slip in the last week.
+  if (slot === "night" && dayOffset <= 7) {
+    if (dayOffset === 6 || dayOffset === 3) return { status: "CLAIMED", missClass: "MISSED", alerted: ["son"], claimedBy: "son", claimAfter: jitter(4, 9) };
+    if (dayOffset === 2) return { status: "TAKEN_LATE", missClass: "MISSED", takenAfter: jitter(35, 48), alerted: ["son"] };
+    return { status: "TAKEN", takenAfter: jitter(12, 19) };
+  }
+  // Otherwise steady: mornings a few minutes after the reminder, nights a little later.
+  return { status: "TAKEN", takenAfter: slot === "morning" ? jitter(1, 9) : jitter(3, 14) };
+}
 
 export interface DemoSeed {
   fid: string;
@@ -70,34 +114,41 @@ export function buildDemoSeed(input: { sid: string; now: number; ttl: number }):
   const slot = (slotName: SlotName, compactTime: string, medIds: string[], critical: boolean): SlotItem => ({ ...keys.slot(pid, compactTime), pid, compactTime, slotName, medIds, critical, ttl });
   const slots = [slot("morning", "0800", ["med-glycomet", "med-telma"], false), slot("night", "2100", ["med-glycomet", "med-lantus"], true)];
 
-  // Six past days, so the week strip and doctor report have a believable story.
+  // Thirty past days, so every chart on the dashboard and the doctor report tells a believable story:
+  // mornings are steady, evening doses slip in the last week, the phone is offline twice, and both
+  // children have stepped in. The pattern is fixed (not random) so every demo and video looks the same.
   const history: DoseItem[] = [];
-  const pastOutcome = (dayOffset: number, slotName: SlotName): { status: DoseStatus; missClass?: MissClass; claimedBy?: string } => {
-    if (dayOffset === 5 && slotName === "morning") return { status: "UNRESOLVED", missClass: "MISSED" };
-    if (dayOffset === 4 && slotName === "night") return { status: "CLAIMED", missClass: "OFFLINE", claimedBy: sonId };
-    if (dayOffset === 2 && slotName === "morning") return { status: "TAKEN_LATE", missClass: "MISSED", claimedBy: daughterId };
-    return { status: "TAKEN" };
-  };
-  for (let dayOffset = 6; dayOffset >= 1; dayOffset--) {
+  const random = seeded(20260917);
+  for (let dayOffset = HISTORY_DAYS; dayOffset >= 1; dayOffset--) {
     for (const { slotName, hour, medIds, critical } of [
       { slotName: "morning" as const, hour: 8, medIds: ["med-glycomet", "med-telma"], critical: false },
       { slotName: "night" as const, hour: 21, medIds: ["med-glycomet", "med-lantus"], critical: true },
     ]) {
-      const scheduled = istTime(input.now - dayOffset * DAY, hour);
-      const doseId = makeDoseId(pid, istDoseStamp(new Date(scheduled)));
+      const scheduledMs = istTime(input.now - dayOffset * DAY, hour);
+      const scheduledAt = new Date(scheduledMs).toISOString();
+      const stamp = istDoseStamp(new Date(scheduledMs));
+      const at = (minutes: number) => new Date(scheduledMs + minutes * 60_000).toISOString();
+      const story = storyFor(dayOffset, slotName, random);
+      const escalatedAt = at(30);
       history.push({
-        ...keys.dose(pid, istDoseStamp(new Date(scheduled))),
-        doseId,
+        ...keys.dose(pid, stamp),
+        doseId: makeDoseId(pid, stamp),
         fid,
         pid,
         slotName,
         medIds,
         critical,
-        scheduledAt: new Date(scheduled).toISOString(),
+        scheduledAt,
         executionArn: "",
         channel: "inbox",
         ttl,
-        ...pastOutcome(dayOffset, slotName),
+        status: story.status,
+        ...(story.missClass ? { missClass: story.missClass } : {}),
+        ...(story.offline ? {} : { deliveredAt: at(0.05) }),
+        ...(story.takenAfter !== undefined ? { takenAt: at(story.takenAfter) } : {}),
+        ...(story.status !== "TAKEN" ? { escalatedAt } : {}),
+        ...(story.alerted ? { alertedMemberIds: new Set(story.alerted.map((who) => (who === "son" ? sonId : daughterId))) } : {}),
+        ...(story.claimedBy ? { claimedBy: story.claimedBy === "son" ? sonId : daughterId, claimedAt: at(30 + (story.claimAfter ?? 5)) } : {}),
       });
     }
   }

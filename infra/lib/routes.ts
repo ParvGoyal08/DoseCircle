@@ -20,6 +20,7 @@ export const FAMILY_ROUTE_KEYS = [
   "DELETE /families/{fid}/parents/{pid}/medicines/{medId}",
   "POST /families/{fid}/parents/{pid}/medicines/{medId}/refill",
   "GET /families/{fid}/parents/{pid}/report",
+  "GET /families/{fid}/parents/{pid}/insights",
   "POST /families/{fid}/prescriptions",
   "GET /families/{fid}/prescriptions/{rxId}",
   "POST /families/{fid}/prescriptions/{rxId}/confirm",
@@ -43,4 +44,5 @@ export const DEMO_ROUTE_KEYS = [
   "GET /demo/prescription",
   "GET /demo/doses/{doseId}/timeline",
   "GET /demo/families/{fid}/parents/{pid}/report",
+  "GET /demo/families/{fid}/parents/{pid}/insights",
 ] as const;

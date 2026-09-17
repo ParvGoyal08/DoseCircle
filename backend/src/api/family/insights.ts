@@ -12,6 +12,7 @@ import { queryParam } from "../../lib/router.js";
 import { buildDoctorReport } from "../../report/build.js";
 import { istDate } from "../../scheduling/plan.js";
 import { listMedicines } from "../../scheduling/sync-slots.js";
+import { buildInsights } from "../../views/insights.js";
 import { buildTimeline, type DoseEventRow, type HistoryEvent } from "../../views/timeline.js";
 
 async function executionHistory(executionArn: string): Promise<HistoryEvent[]> {
@@ -125,4 +126,44 @@ export async function getReport(event: APIGatewayProxyEventV2) {
       .map((m) => ({ medId: m.medId, nameAsPrinted: m.nameAsPrinted, strength: m.strength, slots: m.slots, food: m.food, active: m.active })),
     report,
   });
+}
+
+/**
+ * GET /families/{fid}/parents/{pid}/insights?days=7|30 — the analytics dashboard.
+ * Reads twice the period so trends can be compared with the period before.
+ */
+export async function getInsights(event: APIGatewayProxyEventV2) {
+  const fid = pathParam(event, "fid");
+  const pid = pathParam(event, "pid");
+  const parent = await getParent(fid, pid);
+  if (!parent) throw new HttpError(404, "Parent not found");
+  const { entity } = await memberPrincipal(await principalFrom(event), queryParam(event, "asMemberId"));
+  await authorize({ principal: entity, action: "ViewReport", resource: parentEntity(parent), entities: [familyEntity(fid)] });
+
+  const days = queryParam(event, "days") === "7" ? 7 : 30;
+  // Today's doses may still be open, so the period ends yesterday.
+  const to = istDate(new Date(Date.now() - DAY_MS));
+  const toMs = Date.parse(`${to}T12:00:00+05:30`);
+  const from = istDate(new Date(toMs - (days - 1) * DAY_MS));
+  const previousFrom = istDate(new Date(toMs - (2 * days - 1) * DAY_MS));
+  const stamp = (date: string, time: string) => `${date.replaceAll("-", "")}${time}`;
+
+  const [doses, medicines, members] = await Promise.all([listDoses(pid, stamp(previousFrom, "0000"), stamp(to, "2359")), listMedicines(pid), listMembers(fid)]);
+  // Test and demo runs are not part of the record.
+  const real = doses.filter((d) => d.SK.split("#").length === 2);
+  const current = real.filter((d) => istDate(new Date(d.scheduledAt)) >= from);
+  const previous = real.filter((d) => istDate(new Date(d.scheduledAt)) < from);
+  const names = new Map(members.map((m) => [m.mid, m.displayName]));
+
+  return json(
+    200,
+    buildInsights({
+      doses: current,
+      previousDoses: previous,
+      medicines,
+      ladder: parent.ladder.map((mid) => ({ mid, displayName: names.get(mid) ?? "" })),
+      to,
+      days,
+    }),
+  );
 }

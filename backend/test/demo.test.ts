@@ -17,17 +17,23 @@ describe("demo fixtures", () => {
     expect(keys.size).toBe(items.length);
   });
 
-  it("stays within one DynamoDB batch per 25 items", () => {
-    expect(items.length).toBeLessThan(50);
+  it("writes in a handful of DynamoDB batches", () => {
+    expect(Math.ceil(items.length / 25)).toBeLessThanOrEqual(4);
   });
 
-  it("seeds six days of history with one missed and one offline dose", () => {
-    const doses = items.filter((i) => i.SK.startsWith("DOSE#"));
-    expect(doses).toHaveLength(12);
-    expect(doses.filter((d) => d.missClass === "OFFLINE")).toHaveLength(1);
+  it("seeds thirty days of history with misses, offline days and claims by both children", () => {
+    const doses = items.filter((i) => i.SK.startsWith("DOSE#")) as { status: string; missClass?: string; claimedBy?: string }[];
+    expect(doses).toHaveLength(60);
+    expect(doses.filter((d) => d.missClass === "OFFLINE")).toHaveLength(2);
     expect(doses.filter((d) => d.status === "UNRESOLVED")).toHaveLength(1);
+    expect(new Set(doses.map((d) => d.claimedBy).filter(Boolean))).toEqual(new Set([seed.sonId, seed.daughterId]));
     // Nothing seeded for today, so the live demo dose is the only one on the parent's screen.
-    expect(doses.every((d) => !d.SK.startsWith("DOSE#20260918"))).toBe(true);
+    expect(doses.every((d) => !(d as { SK?: string }).SK?.startsWith("DOSE#20260918"))).toBe(true);
+  });
+
+  it("is identical every time, so demos and the video match", () => {
+    const again = buildDemoSeed({ sid: "s-0123456789ab", now, ttl: 1_900_000_000 });
+    expect(JSON.stringify(again.items, (_k, v) => (v instanceof Set ? [...v] : v))).toBe(JSON.stringify(seed.items, (_k, v) => (v instanceof Set ? [...v] : v)));
   });
 
   it("has a critical night slot and a medicine low enough to trigger the refill warning", () => {
@@ -41,10 +47,10 @@ describe("demo fixtures", () => {
     expect(new Date(istTime(Date.parse("2026-09-18T00:10:00+05:30"), 21)).toISOString()).toBe("2026-09-18T15:30:00.000Z");
   });
 
-  it("tells a believable week: one missed, one unknown, the rest taken", () => {
+  it("tells a believable month: mostly taken, a few missed, two unknown", () => {
     const doses = items.filter((i) => i.SK.startsWith("DOSE#")) as { status: DoseStatus; missClass?: MissClass }[];
     const summary = summariseAdherence(doses.map((d) => reportOutcome(d)));
-    expect(summary).toMatchObject({ onTime: 9, late: 1, missed: 1, unknown: 1 });
-    expect(summary.adherence).toBeCloseTo(10 / 11);
+    expect(summary).toMatchObject({ onTime: 51, late: 2, missed: 5, unknown: 2 });
+    expect(summary.adherence).toBeCloseTo(53 / 58);
   });
 });

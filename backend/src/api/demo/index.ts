@@ -17,7 +17,7 @@ import { get, getParent, listDoses, listMembers } from "../../lib/repository.js"
 import { router } from "../../lib/router.js";
 import { istDate } from "../../scheduling/plan.js";
 import { openAlerts } from "../../views/dashboard.js";
-import { getReport, getTimeline } from "../family/insights.js";
+import { getInsights, getReport, getTimeline } from "../family/insights.js";
 import { doseView } from "../parent/index.js";
 
 const SESSION_HOURS = 2;
@@ -214,6 +214,7 @@ export const DEMO_ROUTES = {
   "GET /demo/prescription": getSamplePrescription,
   "GET /demo/doses/{doseId}/timeline": getTimeline,
   "GET /demo/families/{fid}/parents/{pid}/report": getReport,
+  "GET /demo/families/{fid}/parents/{pid}/insights": getInsights,
 } as const;
 
 export const handler = router(DEMO_ROUTES);

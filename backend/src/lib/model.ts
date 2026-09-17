@@ -112,6 +112,8 @@ export interface DoseItem {
   takenAt?: string;
   claimedBy?: string;
   claimedAt?: string;
+  /** Set by the workflow's MarkEscalating state. */
+  escalatedAt?: string;
   alertedMemberIds?: Set<string>;
   GSI2PK?: string;
   GSI2SK?: string;

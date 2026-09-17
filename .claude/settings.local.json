@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "WebFetch(domain:pmc.ncbi.nlm.nih.gov)",
+      "WebFetch(domain:www.nngroup.com)",
+      "WebFetch(domain:ouraring.com)",
+      "WebFetch(domain:la-hacks-2025.devpost.com)",
+      "WebFetch(domain:hacktx2025.devpost.com)",
+      "WebFetch(domain:www.wemakedevs.org)"
+    ]
+  }
+}
