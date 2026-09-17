@@ -5,6 +5,7 @@ import type { APIGatewayProxyEventV2 } from "aws-lambda";
 import { createHash } from "node:crypto";
 import { z } from "zod";
 import { buildDemoSeed, DEMO_PEOPLE } from "../../demo/fixtures.js";
+import { samplePrescription } from "../../demo/sample-prescription.js";
 import { ddb, logger, metrics, secret, sfn, ttlInHours } from "../../lib/aws.js";
 import { signDemoToken } from "../../lib/demo-jwt.js";
 import { env } from "../../lib/env.js";
@@ -199,11 +200,18 @@ async function reset(event: APIGatewayProxyEventV2) {
   return json(204);
 }
 
+/** GET /demo/prescription — a fictional printed prescription, already read, for the review screen. */
+async function getSamplePrescription(event: APIGatewayProxyEventV2) {
+  await sessionFor(event);
+  return json(200, { sample: true, status: "READY", guardrailInterventions: 0, ...samplePrescription() });
+}
+
 export const DEMO_ROUTES = {
   "POST /demo/sessions": createSession,
   "GET /demo/state": getState,
   "POST /demo/doses": startDose,
   "POST /demo/reset": reset,
+  "GET /demo/prescription": getSamplePrescription,
   "GET /demo/doses/{doseId}/timeline": getTimeline,
   "GET /demo/families/{fid}/parents/{pid}/report": getReport,
 } as const;

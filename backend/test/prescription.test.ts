@@ -4,6 +4,7 @@ import { buildConverseInput, parseConverseOutput, SYSTEM_PROMPT } from "../src/a
 import { runExtraction, type ExtractionPorts } from "../src/ai/pipeline.js";
 import { EXTRACTION_TOOL_NAME, type ExtractedMedicine } from "../src/ai/schema.js";
 import { linesFromBlocks } from "../src/ai/textract.js";
+import { samplePrescription } from "../src/demo/sample-prescription.js";
 import { checkDecisions, MAX_MODEL_BYTES, type ConfirmDecision } from "../src/api/family/prescriptions.js";
 
 const line = (id: string, text: string, confidence: number, wordIds: string[]): Block => ({
@@ -173,4 +174,15 @@ describe("confirming a prescription", () => {
   it("keeps the model image within the Bedrock limit", () => {
     expect(MAX_MODEL_BYTES).toBeLessThanOrEqual(3.75 * 1024 * 1024);
   });
+
+describe("demo sample prescription", () => {
+  it("shows every review level a family would meet", () => {
+    const { rows, lines } = samplePrescription();
+    expect(rows.map((r) => r.level)).toEqual(["amber", "green", "amber", "green"]);
+    expect(rows[2]?.reasons).toEqual(expect.arrayContaining(["handwritten", "low_ocr_confidence", "amount_not_written"]));
+    expect(rows[3]?.schedule.asNeeded).toBe(true);
+    expect(rows[0]?.schedule).toMatchObject({ slots: { morning: 1, night: 1 }, food: "after", durationDays: 30 });
+    for (const line of lines) expect(line.box!.left + line.box!.width).toBeLessThanOrEqual(1);
+  });
+});
 });

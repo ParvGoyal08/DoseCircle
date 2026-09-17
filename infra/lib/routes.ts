@@ -40,6 +40,7 @@ export const DEMO_ROUTE_KEYS = [
   "GET /demo/state",
   "POST /demo/doses",
   "POST /demo/reset",
+  "GET /demo/prescription",
   "GET /demo/doses/{doseId}/timeline",
   "GET /demo/families/{fid}/parents/{pid}/report",
 ] as const;
