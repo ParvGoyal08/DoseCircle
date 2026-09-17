@@ -20,6 +20,9 @@ export const FAMILY_ROUTE_KEYS = [
   "DELETE /families/{fid}/parents/{pid}/medicines/{medId}",
   "POST /families/{fid}/parents/{pid}/medicines/{medId}/refill",
   "GET /families/{fid}/parents/{pid}/report",
+  "POST /families/{fid}/prescriptions",
+  "GET /families/{fid}/prescriptions/{rxId}",
+  "POST /families/{fid}/prescriptions/{rxId}/confirm",
   "GET /doses/{doseId}/timeline",
   "POST /push/subscriptions",
 ] as const;

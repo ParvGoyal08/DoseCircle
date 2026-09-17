@@ -9,8 +9,10 @@ import { readdirSync, readFileSync } from "node:fs";
 import { Effect, PolicyStatement, Role, ServicePrincipal } from "aws-cdk-lib/aws-iam";
 import type { NodejsFunction } from "aws-cdk-lib/aws-lambda-nodejs";
 import { LogGroup, RetentionDays } from "aws-cdk-lib/aws-logs";
-import { BlockPublicAccess, Bucket, BucketEncryption, HttpMethods } from "aws-cdk-lib/aws-s3";
+import { BlockPublicAccess, Bucket, BucketEncryption, EventType, HttpMethods } from "aws-cdk-lib/aws-s3";
 import { CfnScheduleGroup } from "aws-cdk-lib/aws-scheduler";
+import { CfnGuardrail, CfnGuardrailVersion } from "aws-cdk-lib/aws-bedrock";
+import { LambdaDestination } from "aws-cdk-lib/aws-s3-notifications";
 import { Queue } from "aws-cdk-lib/aws-sqs";
 import { DefinitionBody, LogLevel, StateMachine, StateMachineType } from "aws-cdk-lib/aws-stepfunctions";
 import type { Construct } from "constructs";
@@ -25,6 +27,8 @@ export interface DoseCircleStackProps extends StackProps {
   ssmPrefix: string;
   /** Verified SES sender in ap-south-1. Without it Cognito's default sender allows only 50 emails/day. */
   sesFromEmail?: string;
+  /** Bedrock inference profile for prescription reading. Only Global profiles serve Claude from Mumbai. */
+  bedrockModelId?: string;
 }
 
 export class DoseCircleStack extends Stack {
@@ -172,6 +176,73 @@ export class DoseCircleStack extends Stack {
     stateMachine.grantStartExecution(schedulerRole);
     schedulerDlq.grantSendMessages(schedulerRole);
 
+    // ── Prescription reading: Textract (Mumbai) → Claude via Bedrock → Guardrail (Classic tier, Mumbai) ──
+    const guardrail = new CfnGuardrail(this, "NoMedicalAdvice", {
+      name: `${this.stackName}-no-medical-advice`,
+      description: "Keeps the prescription reader's free-text notes to transcription problems only.",
+      blockedInputMessaging: "This note was removed.",
+      blockedOutputsMessaging: "This note was removed.",
+      topicPolicyConfig: {
+        // Classic tier keeps processing in ap-south-1. It is English-only, which is fine: only the
+        // model's English notes are screened, and users only ever see reviewed fixed strings otherwise.
+        topicsTierConfig: { tierName: "CLASSIC" },
+        topicsConfig: [
+          {
+            name: "MedicalAdvice",
+            type: "DENY",
+            definition: "Advice or opinions about taking, changing, stopping, combining or dosing medicines, or about diagnoses, symptoms or treatment.",
+            examples: [
+              "You should take two tablets instead of one.",
+              "This dose seems too high for an elderly patient.",
+              "Stop this medicine if you feel dizzy.",
+              "These two medicines should not be taken together.",
+              "Metformin is used to treat diabetes.",
+            ],
+          },
+        ],
+      },
+      contentPolicyConfig: {
+        contentFiltersTierConfig: { tierName: "CLASSIC" },
+        filtersConfig: ["HATE", "INSULTS", "SEXUAL", "VIOLENCE", "MISCONDUCT"].map((type) => ({ type, inputStrength: "HIGH", outputStrength: "HIGH" })),
+      },
+    });
+    const guardrailVersion = new CfnGuardrailVersion(this, "NoMedicalAdviceVersion", {
+      guardrailIdentifier: guardrail.attrGuardrailId,
+      description: "Deployed with the stack",
+    });
+
+    const inferenceProfileId = props.bedrockModelId ?? "global.anthropic.claude-sonnet-4-6";
+    const foundationModelId = inferenceProfileId.replace(/^global\./, "");
+    const inferenceProfileArn = this.formatArn({ service: "bedrock", resource: "inference-profile", resourceName: inferenceProfileId });
+    const extractor = doseCircleFunction(this, "ExtractPrescription", "ai/extract-prescription.ts", {
+      environment: { ...baseEnv, BEDROCK_MODEL_ID: inferenceProfileId, GUARDRAIL_ID: guardrail.attrGuardrailId, GUARDRAIL_VERSION: guardrailVersion.attrVersion },
+      timeout: Duration.seconds(90),
+      memorySize: 512,
+    });
+    table.grantReadWriteData(extractor);
+    prescriptions.grantRead(extractor, "rx/*");
+    extractor.addToRolePolicy(new PolicyStatement({ actions: ["textract:DetectDocumentText"], resources: ["*"] }));
+    // Global cross-Region inference needs three statements: the profile, the in-Region model reached
+    // through that profile, and the Region-less global model ARN.
+    extractor.addToRolePolicy(new PolicyStatement({ actions: ["bedrock:InvokeModel"], resources: [inferenceProfileArn] }));
+    extractor.addToRolePolicy(
+      new PolicyStatement({
+        actions: ["bedrock:InvokeModel"],
+        resources: [`arn:${this.partition}:bedrock:${this.region}::foundation-model/${foundationModelId}`],
+        conditions: { StringLike: { "bedrock:InferenceProfileArn": inferenceProfileArn } },
+      }),
+    );
+    extractor.addToRolePolicy(
+      new PolicyStatement({
+        actions: ["bedrock:InvokeModel"],
+        resources: [`arn:${this.partition}:bedrock:::foundation-model/${foundationModelId}`],
+        conditions: { StringEquals: { "aws:RequestedRegion": "unspecified" }, StringLike: { "bedrock:InferenceProfileArn": inferenceProfileArn } },
+      }),
+    );
+    extractor.addToRolePolicy(new PolicyStatement({ actions: ["bedrock:ApplyGuardrail"], resources: [guardrail.attrGuardrailArn] }));
+    // Only the full-size upload starts extraction; nothing is ever written back under rx/, so it cannot loop.
+    prescriptions.addEventNotification(EventType.OBJECT_CREATED, new LambdaDestination(extractor), { prefix: "rx/", suffix: "original.jpg" });
+
     // ── HTTP API ────────────────────────────────────────────────────────────
     const deviceOrDemoAuthorizerFn = withSecrets(doseCircleFunction(this, "DeviceDemoAuthorizer", "authorizers/device-demo.ts", { environment: baseEnv }));
     table.grantReadData(deviceOrDemoAuthorizerFn);
@@ -197,6 +268,7 @@ export class DoseCircleStack extends Stack {
       SCHEDULE_GROUP: scheduleGroup.name!,
       SCHEDULER_ROLE_ARN: schedulerRole.roleArn,
       SCHEDULER_DLQ_ARN: schedulerDlq.queueArn,
+      PRESCRIPTIONS_BUCKET: prescriptions.bucketName,
     };
     const apiFunction = (id: string, entry: string, timeout = Duration.seconds(10)) => {
       const fn = withSecrets(doseCircleFunction(this, id, entry, { environment: apiEnv, timeout }));
@@ -236,6 +308,9 @@ export class DoseCircleStack extends Stack {
       }),
     );
     schedulerRole.grantPassRole(familyApi.grantPrincipal);
+    // Presigned uploads and the review image are signed with this function's role.
+    prescriptions.grantPut(familyApi, "rx/*");
+    prescriptions.grantRead(familyApi, "rx/*");
     addRoutes(
       familyApi,
       Object.fromEntries(FAMILY_ROUTE_KEYS.map((key) => [key, family])),
@@ -262,6 +337,7 @@ export class DoseCircleStack extends Stack {
       "POST /demo/sessions": { ThrottlingRateLimit: 2, ThrottlingBurstLimit: 5 },
       "POST /demo/doses": { ThrottlingRateLimit: 5, ThrottlingBurstLimit: 10 },
       "POST /families/{fid}/parents/{pid}/test-dose": { ThrottlingRateLimit: 1, ThrottlingBurstLimit: 2 },
+      "POST /families/{fid}/prescriptions": { ThrottlingRateLimit: 1, ThrottlingBurstLimit: 3 },
     };
 
     // ── Outputs for the web app's environment ───────────────────────────────
@@ -275,5 +351,6 @@ export class DoseCircleStack extends Stack {
     new CfnOutput(this, "ScheduleGroupName", { value: scheduleGroup.name! });
     new CfnOutput(this, "SchedulerRoleArn", { value: schedulerRole.roleArn });
     new CfnOutput(this, "SchedulerDeadLetterQueueArn", { value: schedulerDlq.queueArn });
+    new CfnOutput(this, "GuardrailId", { value: guardrail.attrGuardrailId });
   }
 }

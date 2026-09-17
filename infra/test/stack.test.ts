@@ -66,7 +66,10 @@ describe("DoseCircleStack", () => {
 
   it("runs every function on Node.js 24, arm64", () => {
     const functions = template.findResources("AWS::Lambda::Function");
-    for (const fn of Object.values(functions)) {
+    // CDK's own S3 notification helper is managed by CDK, not by us.
+    const ours = Object.entries(functions).filter(([id]) => !id.startsWith("BucketNotificationsHandler")).map(([, fn]) => fn);
+    expect(ours.length).toBe(Object.keys(functions).length - 1);
+    for (const fn of ours) {
       expect(fn.Properties.Runtime).toBe("nodejs24.x");
       expect(fn.Properties.Architectures).toEqual(["arm64"]);
     }
@@ -155,5 +158,34 @@ describe("DoseCircleStack", () => {
     expect(scheduler.length).toBeGreaterThan(0);
     for (const statement of scheduler) expect(JSON.stringify(statement.Resource)).toContain("-doses/*");
     expect(statements.some((s) => [s.Action].flat().includes("iam:PassRole"))).toBe(true);
+  });
+
+  it("keeps the guardrail on the Classic tier so screening stays in Mumbai", () => {
+    template.hasResourceProperties("AWS::Bedrock::Guardrail", {
+      TopicPolicyConfig: Match.objectLike({ TopicsTierConfig: { TierName: "CLASSIC" }, TopicsConfig: [Match.objectLike({ Name: "MedicalAdvice", Type: "DENY" })] }),
+      ContentPolicyConfig: Match.objectLike({ ContentFiltersTierConfig: { TierName: "CLASSIC" } }),
+    });
+    template.resourceCountIs("AWS::Bedrock::GuardrailVersion", 1);
+  });
+
+  it("grants the prescription reader the three statements a Global inference profile needs", () => {
+    const statements = Object.values(template.findResources("AWS::IAM::Policy")).flatMap((p) => p.Properties.PolicyDocument.Statement) as { Action: string | string[]; Resource: unknown; Condition?: Record<string, Record<string, string>> }[];
+    const invoke = statements.filter((s) => [s.Action].flat().includes("bedrock:InvokeModel")).map((s) => JSON.stringify(s));
+    expect(invoke.some((s) => s.includes("inference-profile/global.anthropic.claude-sonnet-4-6"))).toBe(true);
+    expect(invoke.some((s) => s.includes(":foundation-model/anthropic.claude-sonnet-4-6") && s.includes("bedrock:InferenceProfileArn"))).toBe(true);
+    expect(invoke.some((s) => s.includes("bedrock:::foundation-model/anthropic.claude-sonnet-4-6") && s.includes('"aws:RequestedRegion":"unspecified"'))).toBe(true);
+  });
+
+  it("starts extraction only for the full-size upload under rx/", () => {
+    template.hasResourceProperties("Custom::S3BucketNotifications", {
+      NotificationConfiguration: {
+        LambdaFunctionConfigurations: [
+          Match.objectLike({
+            Events: ["s3:ObjectCreated:*"],
+            Filter: { Key: { FilterRules: Match.arrayWith([{ Name: "suffix", Value: "original.jpg" }, { Name: "prefix", Value: "rx/" }]) } },
+          }),
+        ],
+      },
+    });
   });
 });

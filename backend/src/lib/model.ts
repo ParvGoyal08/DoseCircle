@@ -1,4 +1,6 @@
-import type { DoseStatus, LanguageCode, MissClass, SlotCounts } from "@dosecircle/shared";
+import type { DoseStatus, LanguageCode, MissClass, NotationResult, SlotCounts } from "@dosecircle/shared";
+import type { ExtractedMedicine } from "../ai/schema.js";
+import type { OcrLineWithBox } from "../ai/textract.js";
 
 /** DynamoDB item shapes. Keys are built only through @dosecircle/shared `keys`. */
 
@@ -136,4 +138,37 @@ export interface PushSubscriptionItem {
   subjectId: string;
   subscription: { endpoint: string; keys: { p256dh: string; auth: string } };
   lang: LanguageCode;
+}
+
+export type PrescriptionStatus = "AWAITING_UPLOAD" | "EXTRACTING" | "READY" | "FAILED" | "CONFIRMED";
+
+export interface PrescriptionRow {
+  rowId: string;
+  level: "red" | "amber" | "green";
+  reasons: string[];
+  medicine: ExtractedMedicine;
+  schedule: NotationResult;
+}
+
+export interface PrescriptionItem {
+  PK: string;
+  SK: string;
+  rxId: string;
+  fid: string;
+  pid: string;
+  status: PrescriptionStatus;
+  createdBy: string;
+  createdAt: string;
+  /** The family member agreed the photo may be read by AI, possibly outside India. */
+  consentAt: string;
+  failure?: "unreadable" | "upload_incomplete" | "no_medicines" | "error";
+  lines?: OcrLineWithBox[];
+  rows?: PrescriptionRow[];
+  modelId?: string;
+  guardrailInterventions?: number;
+  extractionMs?: number;
+  confirmedAt?: string;
+  confirmedBy?: string;
+  medIds?: string[];
+  ttl?: number;
 }

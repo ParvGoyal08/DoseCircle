@@ -2,6 +2,7 @@ import { router } from "../../lib/router.js";
 import { getDashboard } from "./dashboard.js";
 import { getReport, getTimeline } from "./insights.js";
 import { createInvite, listDevices, revokeDevice, saveMemberSubscription, sendTestDose, setLadder, updateParent } from "./manage.js";
+import { confirmPrescription, createPrescription, getPrescription } from "./prescriptions.js";
 import { addMedicine, listParentMedicines, refillMedicine, stopMedicine, updateMedicine } from "./medicines.js";
 import { acceptInvite, createFamily, getMe, setMyLanguage } from "./setup.js";
 
@@ -24,6 +25,9 @@ export const FAMILY_ROUTES = {
   "DELETE /families/{fid}/parents/{pid}/medicines/{medId}": stopMedicine,
   "POST /families/{fid}/parents/{pid}/medicines/{medId}/refill": refillMedicine,
   "GET /families/{fid}/parents/{pid}/report": getReport,
+  "POST /families/{fid}/prescriptions": createPrescription,
+  "GET /families/{fid}/prescriptions/{rxId}": getPrescription,
+  "POST /families/{fid}/prescriptions/{rxId}/confirm": confirmPrescription,
   "GET /doses/{doseId}/timeline": getTimeline,
   "POST /push/subscriptions": saveMemberSubscription,
 } as const;
