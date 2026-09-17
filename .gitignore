@@ -22,3 +22,4 @@ fixtures-private/
 web/dist/
 web/dev-dist/
 review/
+.deploy/
