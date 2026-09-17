@@ -1,0 +1,9 @@
+packages:
+  - shared
+  - backend
+  - infra
+  - web
+allowBuilds:
+  esbuild: true
+minimumReleaseAgeExclude:
+  - aws-cdk@2.1142.0

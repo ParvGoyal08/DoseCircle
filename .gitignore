@@ -1,0 +1,21 @@
+node_modules/
+dist/
+.vite/
+coverage/
+
+# CDK
+infra/cdk.out/
+infra/cdk.context.json
+
+# Env and secrets — never commit
+.env
+.env.*
+!.env.example
+*.pem
+
+# Local scratch data (real prescriptions must never be committed)
+scratch/
+fixtures-private/
+
+.DS_Store
+*.log

@@ -1,0 +1,22 @@
+{
+  "name": "saathi",
+  "private": true,
+  "version": "0.1.0",
+  "description": "Family medicine escalation: when a parent misses a dose, the right family member knows.",
+  "license": "MIT",
+  "packageManager": "pnpm@11.25.0",
+  "engines": {
+    "node": ">=20.18.1"
+  },
+  "scripts": {
+    "typecheck": "pnpm -r typecheck",
+    "test": "pnpm -r test",
+    "build": "pnpm -r build",
+    "synth": "pnpm --filter @saathi/infra synth",
+    "secrets:init": "pnpm --filter @saathi/backend secrets:init",
+    "deploy": "pnpm --filter @saathi/infra deploy"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.2"
+  }
+}
