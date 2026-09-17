@@ -43,8 +43,8 @@ export function Timeline({ items, lang: viewerLang, live = false }: { items: Tim
             transition={{ duration: 0.2 }}
             className="relative flex gap-3 pb-5"
           >
-            {!last && <span aria-hidden className="absolute left-[16px] top-9 bottom-0 w-0 border-l-2 border-dashed border-ink/30" />}
-            <span className={cx("relative z-10 grid size-9 shrink-0 place-items-center rounded-full border-2 border-ink shadow-[2px_2px_0_var(--color-ink)]", look.dot, live && last && "ring-4 ring-haldi")}>
+            {!last && <span aria-hidden className="absolute left-[16px] top-9 bottom-0 w-0 border-l border-line-strong" />}
+            <span className={cx("relative z-10 grid size-9 shrink-0 place-items-center rounded-full border border-line-strong", look.dot, live && last && "ring-4 ring-haldi")}>
               <Icon aria-hidden className="size-4" strokeWidth={2.5} />
             </span>
             <div className="min-w-0 flex-1 pt-0.5">

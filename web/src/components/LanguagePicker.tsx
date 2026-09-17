@@ -32,9 +32,9 @@ export function LanguagePicker({ value, onChange, large = false }: { value: Lang
             <label
               key={language.code}
               className={cx(
-                "pressable relative flex cursor-pointer items-center justify-between gap-3 rounded-[var(--radius-card)] border-2 border-ink px-5 shadow-[3px_3px_0_var(--color-ink)]",
+                "pressable relative flex cursor-pointer items-center justify-between gap-3 rounded-[var(--radius-card)] px-5 ring-1",
                 large ? "min-h-20" : "min-h-16",
-                selected ? "bg-haldi" : "bg-surface",
+                selected ? "bg-indigo text-white ring-indigo" : "bg-surface ring-line-strong hover:ring-indigo-soft",
               )}
             >
               <input type="radio" name="language" value={language.code} checked={selected} onChange={() => onChange(language.code)} className="sr-only" />
@@ -47,7 +47,7 @@ export function LanguagePicker({ value, onChange, large = false }: { value: Lang
                     {i18next.getFixedT(language.code)("lang.draft")}
                   </span>
                 )}
-                <span aria-hidden className={cx("grid size-7 place-items-center rounded-full border-2", selected ? "border-ink bg-ink text-paper" : "border-line-strong")}>
+                <span aria-hidden className={cx("grid size-7 place-items-center rounded-full border-2", selected ? "border-white bg-white text-indigo" : "border-line-strong")}>
                   {selected && <Check className="size-4" strokeWidth={3} />}
                 </span>
               </span>

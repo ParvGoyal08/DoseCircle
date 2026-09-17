@@ -1,92 +1,117 @@
 @import "tailwindcss";
-@import "@fontsource-variable/anek-latin/wdth.css";
+@import "@fontsource-variable/inter/wght.css";
 @import "@fontsource-variable/anek-kannada/wdth.css";
 @import "@fontsource-variable/anek-devanagari/wdth.css";
 
+@custom-variant dark (&:where([data-theme="dark"], [data-theme="dark"] *));
+
 /*
- * "Haldi & Kolam" — warm paper, near-black ink, turmeric and marigold for celebration, indigo for depth.
- * Decoration (kolam patterns, garlands, stickers, characters) lives around the content, never inside it:
- * text always sits on a flat, high-contrast surface.
- * Every status has a colour, an icon and a word; colour is never the only signal.
- * Contrast on paper (WCAG): ink 16.4, muted 7.1, taken 6.1, due 6.2, missed 6.2, critical 9.5, offline 7.2, claimed 6.3, indigo 12.8.
+ * "Ink & Haldi" — a light, high-contrast app with ink-blue hero surfaces.
+ *
+ * Evidence behind the choices:
+ *   - Dark text on light backgrounds reads best across ages, especially in bright rooms (PubMed 23654206;
+ *     ETRA 2025). A dark theme is offered for people who prefer it (e.g. cataracts, NN/g).
+ *   - Haldi #F4B400 on white is 1.85:1, so it is only ever a fill behind dark text (ink on haldi 9.6:1),
+ *     never text, thin lines or icons on white.
+ *   - Every text colour below is at least 7:1 on the page (WCAG 2.2 AAA 1.4.6), in both themes.
+ *   - Status colours mean one thing everywhere, and always come with a label, icon or pattern too,
+ *     because blue/yellow discrimination declines with age (Sci Rep 2020).
  */
 @theme {
-  --color-paper: #fff8ec;
+  --color-paper: #f6f7fb;
   --color-surface: #ffffff;
-  --color-ink: #1c1917;
-  --color-muted: #57534e;
-  --color-line: #eadfcb;
-  --color-line-strong: #d6c6a8;
+  --color-sunken: #eef0f6;
+  --color-ink: #14133a;
+  --color-muted: #4a4b68;
+  --color-line: #e3e5ef;
+  --color-line-strong: #c9ccdc;
 
-  /* Festive brand colours: fills and decoration. */
-  --color-haldi: #f4b400;
-  --color-haldi-tint: #fff0c2;
-  --color-haldi-deep: #7a5a00;
-  --color-marigold: #ff8a1f;
-  --color-marigold-tint: #ffe3c7;
   --color-indigo: #25236e;
   --color-indigo-soft: #3b39a3;
-  --color-indigo-tint: #e7e6ff;
-  --color-leaf: #2f9e6b;
-  --color-rose: #ff6f91;
-  --color-rose-tint: #ffe0e8;
-  --color-sky-tint: #dcefff;
-  --color-mint-tint: #d8f3e6;
+  --color-indigo-tint: #ececfb;
+  --color-hero: #14133a;
+  --color-hero-2: #25236e;
+  --color-hero-muted: #c7c8e6;
 
-  /* Status colours: unchanged, tuned for contrast. */
-  --color-taken: #146c3e;
-  --color-taken-tint: #e2f5ea;
-  --color-due: #96460a;
-  --color-due-tint: #fff0dc;
-  --color-missed: #b42318;
-  --color-missed-tint: #fde8e5;
-  --color-critical: #7a1e3a;
-  --color-critical-tint: #f9e6ee;
-  --color-offline: #475467;
+  --color-haldi: #f4b400;
+  --color-haldi-tint: #fff3cf;
+  --color-haldi-deep: #6b4800;
+
+  --color-taken: #03573f;
+  --color-taken-fill: #10a36d;
+  --color-taken-tint: #e3f4ec;
+  --color-due: #6b4800;
+  --color-due-tint: #fff3cf;
+  --color-missed: #9f1d12;
+  --color-missed-fill: #e0453a;
+  --color-missed-tint: #fdeceb;
+  --color-critical: #7e1a39;
+  --color-critical-tint: #fbe9ef;
+  --color-offline: #3f4a5a;
+  --color-offline-fill: #a0a6b8;
   --color-offline-tint: #eceff4;
-  --color-claimed: #1d4ed8;
-  --color-claimed-tint: #e4ecff;
+  --color-claimed: #3730a3;
+  --color-claimed-fill: #5b54e6;
+  --color-claimed-tint: #eeedfc;
 
-  --font-sans: "Anek Latin Variable", "Anek Kannada Variable", "Anek Devanagari Variable", ui-sans-serif, system-ui, sans-serif;
+  /* Kept for older class names; they map onto the palette above. */
+  --color-marigold: #f4b400;
+  --color-marigold-tint: #fff3cf;
+  --color-sky-tint: #ececfb;
+  --color-rose: #e0453a;
+  --color-rose-tint: #fdeceb;
+  --color-mint-tint: #e3f4ec;
+  --color-leaf: #10a36d;
 
-  --radius-card: 20px;
-  --radius-button: 16px;
+  --font-sans: "Inter Variable", "Anek Kannada Variable", "Anek Devanagari Variable", ui-sans-serif, system-ui, sans-serif;
+
+  --radius-card: 16px;
+  --radius-button: 12px;
 
   --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
-  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
 
-  --animate-float: float 6s ease-in-out infinite;
-  --animate-sway: sway 5s ease-in-out infinite;
   --animate-pulse-ring: pulse-ring 1.8s ease-out infinite;
-
-  @keyframes float {
-    0%,
-    100% {
-      transform: translateY(0);
-    }
-    50% {
-      transform: translateY(-10px);
-    }
-  }
-  @keyframes sway {
-    0%,
-    100% {
-      transform: rotate(-2deg);
-    }
-    50% {
-      transform: rotate(2deg);
-    }
-  }
   @keyframes pulse-ring {
     0% {
-      transform: scale(0.9);
-      opacity: 0.7;
+      transform: scale(0.95);
+      opacity: 0.6;
     }
     100% {
-      transform: scale(1.6);
+      transform: scale(1.5);
       opacity: 0;
     }
   }
+}
+
+/* Dark theme: same meanings, lighter status text so it stays above 7:1 on dark surfaces. */
+[data-theme="dark"] {
+  --color-paper: #0c0c22;
+  --color-surface: #16163a;
+  --color-sunken: #10102c;
+  --color-ink: #f4f4fa;
+  --color-muted: #b9bbd2;
+  --color-line: #2a2a52;
+  --color-line-strong: #3a3a6a;
+  --color-indigo-tint: #22224c;
+  --color-haldi-tint: #3a3010;
+  --color-haldi-deep: #f4b400;
+  --color-taken: #4ade9a;
+  --color-taken-tint: #0f3024;
+  --color-due: #f4b400;
+  --color-due-tint: #3a3010;
+  --color-missed: #ff8a80;
+  --color-missed-tint: #3a1618;
+  --color-critical: #f7a8c4;
+  --color-critical-tint: #3a1626;
+  --color-offline: #b3bccd;
+  --color-offline-tint: #22263a;
+  --color-claimed: #afb4ff;
+  --color-claimed-tint: #24245a;
+  --color-marigold-tint: #3a3010;
+  --color-sky-tint: #22224c;
+  --color-rose-tint: #3a1618;
+  --color-mint-tint: #0f3024;
+  color-scheme: dark;
 }
 
 @layer base {
@@ -94,36 +119,37 @@
     background: var(--color-paper);
     color: var(--color-ink);
     font-family: var(--font-sans);
+    font-feature-settings: "cv11", "ss01";
     -webkit-text-size-adjust: 100%;
     text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
   }
   body {
     min-height: 100dvh;
     background: var(--color-paper);
     line-height: 1.5;
-    font-stretch: 100%;
   }
 
   /* Indic scripts need taller lines: Kannada vowel signs sit well above and below the line. */
   :lang(kn) {
-    font-family: "Anek Kannada Variable", "Noto Sans Kannada", "Anek Latin Variable", sans-serif;
-    line-height: 1.75;
+    font-family: "Anek Kannada Variable", "Noto Sans Kannada", "Inter Variable", sans-serif;
+    line-height: 1.7;
   }
   :lang(hi),
   :lang(mr) {
-    font-family: "Anek Devanagari Variable", "Noto Sans Devanagari", "Anek Latin Variable", sans-serif;
-    line-height: 1.65;
+    font-family: "Anek Devanagari Variable", "Noto Sans Devanagari", "Inter Variable", sans-serif;
+    line-height: 1.6;
   }
   /* Medicine names stay in Latin script exactly as printed, whatever the surrounding language. */
   .medicine-name {
-    font-family: "Anek Latin Variable", ui-sans-serif, sans-serif;
+    font-family: "Inter Variable", ui-sans-serif, sans-serif;
     line-height: 1.2;
     font-variant-numeric: tabular-nums;
   }
 
   :focus-visible {
-    outline: 3px solid var(--color-marigold);
-    outline-offset: 3px;
+    outline: 3px solid var(--color-haldi);
+    outline-offset: 2px;
   }
 
   button {
@@ -133,53 +159,79 @@
 }
 
 @layer components {
-  /* Condensed, heavy display type from Anek's width axis. Latin only; Indic headings keep normal width. */
   .font-display {
-    font-weight: 800;
-    font-stretch: 78%;
-    letter-spacing: -0.015em;
-    line-height: 0.95;
+    font-weight: 700;
+    letter-spacing: -0.035em;
+    line-height: 1.02;
   }
   .font-display:lang(kn),
   .font-display:lang(hi) {
-    font-stretch: 100%;
-    line-height: 1.3;
     letter-spacing: 0;
+    line-height: 1.3;
   }
 
-  /* Sticker surfaces: ink outline and a solid offset shadow. */
+  /* Cards: a hairline border and a soft, low shadow. */
   .sticker {
-    border: 2.5px solid var(--color-ink);
+    border: 1px solid var(--color-line);
     border-radius: var(--radius-card);
-    box-shadow: 5px 5px 0 var(--color-ink);
+    box-shadow:
+      0 1px 2px rgb(20 19 58 / 0.05),
+      0 12px 32px -18px rgb(20 19 58 / 0.18);
   }
   .sticker-sm {
-    border: 2px solid var(--color-ink);
-    border-radius: 14px;
-    box-shadow: 3px 3px 0 var(--color-ink);
+    border: 1px solid var(--color-line);
+    border-radius: 12px;
+    box-shadow: 0 1px 2px rgb(20 19 58 / 0.05);
+  }
+  [data-theme="dark"] .sticker,
+  [data-theme="dark"] .sticker-sm {
+    box-shadow: none;
   }
   .pressable {
     transition:
-      transform 140ms var(--ease-out-soft),
-      box-shadow 140ms var(--ease-out-soft);
+      transform 160ms var(--ease-out-soft),
+      box-shadow 160ms var(--ease-out-soft),
+      background-color 160ms var(--ease-out-soft),
+      border-color 160ms var(--ease-out-soft);
   }
   .pressable:hover:not(:disabled) {
-    transform: translate(-1px, -1px);
-    box-shadow: 6px 6px 0 var(--color-ink);
+    transform: translateY(-1px);
   }
   .pressable:active:not(:disabled) {
-    transform: translate(3px, 3px);
-    box-shadow: 1px 1px 0 var(--color-ink);
+    transform: translateY(0) scale(0.985);
   }
 
-  /* Kolam: a continuous loop around a dot grid, drawn once and tiled. */
-  .kolam {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='56' viewBox='0 0 56 56'%3E%3Cg fill='none' stroke='%231c1917' stroke-opacity='.09' stroke-width='1.6'%3E%3Cpath d='M28 4c10 10 14 14 24 24-10 10-14 14-24 24C18 42 14 38 4 28 14 18 18 14 28 4z'/%3E%3Ccircle cx='28' cy='28' r='7'/%3E%3C/g%3E%3Cg fill='%231c1917' fill-opacity='.14'%3E%3Ccircle cx='28' cy='28' r='1.8'/%3E%3Ccircle cx='0' cy='0' r='1.8'/%3E%3Ccircle cx='56' cy='0' r='1.8'/%3E%3Ccircle cx='0' cy='56' r='1.8'/%3E%3Ccircle cx='56' cy='56' r='1.8'/%3E%3C/g%3E%3C/svg%3E");
-    background-size: 56px 56px;
+  /* Ink hero surfaces: deep ink with soft haldi and indigo light. */
+  .hero-surface {
+    background-color: var(--color-hero);
+    background-image:
+      radial-gradient(55% 70% at 88% 0%, rgb(244 180 0 / 0.2), transparent 62%),
+      radial-gradient(60% 80% at 0% 100%, rgb(91 84 230 / 0.35), transparent 60%),
+      linear-gradient(180deg, var(--color-hero) 0%, var(--color-hero-2) 140%);
+    color: #ffffff;
   }
+  .hero-grid {
+    background-image:
+      linear-gradient(rgb(255 255 255 / 0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgb(255 255 255 / 0.05) 1px, transparent 1px);
+    background-size: 44px 44px;
+    mask-image: radial-gradient(80% 90% at 50% 0%, black, transparent 85%);
+  }
+  .glass-card {
+    background: rgb(255 255 255 / 0.06);
+    border: 1px solid rgb(255 255 255 / 0.12);
+    border-radius: var(--radius-card);
+  }
+
+  /* No decorative patterns in this theme; kept so older markup stays harmless. */
+  .kolam,
   .kolam-light {
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='56' viewBox='0 0 56 56'%3E%3Cg fill='none' stroke='%23fff8ec' stroke-opacity='.14' stroke-width='1.6'%3E%3Cpath d='M28 4c10 10 14 14 24 24-10 10-14 14-24 24C18 42 14 38 4 28 14 18 18 14 28 4z'/%3E%3Ccircle cx='28' cy='28' r='7'/%3E%3C/g%3E%3Cg fill='%23f4b400' fill-opacity='.35'%3E%3Ccircle cx='28' cy='28' r='1.8'/%3E%3Ccircle cx='0' cy='0' r='1.8'/%3E%3Ccircle cx='56' cy='0' r='1.8'/%3E%3Ccircle cx='0' cy='56' r='1.8'/%3E%3Ccircle cx='56' cy='56' r='1.8'/%3E%3C/g%3E%3C/svg%3E");
-    background-size: 56px 56px;
+    background-image: none;
+  }
+
+  /* Hatched fill for "phone offline" in charts: a pattern as well as a colour. */
+  .hatch {
+    background-image: repeating-linear-gradient(135deg, var(--color-offline-fill) 0 2px, transparent 2px 6px);
   }
 }
 
@@ -206,6 +258,7 @@
   html,
   body {
     background: #fff;
+    color: #000;
   }
   .no-print {
     display: none !important;

@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import { Link, Navigate, useNavigate, useParams } from "react-router";
 import { InstallGuide } from "../../components/InstallGuide";
 import { defaultLanguage, LanguagePicker } from "../../components/LanguagePicker";
-import { Garland } from "../../components/illustrations/Festive";
 import { Logo } from "../../components/Logo";
 import { ParentDoseScreen } from "../../components/ParentDoseScreen";
 import { Button, cx, SLOT_ICONS } from "../../components/ui";
@@ -94,12 +93,11 @@ export function JoinPage() {
   };
 
   return (
-    <div className="kolam min-h-dvh bg-paper">
-    <Garland className="h-10 w-full" count={30} />
+    <div className="min-h-dvh bg-paper">
     <main className="mx-auto flex max-w-xl flex-col gap-6 px-4 pb-10 pt-4">
       <div className="flex items-center gap-2.5">
         <Logo className="size-10" />
-        <span className="text-2xl font-extrabold">DoseCircle</span>
+        <span className="text-xl font-semibold tracking-tight">DoseCircle</span>
       </div>
 
       <LanguagePicker value={chosen} onChange={setChosen} large />
@@ -121,7 +119,7 @@ export function JoinPage() {
             value={code}
             onChange={(e) => setCode(e.target.value.toUpperCase())}
             aria-label={t("parent.join.codeLabel")}
-            className="tabular mt-4 h-20 w-full rounded-2xl border-[3px] border-ink bg-haldi-tint text-center font-mono text-4xl font-bold tracking-[0.25em] shadow-[3px_3px_0_var(--color-ink)] focus:bg-surface"
+            className="tabular mt-4 h-20 w-full rounded-2xl border border-line-strong bg-paper text-center font-mono text-4xl font-semibold tracking-[0.25em] focus:border-indigo focus:bg-surface focus:outline-none"
           />
           {status === "invalid" && (
             <p lang={lang} role="alert" className="mt-3 text-lg font-medium text-missed">
@@ -137,7 +135,7 @@ export function JoinPage() {
 
       {status === "done" && chosen && (
         <>
-          <p lang={lang} className="sticker bg-taken-tint p-4 text-xl font-bold text-taken">
+          <p lang={lang} className="sticker bg-taken-tint p-4 text-xl font-semibold text-taken">
             {t("parent.join.done")}
           </p>
           <RemindersCard lang={chosen} />
@@ -169,7 +167,7 @@ export function ParentHomePage() {
   };
 
   return (
-    <main className="kolam mx-auto flex min-h-dvh max-w-xl flex-col gap-5 px-4 pb-10 pt-6">
+    <main className="mx-auto flex min-h-dvh max-w-xl flex-col gap-5 px-4 pb-10 pt-6">
       <header>
         <div className="flex justify-end">
           <button type="button" onClick={() => setChangingLanguage((v) => !v)} aria-expanded={changingLanguage} className="inline-flex min-h-12 items-center gap-2 rounded-full border border-line-strong bg-surface px-3.5 text-[16px] font-semibold">
@@ -240,7 +238,7 @@ export function ParentHomePage() {
             return (
               <li key={slot.slotName}>
                 {open && slot.dose ? (
-                  <Link to={`/parent/dose/${encodeURIComponent(slot.dose.doseId)}`} className="sticker pressable block bg-haldi-tint p-4">
+                  <Link to={`/parent/dose/${encodeURIComponent(slot.dose.doseId)}`} className="sticker pressable block bg-surface p-4 ring-2 ring-haldi">
                     {body}
                   </Link>
                 ) : (

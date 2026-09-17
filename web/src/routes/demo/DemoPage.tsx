@@ -1,21 +1,22 @@
 import type { LanguageCode } from "@dosecircle/shared";
 import { LANGUAGES } from "@dosecircle/shared";
-import { ArrowRight, BellRing, Camera, HeartPulse, Loader2, Play, RotateCcw, Smartphone, WifiOff, Zap } from "lucide-react";
+import { ArrowRight, BarChart3, BellRing, Camera, HeartPulse, Loader2, Play, RotateCcw, Smartphone, WifiOff, Zap } from "lucide-react";
 import { AnimatePresence, motion } from "motion/react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router";
 import { FamilyAlert } from "../../components/FamilyAlert";
 import { FamilyCircle, type CircleStage } from "../../components/FamilyCircle";
-import { Character, type CharacterId } from "../../components/illustrations/Characters";
-import { Garland, PetalBurst, Rangoli } from "../../components/illustrations/Festive";
+import { InsightsGrid, InsightsHero } from "../../components/InsightsDashboard";
 import { Logo } from "../../components/Logo";
 import { ParentDoseScreen } from "../../components/ParentDoseScreen";
 import { NotificationBanner, PhoneFrame, type BannerNotification } from "../../components/PhoneFrame";
+import { ThemeToggle } from "../../components/ThemeToggle";
 import { Timeline } from "../../components/Timeline";
-import { Button, cx } from "../../components/ui";
+import { Avatar, Button, cx } from "../../components/ui";
 import { useT } from "../../i18n";
 import { demoClient } from "../../lib/demo";
-import type { DemoSession, DemoState, InboxItem, OpenAlert, Timeline as TimelineData } from "../../lib/types";
+import type { DemoSession, DemoState, InboxItem, Insights, OpenAlert, Timeline as TimelineData } from "../../lib/types";
+import { useApi } from "../../lib/useApi";
 
 const POLL_MS = 1500;
 
@@ -44,14 +45,6 @@ function usePolling(callback: () => Promise<void>, active: boolean, interval = P
 
 const endonym = (code: LanguageCode) => LANGUAGES.find((l) => l.code === code)?.endonym ?? code;
 
-/** The demo's fictional people have drawn characters; order decides who is who if names ever change. */
-function characterFor(name: string, index: number): CharacterId {
-  const lower = name.toLowerCase();
-  if (lower === "arjun") return "arjun";
-  if (lower === "meera") return "meera";
-  return index === 0 ? "arjun" : "meera";
-}
-
 function stageFor(state: DemoState | null, timeline: TimelineData | null): CircleStage {
   const dose = state?.currentDose;
   if (!dose) return "idle";
@@ -73,10 +66,10 @@ function stageFor(state: DemoState | null, timeline: TimelineData | null): Circl
 }
 
 const STAGE_CAPTION: Record<CircleStage, string> = {
-  idle: "Send a dose to start. Everything below runs on the real workflow at 60× speed.",
+  idle: "Send a dose to start. Everything runs on the real workflow at 60× speed.",
   reminding: "A reminder is ringing on Shantha's phone. If she taps, nobody else is disturbed.",
-  checking: "No tap yet. DoseCircle checks whether the reminder even reached her phone.",
-  alerting: "Missed. The family is being asked one person at a time, in the order they chose.",
+  checking: "No tap yet. DoseCircle checks whether the reminder reached her phone.",
+  alerting: "Missed. The family is asked one person at a time, in the order they chose.",
   everyone: "Nobody claimed it in time, so the whole family has been alerted.",
   claimed: "Someone took responsibility. Everyone else was told to stand down.",
   taken: "Taken on time. Nobody was disturbed.",
@@ -93,6 +86,7 @@ export function DemoPage() {
   const [parentOffline, setParentOffline] = useState(false);
   const [busy, setBusy] = useState<null | "start" | "send" | "reset">(null);
   const [error, setError] = useState<string | null>(null);
+  const [view, setView] = useState<"live" | "dashboard">("live");
 
   const start = async () => {
     setBusy("start");
@@ -124,6 +118,7 @@ export function DemoPage() {
       await client.sendDose({ critical });
       setTimeline(null);
       setState(await client.state());
+      setView("live");
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -151,133 +146,147 @@ export function DemoPage() {
     return members.filter((m) => names.includes(m.displayName)).map((m) => m.mid);
   }, [timeline, members]);
   const dose = state?.currentDose ?? null;
-  const celebrate = dose && (dose.status === "CLAIMED" || dose.status === "TAKEN" || dose.status === "TAKEN_LATE") ? `${dose.doseId}-${dose.status}` : null;
 
   if (!session) return <DemoIntro onStart={start} busy={busy === "start"} error={error} simulated={client.simulated} />;
 
   return (
-    <div className="relative min-h-dvh overflow-x-clip bg-paper">
-      <PetalBurst burstKey={celebrate} count={36} />
-
-      {/* Indigo stage header */}
-      <header className="kolam-light relative bg-indigo text-paper">
-        <Garland className="absolute inset-x-0 top-0 h-10 w-full" count={40} />
-        <div className="relative mx-auto max-w-[1440px] px-4 pb-8 pt-14 md:px-8">
-          <nav className="flex flex-wrap items-center gap-3">
-            <Link to="/" className="flex items-center gap-2.5">
-              <Logo className="size-9 rounded-[10px] ring-2 ring-paper" />
-              <span className="text-xl font-bold tracking-tight">DoseCircle</span>
+    <div className="min-h-dvh bg-paper">
+      <header className="hero-surface relative">
+        <div aria-hidden className="hero-grid absolute inset-0" />
+        <div className="relative mx-auto max-w-[1440px] px-4 pb-6 pt-4 md:px-8">
+          <nav className="flex flex-wrap items-center gap-2">
+            <Link to="/" className="mr-2 flex items-center gap-2.5">
+              <Logo className="size-9 rounded-[10px] ring-1 ring-white/20" />
+              <span className="text-lg font-semibold tracking-tight text-white">DoseCircle</span>
             </Link>
-            <span className="rotate-[-2deg] rounded-full border-2 border-ink bg-haldi px-3 py-1 text-[13px] font-bold text-ink shadow-[2px_2px_0_var(--color-ink)]">Live demo · fictional family</span>
-            {client.simulated && <span className="rounded-full border-2 border-ink bg-paper px-3 py-1 text-[13px] font-bold text-offline">Offline simulation</span>}
-            <Link to="/demo/prescription" className="pressable ml-auto inline-flex min-h-11 items-center gap-2 rounded-full border-2 border-ink bg-paper px-4 text-[15px] font-bold text-ink shadow-[3px_3px_0_var(--color-ink)]">
-              <Camera className="size-4.5" strokeWidth={2.5} aria-hidden />
+            <span className="rounded-full bg-white/10 px-3 py-1 text-[13px] font-medium text-hero-muted ring-1 ring-white/15">Demo · fictional family</span>
+            {client.simulated && <span className="rounded-full bg-white/10 px-3 py-1 text-[13px] font-medium text-hero-muted ring-1 ring-white/15">Offline simulation</span>}
+            <div role="tablist" className="ml-auto flex rounded-full bg-white/10 p-1 ring-1 ring-white/15">
+              {[
+                { id: "live" as const, label: "Live escalation", icon: Zap },
+                { id: "dashboard" as const, label: "Family dashboard", icon: BarChart3 },
+              ].map((tab) => (
+                <button key={tab.id} type="button" role="tab" aria-selected={view === tab.id} onClick={() => setView(tab.id)} className={cx("inline-flex min-h-9 items-center gap-1.5 rounded-full px-3.5 text-[14px] font-semibold transition-colors", view === tab.id ? "bg-haldi text-[#14133a]" : "text-white hover:bg-white/10")}>
+                  <tab.icon aria-hidden className="size-4" />
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+            <Link to="/demo/prescription" className="inline-flex min-h-10 items-center gap-2 rounded-full px-3.5 text-[14px] font-semibold text-white ring-1 ring-white/25 hover:bg-white/10">
+              <Camera className="size-4" aria-hidden />
               Prescription photo
             </Link>
+            <ThemeToggle className="grid size-10 place-items-center rounded-full text-white hover:bg-white/10" />
           </nav>
 
-          <div className="mt-8 flex flex-wrap items-end justify-between gap-6">
-            <div>
-              <p className="text-[15px] font-bold uppercase tracking-[0.18em] text-haldi">Mysuru · Bengaluru · Pune</p>
-              <h1 className="font-display mt-2 text-5xl md:text-7xl xl:whitespace-nowrap">Shantha's family circle</h1>
+          {view === "live" && (
+            <div className="mt-6 grid items-center gap-6 xl:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)]">
+              <div>
+                <p className="text-[13px] font-semibold uppercase tracking-[0.16em] text-haldi">Mysuru · Bengaluru · Pune</p>
+                <h1 className="font-display mt-2 text-5xl text-white md:text-6xl">Shantha's family circle</h1>
+                <AnimatePresence mode="wait">
+                  <motion.p key={stage} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} className="mt-4 min-h-14 max-w-xl text-lg text-hero-muted" role="status">
+                    {STAGE_CAPTION[stage]}
+                  </motion.p>
+                </AnimatePresence>
+                <section aria-label="Demo controls" className="mt-5 flex flex-wrap items-center gap-2.5">
+                  <Button tone="haldi" size="lg" onClick={sendDose} disabled={running || busy !== null}>
+                    {busy === "send" ? <Loader2 className="size-5 animate-spin" aria-hidden /> : <Play className="size-5" aria-hidden />}
+                    Send a dose now
+                  </Button>
+                  <Toggle checked={critical} onChange={setCritical} disabled={running} icon={HeartPulse} label="Important medicine" />
+                  <Toggle checked={parentOffline} onChange={setParentOffline} icon={WifiOff} label="Amma's phone offline" />
+                  <button type="button" onClick={reset} disabled={busy !== null} aria-label="Reset demo" className="grid size-12 place-items-center rounded-xl text-white ring-1 ring-white/25 hover:bg-white/10 disabled:opacity-50">
+                    <RotateCcw className="size-4.5" aria-hidden />
+                  </button>
+                </section>
+                <p className="mt-3 flex items-center gap-1.5 text-[13px] text-hero-muted">
+                  <Zap aria-hidden className="size-3.5 text-haldi" /> 60× speed: 20 minutes take 20 seconds
+                </p>
+                {error && (
+                  <p role="alert" className="mt-4 rounded-xl bg-[#ff8a80]/15 px-4 py-2 font-medium text-[#ff8a80] ring-1 ring-[#ff8a80]/30">
+                    {error}
+                  </p>
+                )}
+              </div>
+              <div className="glass-card p-3 md:p-5">
+                <FamilyCircle
+                  parent={{ id: session.parent.pid, name: session.parent.displayName, role: "Amma · Mysuru" }}
+                  members={members.map((m) => ({ id: m.mid, name: m.displayName, role: m.relation }))}
+                  stage={stage}
+                  alertedIds={alertedIds}
+                  claimedById={dose?.claimedBy ?? null}
+                  parentOffline={parentOffline}
+                  missClass={dose?.missClass ?? null}
+                />
+              </div>
             </div>
-            <section aria-label="Demo controls" className="sticker flex flex-wrap items-center gap-3 bg-paper p-3 text-ink">
-              <Button tone="haldi" size="lg" onClick={sendDose} disabled={running || busy !== null} className="text-xl">
-                {busy === "send" ? <Loader2 className="size-5 animate-spin" aria-hidden /> : <Play className="size-5 fill-ink" strokeWidth={2.5} aria-hidden />}
-                Send a dose now
-              </Button>
-              <Toggle checked={critical} onChange={setCritical} disabled={running} icon={HeartPulse} label="Important medicine" />
-              <Toggle checked={parentOffline} onChange={setParentOffline} icon={WifiOff} label="Amma's phone offline" />
-              <Button tone="quiet" size="md" onClick={reset} disabled={busy !== null} aria-label="Reset demo">
-                <RotateCcw className="size-4.5" strokeWidth={2.5} aria-hidden />
-              </Button>
-            </section>
-          </div>
-          {error && (
-            <p role="alert" className="sticker-sm mt-4 bg-missed-tint px-4 py-2 font-bold text-missed">
-              {error}
-            </p>
           )}
         </div>
       </header>
 
-      <main className="mx-auto max-w-[1440px] px-4 pb-20 md:px-8">
-        {/* The live family circle and what the workflow did */}
-        <section className="-mt-2 grid gap-6 pt-8 xl:grid-cols-[minmax(0,1fr)_400px]">
-          <div className="sticker kolam relative overflow-hidden bg-surface p-4 md:p-6">
-            <div className="flex flex-wrap items-center gap-3">
-              <Rangoli size={36} />
-              <AnimatePresence mode="wait">
-                <motion.p key={stage} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} className="min-w-0 flex-1 text-lg font-bold leading-snug md:text-xl" role="status">
-                  {STAGE_CAPTION[stage]}
-                </motion.p>
-              </AnimatePresence>
-              <span className="inline-flex items-center gap-1.5 rounded-full border-2 border-ink bg-haldi-tint px-3 py-1 text-[13px] font-bold">
-                <Zap className="size-3.5 fill-haldi" aria-hidden /> 60× speed
-              </span>
+      {view === "dashboard" ? (
+        <DemoDashboard session={session} lastReceiptAt={state?.parent?.lastReceiptAt ?? null} />
+      ) : (
+        <main className="mx-auto grid max-w-[1440px] gap-6 px-4 pb-20 pt-8 md:px-8 xl:grid-cols-[minmax(0,1fr)_380px]">
+          <section aria-label="Phones">
+            <div className="grid gap-x-6 gap-y-10 md:grid-cols-3">
+              <PhoneColumn name={session.parent.displayName} role="Mother" city={session.parent.city} lang={session.parent.lang}>
+                <ParentPane session={session} state={state} offline={parentOffline} />
+              </PhoneColumn>
+              {members.map((member) => (
+                <PhoneColumn key={member.mid} name={member.displayName} role={member.relation} city={member.city} lang={member.lang}>
+                  <FamilyPane session={session} memberId={member.mid} state={state} timeline={timeline} />
+                </PhoneColumn>
+              ))}
             </div>
-            <div className="mx-auto -mb-6 mt-0 max-w-[720px]">
-              <FamilyCircle
-                parent={{ id: session.parent.pid, name: session.parent.displayName, role: "Amma · Mysuru", character: "amma" }}
-                members={members.map((m, i) => ({ id: m.mid, name: m.displayName, role: m.relation, character: characterFor(m.displayName, i) }))}
-                stage={stage}
-                alertedIds={alertedIds}
-                claimedById={dose?.claimedBy ?? null}
-                parentOffline={parentOffline}
-                missClass={dose?.missClass ?? null}
-              />
-            </div>
-          </div>
+          </section>
 
-          <aside className="sticker flex max-h-[720px] flex-col self-start bg-surface xl:sticky xl:top-4">
-            <div className="border-b-2 border-ink bg-haldi-tint px-5 py-4">
-              <h2 className="font-display text-3xl">Behind the scenes</h2>
-              <p className="mt-1 text-[14px] font-medium text-ink/80">Each step names the Step Functions state that ran it, and the Cedar policy that allowed each action.</p>
+          <aside className="sticker flex max-h-[820px] flex-col self-start overflow-hidden bg-surface xl:sticky xl:top-4">
+            <div className="border-b border-line px-5 py-4">
+              <h2 className="text-lg font-semibold">Behind the scenes</h2>
+              <p className="mt-0.5 text-[13.5px] text-muted">Each step shows the Step Functions state that ran it, and the Cedar policy that allowed each action.</p>
             </div>
             <div className="min-h-0 flex-1 overflow-y-auto px-5 pt-5">
-              {timeline && timeline.items.length > 0 ? (
-                <Timeline items={timeline.items} lang="en" live={running} />
-              ) : (
-                <p className="pb-5 text-[15px] text-muted">The workflow's steps appear here as they happen.</p>
-              )}
+              {timeline && timeline.items.length > 0 ? <Timeline items={timeline.items} lang="en" live={running} /> : <p className="pb-5 text-[15px] text-muted">The workflow's steps appear here as they happen.</p>}
             </div>
             <ArchitectureStrip />
           </aside>
-        </section>
-
-        {/* Three phones, three languages */}
-        <section aria-label="Phones" className="mt-12">
-          <h2 className="font-display text-4xl md:text-5xl">
-            Three phones. <span className="inline-block -rotate-1 border-2 border-ink bg-marigold px-3 pb-1 shadow-[4px_4px_0_var(--color-ink)]">Three languages.</span>
-          </h2>
-          <p className="mt-2 max-w-2xl text-lg text-muted">Each person reads DoseCircle in their own language. Medicine names always stay exactly as printed on the strip.</p>
-          <div className="mt-8 grid gap-x-6 gap-y-12 md:grid-cols-3">
-            <Pedestal tone="bg-marigold-tint" character="amma" name={session.parent.displayName} role="Mother" city={session.parent.city} lang={session.parent.lang}>
-              <ParentPane session={session} state={state} offline={parentOffline} />
-            </Pedestal>
-            {members.map((member, index) => (
-              <Pedestal key={member.mid} tone={index === 0 ? "bg-sky-tint" : "bg-rose-tint"} character={characterFor(member.displayName, index)} name={member.displayName} role={member.relation} city={member.city} lang={member.lang}>
-                <FamilyPane session={session} memberId={member.mid} state={state} timeline={timeline} />
-              </Pedestal>
-            ))}
-          </div>
-        </section>
-      </main>
+        </main>
+      )}
     </div>
   );
 }
 
-function Pedestal({ tone, character, name, role, city, lang, children }: { tone: string; character: CharacterId; name: string; role: string; city: string; lang: LanguageCode; children: React.ReactNode }) {
+function DemoDashboard({ session, lastReceiptAt }: { session: DemoSession; lastReceiptAt: string | null }) {
+  const client = demoClient();
+  const [days, setDays] = useState<7 | 30>(30);
+  const insights = useApi<Insights>(() => client.insights(days), [days]);
   return (
-    <div className={cx("sticker kolam relative px-3 pb-5 pt-12", tone)}>
-      <div className="absolute -top-8 left-4 flex items-end gap-3">
-        <Character who={character} size={72} />
-        <div className="mb-1 rounded-2xl border-2 border-ink bg-surface px-3 py-1 shadow-[3px_3px_0_var(--color-ink)]">
-          <p className="text-[17px] font-extrabold leading-tight">
-            {name} <span className="font-medium text-muted">· {role}</span>
+    <main className="mx-auto max-w-7xl space-y-6 px-4 pb-20 pt-8 md:px-8">
+      {insights.data ? (
+        <>
+          <InsightsHero parentName={session.parent.displayName} lastReceiptAt={lastReceiptAt} insights={insights.data} days={days} onDays={setDays} lang="en" />
+          <InsightsGrid insights={insights.data} lang="en" />
+        </>
+      ) : (
+        <div className="hero-surface h-80 animate-pulse rounded-[24px]" />
+      )}
+    </main>
+  );
+}
+
+function PhoneColumn({ name, role, city, lang, children }: { name: string; role: string; city: string; lang: LanguageCode; children: React.ReactNode }) {
+  return (
+    <div className="flex flex-col items-center gap-3">
+      <div className="flex items-center gap-2.5">
+        <Avatar name={name} size={36} />
+        <div className="leading-tight">
+          <p className="text-[15px] font-semibold">
+            {name} <span className="font-normal text-muted">· {role}</span>
           </p>
-          <p className="text-[13px] font-medium text-muted">
-            {city} · <span lang={lang} className="font-bold text-ink">{endonym(lang)}</span>
+          <p className="text-[13px] text-muted">
+            {city} · <span lang={lang} className="font-semibold text-ink">{endonym(lang)}</span>
           </p>
         </div>
       </div>
@@ -288,13 +297,13 @@ function Pedestal({ tone, character, name, role, city, lang, children }: { tone:
 
 function Toggle({ checked, onChange, disabled, icon: Icon, label }: { checked: boolean; onChange: (value: boolean) => void; disabled?: boolean; icon: typeof HeartPulse; label: string }) {
   return (
-    <label className={cx("inline-flex min-h-12 cursor-pointer items-center gap-2.5 rounded-[var(--radius-button)] border-2 px-3", checked ? "border-ink bg-haldi-tint" : "border-ink/25 bg-surface", disabled && "cursor-not-allowed opacity-50")}>
+    <label className={cx("inline-flex min-h-12 cursor-pointer items-center gap-2.5 rounded-xl px-3 ring-1 transition-colors", checked ? "bg-white/15 ring-haldi/60" : "ring-white/25 hover:bg-white/10", disabled && "cursor-not-allowed opacity-50")}>
       <input type="checkbox" className="peer sr-only" checked={checked} disabled={disabled} onChange={(e) => onChange(e.target.checked)} />
-      <span aria-hidden className={cx("relative h-6 w-11 rounded-full border-2 border-ink transition-colors", checked ? "bg-ink" : "bg-paper")}>
-        <span className={cx("absolute top-0.5 size-4 rounded-full border-2 border-ink bg-haldi transition-transform duration-200", checked ? "translate-x-[20px]" : "translate-x-0.5")} />
+      <span aria-hidden className={cx("relative h-5 w-9 rounded-full transition-colors", checked ? "bg-haldi" : "bg-white/25")}>
+        <span className={cx("absolute top-0.5 size-4 rounded-full bg-white shadow transition-transform duration-200", checked ? "translate-x-[18px]" : "translate-x-0.5")} />
       </span>
-      <Icon aria-hidden className="size-4.5" strokeWidth={2.5} />
-      <span className="text-[15px] font-bold">{label}</span>
+      <Icon aria-hidden className="size-4 text-white" />
+      <span className="text-[14.5px] font-semibold text-white">{label}</span>
     </label>
   );
 }
@@ -302,13 +311,13 @@ function Toggle({ checked, onChange, disabled, icon: Icon, label }: { checked: b
 function ArchitectureStrip() {
   const steps = ["EventBridge Scheduler", "Step Functions", "Lambda", "DynamoDB", "Verified Permissions", "Web Push"];
   return (
-    <div className="border-t-2 border-ink bg-indigo px-5 py-4 text-paper">
-      <p className="text-[12px] font-bold uppercase tracking-[0.18em] text-haldi">Running on AWS · Mumbai</p>
-      <p className="mt-2 flex flex-wrap items-center gap-1.5 text-[13px] font-bold">
+    <div className="hero-surface px-5 py-4">
+      <p className="text-[12px] font-semibold uppercase tracking-[0.16em] text-haldi">Running on AWS · Mumbai</p>
+      <p className="mt-2 flex flex-wrap items-center gap-1.5 text-[12.5px] font-medium text-white">
         {steps.map((step, index) => (
           <span key={step} className="inline-flex items-center gap-1.5">
-            {index > 0 && <ArrowRight aria-hidden className="size-3 text-haldi" />}
-            <span className="rounded-md border-[1.5px] border-paper/40 bg-indigo-soft px-1.5 py-0.5">{step}</span>
+            {index > 0 && <ArrowRight aria-hidden className="size-3 text-hero-muted" />}
+            <span className="rounded-md bg-white/10 px-1.5 py-0.5 ring-1 ring-white/15">{step}</span>
           </span>
         ))}
       </p>
@@ -372,7 +381,7 @@ function ParentPane({ session, state, offline }: { session: DemoSession; state: 
         onDismiss={dismiss}
       />
       {offline && (
-        <div className="absolute inset-x-3 bottom-3 z-20 flex items-center gap-2 rounded-2xl border-2 border-ink bg-offline px-3 py-2 text-[13px] font-bold text-white">
+        <div className="absolute inset-x-3 bottom-3 z-20 flex items-center gap-2 rounded-xl bg-offline px-3 py-2 text-[13px] font-semibold text-white">
           <WifiOff className="size-4 shrink-0" aria-hidden strokeWidth={2.5} /> Airplane mode: reminders wait until the phone is back online
         </div>
       )}
@@ -380,14 +389,14 @@ function ParentPane({ session, state, offline }: { session: DemoSession; state: 
         <ParentDoseScreen key={dose.doseId} dose={dose} onTaken={onTaken} framed />
       ) : (
         <div className="flex h-full flex-col px-5 pt-4">
-          <h2 lang={lang} className="text-[28px] font-bold tracking-tight">
+          <h2 lang={lang} className="text-[26px] font-semibold tracking-tight">
             {t("parent.today.title")}
           </h2>
           {dose ? (
-            <button type="button" onClick={() => setOpen(true)} className="sticker-sm pressable mt-4 flex items-center gap-3 bg-haldi-tint p-4 text-left">
+            <button type="button" onClick={() => setOpen(true)} className="pressable mt-4 flex items-center gap-3 rounded-2xl bg-haldi p-4 text-left text-[#14133a]">
               <BellRing className="size-8 text-due" aria-hidden strokeWidth={2.5} />
               <span className="min-w-0 flex-1">
-                <span lang={lang} className="block text-xl font-bold">
+                <span lang={lang} className="block text-xl font-semibold">
                   {t(`slot.${dose.slotName}`)}
                 </span>
                 <span lang={lang} className="block text-[16px] font-medium">
@@ -398,7 +407,9 @@ function ParentPane({ session, state, offline }: { session: DemoSession; state: 
             </button>
           ) : (
             <div className="mt-6 flex flex-col items-center text-center">
-              <Character who="amma" mood="calm" size={120} />
+              <span className="grid size-20 place-items-center rounded-full bg-taken-tint text-taken">
+                <BellRing aria-hidden className="size-9" />
+              </span>
               <p lang={lang} className="mt-4 text-xl font-medium text-muted">
                 {t("parent.today.none")}
               </p>
@@ -416,7 +427,6 @@ function ParentPane({ session, state, offline }: { session: DemoSession; state: 
 function FamilyPane({ session, memberId, state, timeline }: { session: DemoSession; memberId: string; state: DemoState | null; timeline: TimelineData | null }) {
   const client = demoClient();
   const member = session.members.find((m) => m.mid === memberId)!;
-  const index = session.members.indexOf(member);
   const { t, lang } = useT(member.lang);
   const [why, setWhy] = useState(false);
   const [lastAlert, setLastAlert] = useState<OpenAlert | null>(null);
@@ -444,7 +454,7 @@ function FamilyPane({ session, memberId, state, timeline }: { session: DemoSessi
       <div className="h-full overflow-y-auto px-4 pb-6 pt-3">
         <div className="flex items-center gap-2">
           <Logo className="size-7" />
-          <span className="text-[16px] font-bold">DoseCircle</span>
+          <span className="text-[16px] font-semibold">DoseCircle</span>
         </div>
         {alert ? (
           <div className="mt-4">
@@ -456,15 +466,14 @@ function FamilyPane({ session, memberId, state, timeline }: { session: DemoSessi
               alertedCount={alert.alertedCount}
               onClaim={() => client.claim(alert.doseId, memberId)}
               onWhy={() => setWhy(true)}
-              parentAvatar={<Character who="amma" mood={alert.status === "ESCALATING" ? "worried" : "happy"} size={52} />}
             />
           </div>
         ) : (
-          <div className="sticker-sm mt-4 bg-marigold-tint p-4">
+          <div className="sticker mt-4 bg-surface p-4">
             <div className="flex items-center gap-3">
-              <Character who="amma" mood={dose?.status === "TAKEN" ? "happy" : "calm"} size={56} />
+              <Avatar name={session.parent.displayName} size={48} />
               <div>
-                <p className="text-xl font-bold">{session.parent.displayName}</p>
+                <p className="text-xl font-semibold">{session.parent.displayName}</p>
                 <p lang={lang} className="text-[15px] font-medium">
                   {dose ? t(`status.${dose.status === "TAKEN" ? "taken" : dose.status === "TAKEN_LATE" ? "takenLate" : dose.status === "PENDING" ? "pending" : dose.status === "CLAIMED" ? "claimed" : dose.status === "UNRESOLVED" ? "unresolved" : "escalating"}`) : t("parent.today.none")}
                 </p>
@@ -472,21 +481,16 @@ function FamilyPane({ session, memberId, state, timeline }: { session: DemoSessi
             </div>
           </div>
         )}
-        {!alert && (
-          <div className="mt-8 flex justify-center opacity-90">
-            <Character who={characterFor(member.displayName, index)} size={96} />
-          </div>
-        )}
       </div>
 
       <AnimatePresence>
         {why && timeline && (
-          <motion.div initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }} transition={{ type: "spring", stiffness: 380, damping: 38 }} className="absolute inset-x-0 bottom-0 z-40 flex max-h-[85%] flex-col rounded-t-[26px] border-t-2 border-ink bg-surface">
-            <div className="flex items-center justify-between border-b-2 border-ink bg-haldi-tint px-4 py-3">
-              <h3 lang={lang} className="text-lg font-bold">
+          <motion.div initial={{ y: "100%" }} animate={{ y: 0 }} exit={{ y: "100%" }} transition={{ type: "spring", stiffness: 380, damping: 38 }} className="absolute inset-x-0 bottom-0 z-40 flex max-h-[85%] flex-col rounded-t-[26px] border-t border-line bg-surface">
+            <div className="flex items-center justify-between border-b border-line px-4 py-3">
+              <h3 lang={lang} className="text-lg font-semibold">
                 {t("timeline.title")}
               </h3>
-              <button type="button" onClick={() => setWhy(false)} className="min-h-10 rounded-full border-2 border-ink bg-surface px-3 text-[15px] font-bold">
+              <button type="button" onClick={() => setWhy(false)} className="min-h-10 rounded-full bg-surface px-3 text-[15px] font-semibold ring-1 ring-line-strong">
                 <span lang={lang}>{t("common.close")}</span>
               </button>
             </div>
@@ -501,53 +505,56 @@ function FamilyPane({ session, memberId, state, timeline }: { session: DemoSessi
 }
 
 function DemoIntro({ onStart, busy, error, simulated }: { onStart: () => void; busy: boolean; error: string | null; simulated: boolean }) {
-  const people: { name: string; role: string; city: string; lang: LanguageCode; note: string; who: CharacterId; tone: string; tilt: string }[] = [
-    { name: "Shantha", role: "Amma", city: "Mysuru", lang: "kn", note: "Diabetes and blood-pressure tablets, insulin at night.", who: "amma", tone: "bg-marigold-tint", tilt: "-rotate-2" },
-    { name: "Arjun", role: "Son", city: "Bengaluru", lang: "en", note: "First in the family order.", who: "arjun", tone: "bg-sky-tint", tilt: "rotate-1" },
-    { name: "Meera", role: "Daughter", city: "Pune", lang: "hi", note: "Second in the family order.", who: "meera", tone: "bg-rose-tint", tilt: "-rotate-1" },
+  const people: { name: string; role: string; city: string; lang: LanguageCode; note: string }[] = [
+    { name: "Shantha", role: "Amma", city: "Mysuru", lang: "kn", note: "Diabetes and blood-pressure tablets, insulin at night." },
+    { name: "Arjun", role: "Son", city: "Bengaluru", lang: "en", note: "First in the family order." },
+    { name: "Meera", role: "Daughter", city: "Pune", lang: "hi", note: "Second in the family order." },
   ];
   return (
-    <div className="kolam min-h-dvh bg-paper">
-      <Garland className="h-12 w-full" count={40} />
-      <main className="mx-auto flex max-w-5xl flex-col px-4 py-8 md:py-12">
+    <div className="hero-surface relative min-h-dvh">
+      <div aria-hidden className="hero-grid absolute inset-0" />
+      <main className="relative mx-auto flex max-w-5xl flex-col px-4 py-8 md:py-12">
         <Link to="/" className="flex items-center gap-2.5">
-          <Logo className="size-10" />
-          <span className="text-2xl font-bold tracking-tight">DoseCircle</span>
+          <Logo className="size-10 rounded-[10px] ring-1 ring-white/20" />
+          <span className="text-xl font-semibold tracking-tight text-white">DoseCircle</span>
         </Link>
-        <h1 className="font-display mt-10 max-w-4xl text-6xl md:text-8xl">
-          Watch a missed dose travel through <span className="bg-haldi px-2">a family.</span>
-        </h1>
-        <p className="mt-6 max-w-2xl text-xl font-medium text-muted">
+        <p className="mt-14 text-[13px] font-semibold uppercase tracking-[0.16em] text-haldi">Live demo</p>
+        <h1 className="font-display mt-3 max-w-4xl text-5xl text-white md:text-7xl">Watch a missed dose travel through a family.</h1>
+        <p className="mt-6 max-w-2xl text-lg text-hero-muted md:text-xl">
           Three phones side by side, each in its owner's language. Send a dose, let it go unanswered, and watch the right person get alerted, claim it, and everyone else stand down. Same AWS workflow as real families, at 60× speed.
         </p>
-        <ul className="mt-10 grid gap-6 sm:grid-cols-3">
+        <ul className="mt-10 grid gap-4 sm:grid-cols-3">
           {people.map((person) => (
-            <li key={person.name} className={cx("sticker p-5 transition-transform hover:rotate-0", person.tone, person.tilt)}>
-              <Character who={person.who} mood="happy" size={88} />
-              <p className="mt-3 text-2xl font-extrabold">{person.name}</p>
-              <p className="text-[15px] font-bold text-muted">
-                {person.role} · {person.city}
-              </p>
-              <p className="mt-3 inline-flex rounded-full border-2 border-ink bg-surface px-3 py-0.5 text-lg font-bold" lang={person.lang}>
+            <li key={person.name} className="glass-card p-5">
+              <div className="flex items-center gap-3">
+                <Avatar name={person.name} size={44} className="!bg-white/12 !text-white ring-1 ring-white/25" />
+                <div className="leading-tight">
+                  <p className="text-lg font-semibold text-white">{person.name}</p>
+                  <p className="text-[14px] text-hero-muted">
+                    {person.role} · {person.city}
+                  </p>
+                </div>
+              </div>
+              <p className="mt-4 inline-flex rounded-full bg-haldi px-3 py-0.5 text-[15px] font-semibold text-[#14133a]" lang={person.lang}>
                 {endonym(person.lang)}
               </p>
-              <p className="mt-3 text-[15px] font-medium">{person.note}</p>
+              <p className="mt-3 text-[14.5px] text-hero-muted">{person.note}</p>
             </li>
           ))}
         </ul>
         <div className="mt-10 flex flex-wrap items-center gap-5">
-          <Button tone="haldi" size="lg" onClick={onStart} disabled={busy} className="min-h-16 px-8 text-2xl">
-            {busy ? <Loader2 className="size-6 animate-spin" aria-hidden /> : <Play className="size-6 fill-ink" strokeWidth={2.5} aria-hidden />}
+          <Button tone="haldi" size="lg" onClick={onStart} disabled={busy} className="min-h-14 px-7 text-lg">
+            {busy ? <Loader2 className="size-5 animate-spin" aria-hidden /> : <Play className="size-5" aria-hidden />}
             Start the demo
           </Button>
-          <p className="max-w-sm text-[15px] font-medium text-muted">{simulated ? "Offline simulation: no API is configured." : "Creates a private fictional family that deletes itself after 2 hours."}</p>
+          <p className="max-w-sm text-[14.5px] text-hero-muted">{simulated ? "Offline simulation: no API is configured." : "Creates a private fictional family that deletes itself after 2 hours."}</p>
         </div>
         {error && (
-          <p role="alert" className="sticker-sm mt-4 bg-missed-tint px-4 py-3 font-bold text-missed">
+          <p role="alert" className="mt-4 rounded-xl bg-[#ff8a80]/15 px-4 py-3 font-medium text-[#ff8a80] ring-1 ring-[#ff8a80]/30">
             {error}
           </p>
         )}
-        <p className="mt-12 text-[14px] font-medium text-muted">All names are fictional. Reminders and family alerts only; this is not medical advice. Best viewed on a laptop.</p>
+        <p className="mt-12 text-[13.5px] text-hero-muted">All names are fictional. Reminders and family alerts only; this is not medical advice. Best viewed on a laptop.</p>
       </main>
     </div>
   );

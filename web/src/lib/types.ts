@@ -234,3 +234,6 @@ export interface DemoState {
   inbox: Record<string, InboxItem[]>;
   openAlertsByMember: Record<string, OpenAlert[]>;
 }
+
+// The analytics shape is defined once, next to the code that builds it.
+export type { Highlight, Insights } from "../../../backend/src/views/insights";

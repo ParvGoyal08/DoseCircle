@@ -4,6 +4,7 @@ import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router";
 import { FamilyAlert } from "../../components/FamilyAlert";
 import { FamilyShell } from "../../components/FamilyShell";
+import { InsightsGrid, InsightsHero } from "../../components/InsightsDashboard";
 import { Timeline } from "../../components/Timeline";
 import { OutcomeLegend, WeekStrip } from "../../components/WeekStrip";
 import { Avatar, Button, Card, cx, SLOT_ICONS, StatusPill } from "../../components/ui";
@@ -11,7 +12,7 @@ import { useT } from "../../i18n";
 import { api, ApiError } from "../../lib/api";
 import { RequireFamily } from "../../lib/family";
 import { formatAgo, formatNumber, formatTime } from "../../lib/format";
-import type { Dashboard, ParentCard, Timeline as TimelineData } from "../../lib/types";
+import type { Dashboard, Insights, ParentCard, Timeline as TimelineData } from "../../lib/types";
 import { useApi } from "../../lib/useApi";
 import { EnableMyAlerts } from "./AuthPages";
 
@@ -34,54 +35,83 @@ function Home({ fid, lang: myLang, mid }: { fid: string; lang: string; mid: stri
   const { t, lang } = useT(myLang);
   const dashboard = useApi(() => api<Dashboard>(`/families/${fid}`, { auth: "family" }), [fid], 30_000);
   const data = dashboard.data;
+  const [selectedPid, setSelectedPid] = useState<string | null>(null);
+  const [days, setDays] = useState<7 | 30>(30);
+  const parent = data?.parents.find((p) => p.pid === selectedPid) ?? data?.parents[0];
+  const insights = useApi(parent ? () => api<Insights>(`/families/${fid}/parents/${parent.pid}/insights`, { auth: "family", query: { days: String(days) } }) : null, [fid, parent?.pid, days]);
 
   return (
-    <FamilyShell lang={myLang}>
-      {!data ? (
+    <FamilyShell lang={myLang} full>
+      {!data || !parent ? (
         <div className="grid place-items-center py-24">
           <Loader2 aria-label={t("common.loading")} className="size-8 animate-spin text-muted" />
         </div>
       ) : (
-        <div className="space-y-8">
+        <div className="space-y-6">
+          {data.parents.length > 1 && (
+            <div role="tablist" className="flex flex-wrap gap-2">
+              {data.parents.map((p) => (
+                <button key={p.pid} type="button" role="tab" aria-selected={p.pid === parent.pid} onClick={() => setSelectedPid(p.pid)} className={cx("inline-flex min-h-10 items-center gap-2 rounded-full px-3 font-semibold", p.pid === parent.pid ? "bg-indigo text-white" : "bg-surface text-ink ring-1 ring-line")}>
+                  <Avatar name={p.displayName} size={26} />
+                  {p.displayName}
+                </button>
+              ))}
+            </div>
+          )}
+
           <EnableMyAlerts lang={myLang} />
 
-          <section aria-labelledby="alerts-heading">
-            <h2 id="alerts-heading" lang={lang} className="font-display mb-4 text-4xl">
-              {t("home.openAlerts")}
-            </h2>
-            {data.openAlerts.length === 0 ? (
-              <p lang={lang} className="sticker flex items-center gap-3 bg-mint-tint px-5 py-4 text-lg font-bold text-taken">
-                <BellRing aria-hidden className="size-5" strokeWidth={2.25} />
-                {t("home.allCalm")}
-              </p>
-            ) : (
-              <div className="grid gap-4 md:grid-cols-2">
-                {data.openAlerts.map((alert) => {
-                  const parent = data.parents.find((p) => p.pid === alert.pid);
-                  return (
-                    <FamilyAlert
-                      key={alert.doseId}
-                      alert={alert}
-                      viewerLang={myLang}
-                      viewerMid={mid}
-                      ladder={parent?.ladder ?? []}
-                      alertedCount={alert.alertedCount}
-                      onClaim={async () => {
-                        const result = await claimDose(alert.doseId);
-                        await dashboard.reload();
-                        return result;
-                      }}
-                      onWhy={() => navigate(`/alerts/${encodeURIComponent(alert.doseId)}`)}
-                    />
-                  );
-                })}
-              </div>
-            )}
-          </section>
+          {insights.data ? (
+            <InsightsHero parentName={parent.displayName} lastReceiptAt={parent.lastReceiptAt} insights={insights.data} days={days} onDays={setDays} lang={myLang} />
+          ) : (
+            <div className="hero-surface h-72 animate-pulse rounded-[24px]" />
+          )}
 
-          {data.parents.map((parent) => (
-            <ParentSummary key={parent.pid} parent={parent} fid={fid} myLang={myLang} />
-          ))}
+          <div className="grid gap-5 lg:grid-cols-12">
+            <section aria-labelledby="alerts-heading" className="lg:col-span-7">
+              <h2 id="alerts-heading" lang={lang} className="mb-3 text-lg font-semibold">
+                {t("home.openAlerts")}
+              </h2>
+              {data.openAlerts.length === 0 ? (
+                <p lang={lang} className="sticker flex items-center gap-3 bg-surface px-5 py-4 text-[16px] font-medium text-taken">
+                  <span className="grid size-9 place-items-center rounded-full bg-taken-tint">
+                    <BellRing aria-hidden className="size-4.5" />
+                  </span>
+                  {t("home.allCalm")}
+                </p>
+              ) : (
+                <div className="grid gap-4 md:grid-cols-2">
+                  {data.openAlerts.map((alert) => {
+                    const alertParent = data.parents.find((p) => p.pid === alert.pid);
+                    return (
+                      <FamilyAlert
+                        key={alert.doseId}
+                        alert={alert}
+                        viewerLang={myLang}
+                        viewerMid={mid}
+                        ladder={alertParent?.ladder ?? []}
+                        alertedCount={alert.alertedCount}
+                        onClaim={async () => {
+                          const result = await claimDose(alert.doseId);
+                          await dashboard.reload();
+                          return result;
+                        }}
+                        onWhy={() => navigate(`/alerts/${encodeURIComponent(alert.doseId)}`)}
+                      />
+                    );
+                  })}
+                </div>
+              )}
+            </section>
+            <div className="lg:col-span-5">
+              <h2 lang={lang} className="mb-3 text-lg font-semibold">
+                {t("dash.today")}
+              </h2>
+              <TodayCard parent={parent} fid={fid} myLang={myLang} />
+            </div>
+          </div>
+
+          {insights.data && <InsightsGrid insights={insights.data} lang={myLang} />}
         </div>
       )}
     </FamilyShell>
@@ -90,7 +120,7 @@ function Home({ fid, lang: myLang, mid }: { fid: string; lang: string; mid: stri
 
 const SLOT_ORDER: SlotName[] = ["morning", "afternoon", "evening", "night"];
 
-function ParentSummary({ parent, fid, myLang }: { parent: ParentCard; fid: string; myLang: string }) {
+function TodayCard({ parent, fid, myLang }: { parent: ParentCard; fid: string; myLang: string }) {
   const { t, lang } = useT(myLang);
   const [testState, setTestState] = useState<"idle" | "sent" | "limit">("idle");
 
@@ -105,141 +135,71 @@ function ParentSummary({ parent, fid, myLang }: { parent: ParentCard; fid: strin
 
   const base = `/parents/${parent.pid}`;
   return (
-    <section aria-label={parent.displayName}>
-      <Card className="overflow-hidden">
-        <div className="flex flex-wrap items-center gap-3 border-b-2 border-ink bg-marigold-tint p-4">
-          <Avatar name={parent.displayName} size={56} />
-          <div className="min-w-0 flex-1">
-            <h2 className="font-display text-4xl">{parent.displayName}</h2>
-            <p className="flex flex-wrap items-center gap-x-2 text-[14px] text-muted">
-              <Smartphone aria-hidden className="size-4" />
-              {parent.lastReceiptAt ? (
-                <>
-                  <span lang={lang}>{t("home.lastReachable")}</span>
-                  <span className="tabular font-semibold text-ink">{formatAgo(parent.lastReceiptAt, lang)}</span>
-                </>
-              ) : (
-                <span lang={lang}>{t("home.neverReachable")}</span>
-              )}
-            </p>
-          </div>
-          {parent.myLadderPosition !== null ? (
-            <div className="flex items-center gap-2 rounded-full border-2 border-ink bg-surface py-1 pl-1 pr-3 shadow-[2px_2px_0_var(--color-ink)]" title={t("home.yourPosition")}>
-              <span className="tabular grid size-9 place-items-center rounded-full bg-ink text-[17px] font-extrabold text-haldi">{formatNumber(parent.myLadderPosition, lang)}</span>
-              <span lang={lang} className="max-w-36 text-[13px] leading-tight text-muted">
-                {t("home.yourPosition")}
-              </span>
-            </div>
-          ) : (
-            <span lang={lang} className="text-[13px] text-muted">
-              {t("home.notInOrder")}
-            </span>
-          )}
-        </div>
-
-        {parent.paused && (
-          <p lang={lang} className="flex items-center gap-2 border-b border-line bg-offline-tint px-4 py-2.5 font-medium text-offline">
-            <CirclePause aria-hidden className="size-5" /> {t("home.paused")}
+    <section className="sticker overflow-hidden bg-surface">
+      {parent.paused && (
+        <p lang={lang} className="flex items-center gap-2 border-b border-line bg-offline-tint px-4 py-2.5 font-medium text-offline">
+          <CirclePause aria-hidden className="size-5" /> {t("home.paused")}
+        </p>
+      )}
+      {parent.slots.length === 0 ? (
+        <p lang={lang} className="p-5 text-[15px] text-muted">
+          {t("home.noMedicines")}
+        </p>
+      ) : (
+        <ul className="divide-y divide-line">
+          {[...parent.slots]
+            .sort((a, b) => SLOT_ORDER.indexOf(a.slotName) - SLOT_ORDER.indexOf(b.slotName))
+            .map((slot) => {
+              const dose = parent.today.find((d) => d.slotName === slot.slotName);
+              const Icon = SLOT_ICONS[slot.slotName];
+              return (
+                <li key={slot.slotName} className="flex items-center gap-3 px-5 py-3.5">
+                  <span className="grid size-9 place-items-center rounded-lg bg-sunken">
+                    <Icon aria-hidden className="size-4.5 text-ink" strokeWidth={2.25} />
+                  </span>
+                  <span className="min-w-0">
+                    <span lang={lang} className="block font-semibold">
+                      {t(`slot.${slot.slotName}`)}
+                    </span>
+                    <span className="tabular block text-[13.5px] text-muted">{`${slot.compactTime.slice(0, 2)}:${slot.compactTime.slice(2)}`}</span>
+                  </span>
+                  <span className="ml-auto">
+                    {dose ? (
+                      <Link to={`/alerts/${encodeURIComponent(dose.doseId)}`}>
+                        <StatusPill status={dose.status} missClass={dose.missClass} t={t} lang={lang} />
+                      </Link>
+                    ) : (
+                      <span lang={lang} className="text-[14px] text-muted">
+                        {t("parent.status.later")}
+                      </span>
+                    )}
+                  </span>
+                </li>
+              );
+            })}
+        </ul>
+      )}
+      <nav className="grid grid-cols-2 gap-2 border-t border-line bg-paper/60 p-3">
+        {[
+          { to: `${base}/medicines`, icon: Pill, label: t("action.medicines") },
+          { to: `${base}/report`, icon: FileText, label: t("action.report") },
+          { to: `${base}/settings`, icon: Settings, label: t("action.settings") },
+        ].map(({ to, icon: Icon, label }) => (
+          <Link key={to} to={to} className="pressable inline-flex min-h-11 items-center gap-2 rounded-xl bg-surface px-3 text-[14.5px] font-semibold ring-1 ring-line hover:ring-line-strong">
+            <Icon aria-hidden className="size-4.5 text-indigo-soft dark:text-ink" strokeWidth={2.25} />
+            <span lang={lang}>{label}</span>
+          </Link>
+        ))}
+        <button type="button" onClick={sendTest} disabled={testState !== "idle"} className="pressable inline-flex min-h-11 items-center gap-2 rounded-xl bg-surface px-3 text-[14.5px] font-semibold ring-1 ring-line hover:ring-line-strong disabled:opacity-60">
+          <BellRing aria-hidden className="size-4.5 text-indigo-soft dark:text-ink" strokeWidth={2.25} />
+          <span lang={lang}>{t("action.testReminder")}</span>
+        </button>
+        {testState !== "idle" && (
+          <p lang={lang} role="status" className="col-span-2 px-1 text-[13.5px] text-muted">
+            {testState === "sent" ? t("action.testSent") : t("action.testLimit")}
           </p>
         )}
-
-        <div className="grid gap-6 p-4 md:grid-cols-2">
-          <div>
-            <h3 lang={lang} className="mb-2 text-[15px] font-semibold">
-              {t("home.today")}
-            </h3>
-            {parent.slots.length === 0 ? (
-              <p lang={lang} className="text-[15px] text-muted">
-                {t("home.noMedicines")}
-              </p>
-            ) : (
-              <ul className="divide-y-2 divide-ink/15 overflow-hidden rounded-xl border-2 border-ink">
-                {[...parent.slots]
-                  .sort((a, b) => SLOT_ORDER.indexOf(a.slotName) - SLOT_ORDER.indexOf(b.slotName))
-                  .map((slot) => {
-                    const dose = parent.today.find((d) => d.slotName === slot.slotName);
-                    const Icon = SLOT_ICONS[slot.slotName];
-                    return (
-                      <li key={slot.slotName} className="flex items-center gap-3 px-3 py-2.5">
-                        <Icon aria-hidden className="size-5 text-muted" strokeWidth={2.25} />
-                        <span lang={lang} className="font-semibold">
-                          {t(`slot.${slot.slotName}`)}
-                        </span>
-                        <span className="tabular text-[15px] text-muted">{`${slot.compactTime.slice(0, 2)}:${slot.compactTime.slice(2)}`}</span>
-                        <span className="ml-auto">
-                          {dose ? (
-                            <Link to={`/alerts/${encodeURIComponent(dose.doseId)}`}>
-                              <StatusPill status={dose.status} missClass={dose.missClass} t={t} lang={lang} />
-                            </Link>
-                          ) : (
-                            <span lang={lang} className="text-[14px] text-muted">
-                              {t("parent.status.later")}
-                            </span>
-                          )}
-                        </span>
-                      </li>
-                    );
-                  })}
-              </ul>
-            )}
-          </div>
-          <div>
-            <h3 lang={lang} className="mb-2 text-[15px] font-semibold">
-              {t("home.week")}
-            </h3>
-            <WeekStrip week={parent.week} t={t} lang={lang} />
-            <div className="mt-2">
-              <OutcomeLegend t={t} lang={lang} />
-            </div>
-            {parent.refills.some((r) => r.level !== "ok") && (
-              <div className="mt-4">
-                <h3 lang={lang} className="mb-2 text-[15px] font-semibold">
-                  {t("home.refills")}
-                </h3>
-                <ul className="flex flex-wrap gap-2">
-                  {parent.refills
-                    .filter((r) => r.level !== "ok")
-                    .map((r) => (
-                      <li key={r.medId} className={cx("inline-flex items-center gap-2 rounded-full border-2 border-ink px-3 py-1.5 text-[14px] font-bold", r.level === "critical" ? "bg-missed-tint text-missed" : r.level === "recount" ? "bg-offline-tint text-offline" : "bg-due-tint text-due")}>
-                        <Pill aria-hidden className="size-4" strokeWidth={2.25} />
-                        <span lang="en" className="medicine-name">
-                          {r.nameAsPrinted}
-                        </span>
-                        {r.level === "recount" ? (
-                          <span lang={lang}>{t("refill.recount")}</span>
-                        ) : (
-                          r.daysLeft !== null && <span className="tabular">{formatNumber(r.daysLeft, lang, { style: "unit", unit: "day", unitDisplay: "long" })}</span>
-                        )}
-                      </li>
-                    ))}
-                </ul>
-              </div>
-            )}
-          </div>
-        </div>
-
-        <nav className="flex flex-wrap gap-2 border-t-2 border-ink bg-haldi-tint/60 p-3">
-          {[
-            { to: `${base}/medicines`, icon: Pill, label: t("action.medicines") },
-            { to: `${base}/report`, icon: FileText, label: t("action.report") },
-            { to: `${base}/settings`, icon: Settings, label: t("action.settings") },
-          ].map(({ to, icon: Icon, label }) => (
-            <Link key={to} to={to} className="pressable inline-flex min-h-11 items-center gap-2 rounded-full border-2 border-ink bg-surface px-3.5 text-[15px] font-bold shadow-[2px_2px_0_var(--color-ink)]">
-              <Icon aria-hidden className="size-4.5" strokeWidth={2.25} />
-              <span lang={lang}>{label}</span>
-            </Link>
-          ))}
-          <Button tone="quiet" size="sm" className="min-h-11 rounded-full" onClick={sendTest} disabled={testState !== "idle"}>
-            <BellRing aria-hidden className="size-4.5" strokeWidth={2.25} />
-            <span lang={lang}>{t("action.testReminder")}</span>
-          </Button>
-          {testState !== "idle" && (
-            <p lang={lang} role="status" className="w-full px-1 text-[14px] text-muted">
-              {testState === "sent" ? t("action.testSent") : t("action.testLimit")}
-            </p>
-          )}
-        </nav>
-      </Card>
+      </nav>
     </section>
   );
 }

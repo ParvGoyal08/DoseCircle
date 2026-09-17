@@ -1,5 +1,4 @@
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { Character, type CharacterId, type Mood } from "./illustrations/Characters";
 
 export type CircleStage = "idle" | "reminding" | "checking" | "alerting" | "everyone" | "claimed" | "taken" | "late" | "unresolved";
 
@@ -7,7 +6,6 @@ export interface CirclePerson {
   id: string;
   name: string;
   role: string;
-  character: CharacterId;
 }
 
 export interface FamilyCircleProps {
@@ -22,167 +20,136 @@ export interface FamilyCircleProps {
 }
 
 const W = 640;
-const H = 400;
-const PARENT = { x: 150, y: 200 };
+const H = 380;
+const PARENT = { x: 140, y: 180 };
+const HALDI = "#F4B400";
+const GREEN = "#4ADE9A";
+const BLUE = "#AFB4FF";
+const RED = "#FF8A80";
+const GREY = "#B3BCCD";
 
 function memberPoint(index: number, count: number) {
-  const spread = count === 1 ? 0 : 150;
-  const y = H / 2 - spread / 2 - (count > 2 ? 40 : 0) + (count === 1 ? 0 : (index * (spread + (count > 2 ? 80 : 0))) / (count - 1));
-  return { x: 500, y };
+  if (count === 1) return { x: 500, y: H / 2 };
+  const top = 92;
+  const bottom = H - 104;
+  return { x: 500, y: top + (index * (bottom - top)) / (count - 1) };
 }
 
-function pathTo(point: { x: number; y: number }, index: number) {
-  const bend = index % 2 === 0 ? -70 : 70;
+function pathTo(point: { x: number; y: number }) {
   const midX = (PARENT.x + point.x) / 2;
-  const midY = (PARENT.y + point.y) / 2 + bend;
-  return `M${PARENT.x + 60} ${PARENT.y} Q${midX} ${midY} ${point.x - 56} ${point.y}`;
+  return `M${PARENT.x + 52} ${PARENT.y} C${midX} ${PARENT.y} ${midX} ${point.y} ${point.x - 42} ${point.y}`;
 }
 
-function Bubble({ x, y, tone, children }: { x: number; y: number; tone: "haldi" | "rose" | "blue" | "green" | "grey" | "indigo"; children: string }) {
-  const fill = { haldi: "#fff0c2", rose: "#fde8e5", blue: "#e4ecff", green: "#e2f5ea", grey: "#eceff4", indigo: "#e7e6ff" }[tone];
-  const text = { haldi: "#1c1917", rose: "#b42318", blue: "#1d4ed8", green: "#146c3e", grey: "#475467", indigo: "#25236e" }[tone];
-  const width = children.length * 7.4 + 26;
+function Tag({ x, y, color, children, anchor = "middle" }: { x: number; y: number; color: string; children: string; anchor?: "middle" | "start" }) {
+  const width = children.length * 7.1 + 22;
+  const left = anchor === "middle" ? x - width / 2 : x;
   return (
-    <motion.g initial={{ scale: 0.6, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.6, opacity: 0 }} transition={{ type: "spring", stiffness: 500, damping: 22 }} style={{ transformOrigin: `${x}px ${y}px` }}>
-      <rect x={x - width / 2 + 3} y={y - 15 + 3} width={width} height="30" rx="15" fill="#1c1917" />
-      <rect x={x - width / 2} y={y - 15} width={width} height="30" rx="15" fill={fill} stroke="#1c1917" strokeWidth="2" />
-      <text x={x} y={y + 5} textAnchor="middle" fontSize="14" fontWeight="700" fill={text} fontFamily="Anek Latin Variable, sans-serif">
+    <motion.g initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.25, ease: [0.22, 1, 0.36, 1] }}>
+      <rect x={left} y={y - 13} width={width} height="26" rx="13" fill="rgb(255 255 255 / 0.08)" stroke={color} strokeOpacity="0.55" />
+      <circle cx={left + 12} cy={y} r="3.5" fill={color} />
+      <text x={left + 21} y={y + 4.5} fontSize="13" fontWeight="600" fill="#FFFFFF" fontFamily="Inter Variable, sans-serif">
         {children}
       </text>
     </motion.g>
   );
 }
 
+function Node({ x, y, r, name, sub, ring, glow, pulse }: { x: number; y: number; r: number; name: string; sub: string; ring: string; glow: boolean; pulse: boolean }) {
+  const reduceMotion = useReducedMotion();
+  return (
+    <g>
+      {glow && <circle cx={x} cy={y} r={r + 16} fill={ring} opacity="0.14" />}
+      {pulse && !reduceMotion && <circle cx={x} cy={y} r={r + 4} fill="none" stroke={ring} strokeWidth="2" className="animate-pulse-ring" style={{ transformBox: "fill-box", transformOrigin: "center" }} />}
+      <circle cx={x} cy={y} r={r} fill="#1F1E55" stroke={ring} strokeWidth="2.5" />
+      <text x={x} y={y + r * 0.32} textAnchor="middle" fontSize={r * 0.82} fontWeight="600" fill="#FFFFFF" fontFamily="Inter Variable, sans-serif">
+        {[...name][0]?.toUpperCase()}
+      </text>
+      <text x={x} y={y + r + 24} textAnchor="middle" fontSize="15" fontWeight="600" fill="#FFFFFF" fontFamily="Inter Variable, sans-serif">
+        {name}
+      </text>
+      <text x={x} y={y + r + 42} textAnchor="middle" fontSize="12.5" fill="#C7C8E6" fontFamily="Inter Variable, sans-serif">
+        {sub}
+      </text>
+    </g>
+  );
+}
+
 /**
- * The escalation, drawn as the family itself: a reminder rings at Amma, and if nobody taps, the alert
- * travels along the thread to each person in the family's order until someone takes responsibility.
+ * The escalation as a live diagram on the ink hero: the reminder pulses at the parent, and if nobody
+ * taps, the alert travels to each person in the family's order until someone takes responsibility.
  */
 export function FamilyCircle({ parent, members, stage, alertedIds, claimedById, parentOffline, missClass }: FamilyCircleProps) {
   const reduceMotion = useReducedMotion();
   const resolved = stage === "claimed" || stage === "taken" || stage === "late";
   const currentId = stage === "alerting" ? alertedIds[alertedIds.length - 1] : null;
-
-  const parentMood: Mood = stage === "taken" || stage === "late" || stage === "claimed" ? "happy" : stage === "idle" ? "calm" : stage === "reminding" ? "calm" : "worried";
-  const memberMood = (id: string): Mood => {
-    if (stage === "claimed") return id === claimedById ? "happy" : "calm";
-    if (stage === "taken" || stage === "late") return "happy";
-    if (stage === "everyone" || stage === "unresolved") return "worried";
-    return alertedIds.includes(id) ? "worried" : "calm";
-  };
+  const parentRing = stage === "taken" || stage === "late" ? GREEN : stage === "alerting" || stage === "everyone" || stage === "unresolved" ? (missClass === "OFFLINE" ? GREY : RED) : stage === "reminding" || stage === "checking" ? HALDI : "rgb(255 255 255 / 0.35)";
 
   return (
-    <svg viewBox={`0 20 ${W} ${H - 20}`} className="h-auto w-full" role="img" aria-label="Family escalation diagram">
-      {/* the kolam thread that ties the family together */}
-      <circle cx={W / 2} cy={H / 2} r="178" fill="none" stroke="#1c1917" strokeOpacity="0.12" strokeWidth="2" strokeDasharray="2 10" strokeLinecap="round" />
-      {Array.from({ length: 16 }, (_, i) => {
-        const a = (i / 16) * Math.PI * 2;
-        return <circle key={i} cx={W / 2 + Math.cos(a) * 178} cy={H / 2 + Math.sin(a) * 178} r="3" fill="#f4b400" stroke="#1c1917" strokeWidth="1" opacity="0.7" />;
-      })}
-
+    <svg viewBox={`0 0 ${W} ${H}`} className="h-auto w-full" role="img" aria-label="Family escalation diagram">
       {members.map((member, index) => {
         const point = memberPoint(index, members.length);
-        const d = pathTo(point, index);
-        const alerted = alertedIds.includes(member.id) || stage === "everyone" || (stage === "unresolved" && alertedIds.length > 0);
+        const d = pathTo(point);
+        const alerted = alertedIds.includes(member.id) || stage === "everyone";
         const isClaimer = claimedById === member.id;
-        const lit = isClaimer ? "#1d4ed8" : alerted && !resolved ? "#ff8a1f" : resolved && alerted ? "#2f9e6b" : "#d6c6a8";
+        const color = isClaimer ? BLUE : alerted && !resolved ? HALDI : resolved && alerted ? GREEN : "rgb(255 255 255 / 0.18)";
         const flowing = (currentId === member.id || stage === "everyone") && !reduceMotion;
         return (
           <g key={member.id}>
-            <path d={d} fill="none" stroke="#1c1917" strokeWidth="9" strokeLinecap="round" opacity={alerted ? 1 : 0.15} />
-            <path d={d} fill="none" stroke={lit} strokeWidth="5" strokeLinecap="round" strokeDasharray={alerted ? "0" : "4 10"} />
+            <path d={d} fill="none" stroke="rgb(255 255 255 / 0.12)" strokeWidth="2" strokeDasharray="3 6" />
+            <motion.path d={d} fill="none" stroke={color} strokeWidth="3" strokeLinecap="round" initial={false} animate={{ pathLength: alerted || isClaimer ? 1 : 0, opacity: alerted || isClaimer ? 1 : 0 }} transition={{ duration: 0.8, ease: [0.22, 1, 0.36, 1] }} />
             {flowing &&
-              [0, 0.6, 1.2].map((begin) => (
-                <circle key={begin} r="7" fill="#f4b400" stroke="#1c1917" strokeWidth="2">
-                  <animateMotion dur="1.8s" begin={`${begin}s`} repeatCount="indefinite" path={d} />
+              [0, 0.7].map((begin) => (
+                <circle key={begin} r="5" fill={HALDI}>
+                  <animateMotion dur="1.4s" begin={`${begin}s`} repeatCount="indefinite" path={d} />
                 </circle>
               ))}
-            {isClaimer && !reduceMotion && (
-              <circle r="8" fill="#1d4ed8" stroke="#1c1917" strokeWidth="2">
-                <animateMotion dur="1.2s" repeatCount="1" keyPoints="1;0" keyTimes="0;1" calcMode="linear" path={d} fill="freeze" />
-              </circle>
-            )}
           </g>
         );
       })}
 
-      {/* parent */}
-      <g>
-        {(stage === "reminding" || stage === "checking") && !reduceMotion && (
-          <circle cx={PARENT.x} cy={PARENT.y} r="62" fill="none" stroke="#ff8a1f" strokeWidth="4" className="origin-center animate-pulse-ring" style={{ transformBox: "fill-box", transformOrigin: "center" }} />
+      <Node x={PARENT.x} y={PARENT.y} r={46} name={parent.name} sub={parent.role} ring={parentRing} glow={stage !== "idle"} pulse={stage === "reminding" || stage === "checking"} />
+      <AnimatePresence>
+        {stage === "reminding" && (
+          <Tag key="remind" x={PARENT.x} y={PARENT.y - 76} color={parentOffline ? GREY : HALDI}>
+            {parentOffline ? "Reminder waiting" : "Reminder ringing"}
+          </Tag>
         )}
-        <circle cx={PARENT.x + 4} cy={PARENT.y + 4} r="62" fill="#1c1917" />
-        <Character who={parent.character} mood={parentMood} size={124} x={PARENT.x - 62} y={PARENT.y - 62} ring={stage === "taken" || stage === "late" ? "#146c3e" : undefined} />
-        <text x={PARENT.x} y={PARENT.y + 90} textAnchor="middle" fontSize="20" fontWeight="800" fill="#1c1917" fontFamily="Anek Latin Variable, sans-serif">
-          {parent.name}
-        </text>
-        <text x={PARENT.x} y={PARENT.y + 110} textAnchor="middle" fontSize="14" fill="#57534e" fontFamily="Anek Latin Variable, sans-serif">
-          {parent.role}
-        </text>
-        <AnimatePresence>
-          {stage === "reminding" && !parentOffline && (
-            <Bubble key="remind" x={PARENT.x} y={PARENT.y - 88} tone="haldi">
-              Reminder ringing
-            </Bubble>
-          )}
-          {stage === "reminding" && parentOffline && (
-            <Bubble key="offline" x={PARENT.x} y={PARENT.y - 88} tone="grey">
-              Phone offline
-            </Bubble>
-          )}
-          {(stage === "alerting" || stage === "everyone") && (
-            <Bubble key="miss" x={PARENT.x} y={PARENT.y - 88} tone={missClass === "OFFLINE" ? "grey" : "rose"}>
-              {missClass === "OFFLINE" ? "Phone seems offline" : "Dose not confirmed"}
-            </Bubble>
-          )}
-          {(stage === "taken" || stage === "late") && (
-            <Bubble key="taken" x={PARENT.x} y={PARENT.y - 88} tone="green">
-              {stage === "late" ? "Taken, a little late" : "Taken on time"}
-            </Bubble>
-          )}
-          {stage === "unresolved" && (
-            <Bubble key="unresolved" x={PARENT.x} y={PARENT.y - 88} tone="rose">
-              Nobody responded
-            </Bubble>
-          )}
-        </AnimatePresence>
-      </g>
+        {stage === "checking" && (
+          <Tag key="check" x={PARENT.x} y={PARENT.y - 76} color={HALDI}>
+            Checking delivery
+          </Tag>
+        )}
+        {(stage === "alerting" || stage === "everyone") && (
+          <Tag key="miss" x={PARENT.x} y={PARENT.y - 76} color={missClass === "OFFLINE" ? GREY : RED}>
+            {missClass === "OFFLINE" ? "Phone offline" : "Dose missed"}
+          </Tag>
+        )}
+        {(stage === "taken" || stage === "late") && (
+          <Tag key="taken" x={PARENT.x} y={PARENT.y - 76} color={GREEN}>
+            {stage === "late" ? "Taken late" : "Taken"}
+          </Tag>
+        )}
+        {stage === "unresolved" && (
+          <Tag key="unresolved" x={PARENT.x} y={PARENT.y - 76} color={RED}>
+            Nobody responded
+          </Tag>
+        )}
+      </AnimatePresence>
 
-      {/* family members */}
       {members.map((member, index) => {
         const point = memberPoint(index, members.length);
         const isClaimer = claimedById === member.id;
-        const alerted = alertedIds.includes(member.id);
-        const standDown = stage === "claimed" && alerted && !isClaimer;
+        const alerted = alertedIds.includes(member.id) || stage === "everyone";
+        const ring = isClaimer ? BLUE : currentId === member.id ? HALDI : alerted ? (resolved ? GREEN : HALDI) : "rgb(255 255 255 / 0.3)";
+        const status = isClaimer ? "Handling it" : stage === "claimed" && alerted ? "Stood down" : currentId === member.id ? "Being asked" : stage === "everyone" ? "Alerted" : null;
         return (
           <g key={member.id}>
-            <circle cx={point.x + 3} cy={point.y + 3} r="48" fill="#1c1917" />
-            <Character who={member.character} mood={memberMood(member.id)} size={96} x={point.x - 48} y={point.y - 48} ring={isClaimer ? "#1d4ed8" : undefined} />
-            <text x={point.x + 62} y={point.y - 4} fontSize="19" fontWeight="800" fill="#1c1917" fontFamily="Anek Latin Variable, sans-serif">
-              {member.name}
-            </text>
-            <text x={point.x + 62} y={point.y + 16} fontSize="14" fill="#57534e" fontFamily="Anek Latin Variable, sans-serif">
-              {`${index + 1}${["st", "nd", "rd"][index] ?? "th"} in line`}
-            </text>
+            <Node x={point.x} y={point.y} r={34} name={member.name} sub={`${index + 1}${["st", "nd", "rd"][index] ?? "th"} in line`} ring={ring} glow={isClaimer || currentId === member.id} pulse={currentId === member.id} />
             <AnimatePresence>
-              {isClaimer && (
-                <Bubble key="claim" x={point.x} y={point.y - 66} tone="blue">
-                  I'll handle it
-                </Bubble>
-              )}
-              {standDown && (
-                <Bubble key="stand" x={point.x} y={point.y - 66} tone="grey">
-                  Standing down
-                </Bubble>
-              )}
-              {!resolved && currentId === member.id && (
-                <Bubble key="asked" x={point.x} y={point.y - 66} tone="haldi">
-                  Being asked now
-                </Bubble>
-              )}
-              {stage === "everyone" && (
-                <Bubble key="everyone" x={point.x} y={point.y - 66} tone="rose">
-                  Everyone alerted
-                </Bubble>
+              {status && (
+                <Tag key={status} x={point.x} y={point.y - 58} color={isClaimer ? BLUE : status === "Stood down" ? GREY : HALDI}>
+                  {status}
+                </Tag>
               )}
             </AnimatePresence>
           </g>

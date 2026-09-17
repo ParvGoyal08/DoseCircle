@@ -5,8 +5,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useT } from "../i18n";
 import { formatCount, formatTime } from "../lib/format";
 import type { DoseView } from "../lib/types";
-import { PetalBurst, SlotScene } from "./illustrations/Festive";
-import { cx } from "./ui";
+import { cx, SLOT_ICONS } from "./ui";
 
 export const UNDO_SECONDS = 10;
 
@@ -147,27 +146,28 @@ export function ParentDoseScreen({ dose, onTaken, autoPlay = false, framed = fal
   };
 
   const pad = framed ? "px-5" : "px-6";
+  const SlotIcon = SLOT_ICONS[dose.slotName];
 
   return (
     <div className="relative flex h-full min-h-0 flex-col bg-paper">
-      <PetalBurst burstKey={phase === "sent" && !reduceMotion ? `${dose.doseId}-taken` : null} count={18} />
       <div className="flex-1 overflow-y-auto pb-4">
-        <header className="relative">
-          <SlotScene slot={dose.slotName} className={cx("block w-full border-b-2 border-ink", framed ? "h-24" : "h-32")} />
-          <div className={cx("absolute inset-x-0 bottom-3 flex items-end justify-between gap-3", pad)}>
-            <div className={cx("rounded-2xl border-2 border-ink bg-surface px-3 py-1 shadow-[3px_3px_0_var(--color-ink)]")}>
-              <h1 lang={lang} className={cx("font-bold leading-tight tracking-tight text-ink", framed ? "text-[28px]" : "text-[36px]")}>
-                {t(`slot.${dose.slotName}`)}
-              </h1>
-              <p className="tabular -mt-0.5 text-lg font-semibold text-muted">{formatTime(dose.scheduledAt, lang)}</p>
+        <header className={cx("hero-surface relative overflow-hidden", framed ? "px-5 pb-5 pt-4" : "px-6 pb-7 pt-8")}>
+          <div aria-hidden className="hero-grid absolute inset-0" />
+          <div className="relative flex items-start justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <span className={cx("grid shrink-0 place-items-center rounded-2xl bg-haldi text-[#14133a]", framed ? "size-12" : "size-14")}>
+                <SlotIcon aria-hidden className={framed ? "size-6" : "size-7"} strokeWidth={2.25} />
+              </span>
+              <div>
+                <h1 lang={lang} className={cx("font-semibold leading-tight tracking-tight text-white", framed ? "text-[28px]" : "text-[36px]")}>
+                  {t(`slot.${dose.slotName}`)}
+                </h1>
+                <p className="tabular text-lg font-medium text-hero-muted">{formatTime(dose.scheduledAt, lang)}</p>
+              </div>
             </div>
             {reminder.available && phase === "ready" && (
-              <button
-                type="button"
-                onClick={reminder.play}
-                className="pressable inline-flex min-h-14 items-center gap-2 rounded-full border-2 border-ink bg-haldi px-4 text-lg font-bold text-ink shadow-[3px_3px_0_var(--color-ink)]"
-              >
-                <Volume2 aria-hidden className={cx("size-6", reminder.playing && "animate-pulse")} strokeWidth={2.5} />
+              <button type="button" onClick={reminder.play} className="pressable inline-flex min-h-14 items-center gap-2 rounded-full bg-white/12 px-4 text-lg font-semibold text-white ring-1 ring-white/25">
+                <Volume2 aria-hidden className={cx("size-6", reminder.playing && "animate-pulse")} strokeWidth={2.25} />
                 <span lang={lang}>{t("parent.listen")}</span>
               </button>
             )}
@@ -179,7 +179,7 @@ export function ParentDoseScreen({ dose, onTaken, autoPlay = false, framed = fal
         </p>
 
         {dose.critical && phase === "ready" && (
-          <p lang={lang} className="sticker-sm mt-4 flex items-start gap-3 bg-critical-tint p-4 text-lg font-bold text-critical">
+          <p lang={lang} className="mt-4 flex items-start gap-3 rounded-2xl bg-critical-tint p-4 text-lg font-semibold text-critical">
             <HeartPulse aria-hidden className="mt-1 size-6 shrink-0" strokeWidth={2.25} />
             {t("parent.important")}
           </p>
@@ -187,10 +187,10 @@ export function ParentDoseScreen({ dose, onTaken, autoPlay = false, framed = fal
 
         <ul className="mt-5 space-y-3">
           {dose.medicines.map((medicine) => (
-            <li key={medicine.medId} className={cx("sticker-sm flex items-center bg-surface", framed ? "gap-3 p-3" : "gap-4 p-4")}>
+            <li key={medicine.medId} className={cx("sticker flex items-center bg-surface", framed ? "gap-3 p-3" : "gap-4 p-4")}>
               <span
                 aria-label={medicine.count === null ? undefined : String(medicine.count)}
-                className={cx("tabular grid shrink-0 place-items-center rounded-2xl border-2 border-ink bg-haldi font-bold text-ink", framed ? "size-13 text-[28px]" : "size-16 text-[32px]")}
+                className={cx("tabular grid shrink-0 place-items-center rounded-2xl bg-haldi font-semibold text-[#14133a]", framed ? "size-13 text-[28px]" : "size-16 text-[32px]")}
               >
                 {formatCount(medicine.count)}
               </span>
@@ -219,7 +219,7 @@ export function ParentDoseScreen({ dose, onTaken, autoPlay = false, framed = fal
         </div>
       </div>
 
-      <div className={cx("safe-bottom border-t-2 border-ink bg-paper pt-4", pad)}>
+      <div className={cx("safe-bottom border-t border-line bg-surface pt-4", pad)}>
         <AnimatePresence mode="wait" initial={false}>
           {phase === "ready" && (
             <motion.div key="ready" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }}>
@@ -232,11 +232,11 @@ export function ParentDoseScreen({ dose, onTaken, autoPlay = false, framed = fal
                 type="button"
                 onClick={tapTaken}
                 className={cx(
-                  "pressable flex w-full flex-col items-center justify-center gap-2 rounded-[22px] border-[3px] border-ink bg-taken px-4 text-white shadow-[5px_5px_0_var(--color-ink)]",
+                  "pressable flex w-full flex-col items-center justify-center gap-2 rounded-[22px] bg-taken px-4 text-white shadow-[0_12px_28px_-12px_rgb(3_87_63/0.7)]",
                   framed ? "min-h-32" : "min-h-40",
                 )}
               >
-                <span className="grid size-12 place-items-center rounded-full border-2 border-ink bg-haldi text-ink">
+                <span className="grid size-12 place-items-center rounded-full bg-white/18 text-white">
                   <Check aria-hidden className="size-8" strokeWidth={3} />
                 </span>
                 <span lang={lang} className={cx("font-semibold leading-tight", framed ? "text-2xl" : "text-[28px]")}>
@@ -252,7 +252,7 @@ export function ParentDoseScreen({ dose, onTaken, autoPlay = false, framed = fal
               initial={reduceMotion ? { opacity: 0 } : { opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
-              className={cx("sticker flex flex-col items-center bg-taken-tint px-4 py-5 text-center", framed ? "min-h-32" : "min-h-40")}
+              className={cx("flex flex-col items-center rounded-[22px] bg-taken-tint px-4 py-5 text-center", framed ? "min-h-32" : "min-h-40")}
               role="status"
             >
               <TickMark />
@@ -268,7 +268,7 @@ export function ParentDoseScreen({ dose, onTaken, autoPlay = false, framed = fal
                 <button
                   type="button"
                   onClick={() => setPhase("ready")}
-                  className="pressable mt-3 inline-flex min-h-14 items-center gap-3 rounded-full border-2 border-ink bg-surface pl-2 pr-5 text-lg font-bold text-ink shadow-[3px_3px_0_var(--color-ink)]"
+                  className="pressable mt-3 inline-flex min-h-14 items-center gap-3 rounded-full border border-line-strong bg-surface pl-2 pr-5 text-lg font-semibold text-ink"
                 >
                   <CountdownRing seconds={secondsLeft} total={UNDO_SECONDS} />
                   <Undo2 aria-hidden className="size-5" strokeWidth={2.5} />
@@ -279,7 +279,7 @@ export function ParentDoseScreen({ dose, onTaken, autoPlay = false, framed = fal
           )}
 
           {phase === "closed" && (
-            <motion.p key="closed" lang={lang} initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="sticker-sm bg-offline-tint px-4 py-6 text-center text-xl font-bold text-offline">
+            <motion.p key="closed" lang={lang} initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="rounded-[22px] bg-offline-tint px-4 py-6 text-center text-xl font-semibold text-offline">
               {t("parent.alreadyClosed")}
             </motion.p>
           )}

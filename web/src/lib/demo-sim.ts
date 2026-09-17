@@ -268,6 +268,10 @@ export function createSimulatedDemoClient(): DemoClient {
       const { samplePrescription } = await import("../../../backend/src/demo/sample-prescription");
       return delay({ sample: true, status: "READY", guardrailInterventions: 0, ...samplePrescription() });
     },
+    async insights(days) {
+      const { demoInsights } = await import("./demo-insights");
+      return delay(demoInsights(days));
+    },
     async reset() {
       generation++;
       wake?.();

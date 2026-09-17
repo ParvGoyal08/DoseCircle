@@ -1,5 +1,5 @@
 import { api, ApiError, setTokenProvider } from "./api";
-import type { DemoSession, DemoState, InboxItem, Prescription, Timeline } from "./types";
+import type { DemoSession, DemoState, InboxItem, Insights, Prescription, Timeline } from "./types";
 
 export interface DemoClient {
   /** True when running the in-browser simulation instead of AWS. */
@@ -14,6 +14,7 @@ export interface DemoClient {
   receipt(item: InboxItem, recipient: string): Promise<void>;
   timeline(doseId: string, asMemberId: string): Promise<Timeline>;
   prescription(): Promise<Prescription>;
+  insights(days: 7 | 30): Promise<Insights>;
   reset(): Promise<void>;
 }
 
@@ -71,6 +72,8 @@ export function createAwsDemoClient(): DemoClient {
     },
     timeline: (doseId, asMemberId) => api<Timeline>(`/demo/doses/${encodeURIComponent(doseId)}/timeline`, { auth: "demo", query: { asMemberId } }),
     prescription: () => api<Prescription>("/demo/prescription", { auth: "demo" }),
+    insights: (days) =>
+      api<Insights>(`/demo/families/${current!.fid}/parents/${current!.parent.pid}/insights`, { auth: "demo", query: { asMemberId: current!.members[0]!.mid, days: String(days) } }),
     async reset() {
       try {
         await api("/demo/reset", { method: "POST", auth: "demo" });

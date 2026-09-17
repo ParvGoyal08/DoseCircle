@@ -58,7 +58,7 @@ function ReportView({ fid, pid, myLang }: { fid: string; pid: string; myLang: st
 
       {data && (
         <article lang={lang} className="mx-auto max-w-[800px] rounded-[var(--radius-card)] border border-line bg-surface p-8 print:max-w-none print:rounded-none print:border-0 print:p-0">
-          <header className="flex flex-wrap items-end justify-between gap-4 border-b-2 border-ink pb-4">
+          <header className="flex flex-wrap items-end justify-between gap-4 border-b border-line pb-4">
             <div>
               <p className="text-[13px] font-semibold uppercase tracking-wider text-muted">{t("report.title")}</p>
               <h1 className="mt-1 text-3xl font-semibold">{data.parent.displayName}</h1>

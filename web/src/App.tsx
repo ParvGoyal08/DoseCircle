@@ -11,7 +11,6 @@ import { MySettingsPage, ParentSettingsPage } from "./routes/family/SettingsPage
 import { LandingPage } from "./routes/LandingPage";
 import { JoinPage, ParentDosePage, ParentHomePage } from "./routes/parent/ParentPages";
 import "./lib/auth";
-import { GalleryPage } from "./routes/dev/GalleryPage";
 
 const router = createBrowserRouter([
   { path: "/", element: <LandingPage /> },
@@ -45,7 +44,6 @@ const router = createBrowserRouter([
       { path: "/medicines", element: <Navigate to="/home" replace /> },
     ],
   },
-  ...(import.meta.env.DEV ? [{ path: "/dev/gallery", element: <GalleryPage /> }] : []),
   { path: "*", element: <Navigate to="/" replace /> },
 ]);
 

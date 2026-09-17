@@ -53,7 +53,7 @@ export function FamilyAlert({ alert, viewerLang, viewerMid, ladder, alertedCount
 
   return (
     <article className="sticker overflow-hidden bg-surface">
-      <div aria-hidden className={cx("h-2.5 border-b-2 border-ink", band)} />
+      <div aria-hidden className={cx("h-1", band)} />
       <div className="p-4">
         <div className="flex flex-wrap items-center gap-2">
           <StatusPill status={alert.status} missClass={alert.missClass} t={t} lang={lang} />
@@ -63,7 +63,7 @@ export function FamilyAlert({ alert, viewerLang, viewerMid, ladder, alertedCount
         <div className="mt-3 flex items-center gap-3">
           {parentAvatar ?? <Avatar name={alert.parentName} size={48} />}
           <div className="min-w-0">
-            <h2 className="truncate text-[26px] font-extrabold leading-tight text-ink">{alert.parentName}</h2>
+            <h2 className="truncate text-[26px] font-semibold leading-tight text-ink">{alert.parentName}</h2>
             <p className="flex flex-wrap items-center gap-x-1.5 text-[15px] text-muted">
               <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
                 <SlotIcon aria-hidden className="size-4" strokeWidth={2.25} />
@@ -92,8 +92,8 @@ export function FamilyAlert({ alert, viewerLang, viewerMid, ladder, alertedCount
                   {index > 0 && <ChevronRight aria-hidden className={cx("size-4", asked ? "text-ink" : "text-line-strong")} />}
                   <span
                     className={cx(
-                      "inline-flex items-center gap-1.5 rounded-full border-2 py-0.5 pl-0.5 pr-2.5 text-sm font-bold",
-                      current ? "border-ink bg-haldi text-ink shadow-[2px_2px_0_var(--color-ink)]" : asked ? "border-ink bg-paper text-ink" : "border-ink/20 bg-paper text-muted",
+                      "inline-flex items-center gap-1.5 rounded-full py-0.5 pl-0.5 pr-2.5 text-sm font-semibold",
+                      current ? "bg-haldi text-[#14133a]" : asked ? "bg-indigo-tint text-ink" : "bg-sunken text-muted",
                     )}
                   >
                     <Avatar name={person.displayName} size={22} />
@@ -108,7 +108,7 @@ export function FamilyAlert({ alert, viewerLang, viewerMid, ladder, alertedCount
 
       <AnimatePresence mode="wait" initial={false}>
         {alert.status === "ESCALATING" && (
-          <motion.div key="open" exit={{ opacity: 0 }} className="border-t-2 border-ink bg-haldi-tint/50 p-4">
+          <motion.div key="open" exit={{ opacity: 0 }} className="border-t border-line bg-paper p-4">
             {alert.alertedMe ? (
               <Button tone="claimed" size="lg" className="w-full" onClick={claim} disabled={claiming}>
                 <Hand aria-hidden className="size-5" strokeWidth={2.5} />
@@ -133,7 +133,7 @@ export function FamilyAlert({ alert, viewerLang, viewerMid, ladder, alertedCount
             initial={reduceMotion ? { opacity: 0 } : { opacity: 0, x: 24 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
-            className="flex items-center gap-3 border-t-2 border-ink bg-claimed-tint p-4"
+            className="flex items-center gap-3 border-t border-line bg-claimed-tint p-4"
             role="status"
           >
             <Avatar name={alert.claimedByName ?? "?"} size={36} ring="ring-2 ring-claimed" />
@@ -155,13 +155,13 @@ export function FamilyAlert({ alert, viewerLang, viewerMid, ladder, alertedCount
         )}
 
         {resolvedByParent && (
-          <motion.p key="taken" initial={{ opacity: 0 }} animate={{ opacity: 1 }} lang={lang} className="border-t-2 border-ink bg-taken-tint p-4 text-[16px] font-bold text-taken" role="status">
+          <motion.p key="taken" initial={{ opacity: 0 }} animate={{ opacity: 1 }} lang={lang} className="border-t border-line bg-taken-tint p-4 text-[16px] font-semibold text-taken" role="status">
             {t("alert.parentTookIt")}
           </motion.p>
         )}
       </AnimatePresence>
 
-      <button type="button" onClick={onWhy} className="flex w-full items-center gap-2 border-t-2 border-ink px-4 py-3 text-left text-[15px] font-bold text-ink hover:bg-haldi-tint">
+      <button type="button" onClick={onWhy} className="flex w-full items-center gap-2 border-t border-line px-4 py-3 text-left text-[15px] font-semibold text-ink hover:bg-sunken">
         <Info aria-hidden className="size-4.5" strokeWidth={2.25} />
         <span lang={lang} className="flex-1">
           {t("alert.why")}

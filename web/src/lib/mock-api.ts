@@ -134,6 +134,10 @@ export async function mockApi(path: string, method: string): Promise<unknown> {
   if (/\/timeline$/.test(path)) return timeline;
   if (/\/medicines$/.test(path) && method === "GET") return { medicines };
   if (/\/report$/.test(path)) return report;
+  if (/\/insights/.test(path)) {
+    const { demoInsights } = await import("./demo-insights");
+    return demoInsights(path.includes("days=7") ? 7 : 30);
+  }
   if (/\/devices$/.test(path)) return { devices: [{ deviceId: "dev-1", pairedAt: iso(60 * 24 * 3), lang: "kn" }], lastReceiptAt: iso(26) };
   if (path === "/parent/today") return today;
   if (path.startsWith("/parent/doses/")) return dose;

@@ -5,7 +5,6 @@ import { useEffect, useState, type FormEvent } from "react";
 import { Link, Navigate, useNavigate, useSearchParams } from "react-router";
 import { Field, inputClass } from "../../components/FamilyShell";
 import { defaultLanguage, LanguagePicker } from "../../components/LanguagePicker";
-import { Garland } from "../../components/illustrations/Festive";
 import { Logo } from "../../components/Logo";
 import { Button } from "../../components/ui";
 import { useT } from "../../i18n";
@@ -20,14 +19,26 @@ function preferredLanguage(): LanguageCode {
 
 function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="kolam min-h-dvh bg-paper">
-      <Garland className="h-10 w-full" count={40} />
-      <main className="mx-auto flex max-w-md flex-col px-4 pb-10 pt-6">
-        <Link to="/" className="flex items-center gap-2.5">
-          <Logo className="size-10" />
-          <span className="text-2xl font-extrabold">DoseCircle</span>
+    <div className="grid min-h-dvh bg-paper lg:grid-cols-[1fr_1.1fr]">
+      <aside className="hero-surface relative hidden overflow-hidden lg:block">
+        <div aria-hidden className="hero-grid absolute inset-0" />
+        <div className="relative flex h-full flex-col p-12">
+          <Link to="/" className="flex items-center gap-2.5">
+            <Logo className="size-10 rounded-[10px] ring-1 ring-white/20" />
+            <span className="text-xl font-semibold tracking-tight text-white">DoseCircle</span>
+          </Link>
+          <p className="font-display mt-auto max-w-md text-5xl text-white">
+            The right person knows, <span className="text-haldi">every time.</span>
+          </p>
+          <p className="mt-5 max-w-md text-lg text-hero-muted">Reminders in each person's own language, and a family that is asked one person at a time when a dose is missed.</p>
+        </div>
+      </aside>
+      <main className="flex flex-col px-4 py-8 sm:px-10">
+        <Link to="/" className="flex items-center gap-2.5 lg:hidden">
+          <Logo className="size-9" />
+          <span className="text-lg font-semibold tracking-tight">DoseCircle</span>
         </Link>
-        <div className="sticker mt-8 bg-surface p-5">{children}</div>
+        <div className="mx-auto my-auto w-full max-w-md py-10">{children}</div>
       </main>
     </div>
   );
@@ -92,7 +103,7 @@ export function SignInPage() {
   return (
     <AuthLayout>
       <form onSubmit={submit} className="space-y-4">
-        <h1 lang={lang} className="font-display text-4xl">
+        <h1 lang={lang} className="font-display text-4xl md:text-[44px]">
           {mode === "create" ? t("auth.title.create") : mode === "confirm" ? t("auth.confirmTitle") : t("auth.title.signIn")}
         </h1>
         {mode !== "confirm" ? (
@@ -161,13 +172,13 @@ export function PhoneInvite({ fid, pid, parentName, lang: viewerLang }: { fid: s
   const whatsapp = `https://wa.me/?text=${encodeURIComponent(`${t("onboard.shareMessage")}\n${invite.link}`)}`;
   return (
     <div className="sticker bg-surface p-4">
-      <p className="text-lg font-bold">{parentName}</p>
+      <p className="text-lg font-semibold">{parentName}</p>
       <p lang={lang} className="mt-1 text-[15px] text-muted">
         {t("onboard.connectPhoneHelp")}
       </p>
       <p className="tabular mt-3 font-mono text-3xl font-semibold tracking-[0.2em]">{invite.code}</p>
       <div className="mt-3 flex flex-wrap gap-2">
-        <a href={whatsapp} target="_blank" rel="noreferrer" className="pressable inline-flex min-h-12 items-center gap-2 rounded-[var(--radius-button)] border-2 border-ink bg-taken px-4 font-bold text-white shadow-[3px_3px_0_var(--color-ink)]">
+        <a href={whatsapp} target="_blank" rel="noreferrer" className="pressable inline-flex min-h-12 items-center gap-2 rounded-[var(--radius-button)] border border-line-strong bg-taken px-4 font-semibold text-white">
           <MessageCircle aria-hidden className="size-5" strokeWidth={2.25} />
           <span lang={lang}>{t("onboard.shareWhatsApp")}</span>
         </a>
@@ -202,8 +213,8 @@ export function EnableMyAlerts({ lang: viewerLang }: { lang: string }) {
   const [permission, setPermission] = useState(() => ("Notification" in window ? Notification.permission : "denied"));
   if (pushSupport() !== "supported" || permission === "granted") return null;
   return (
-    <div className="sticker flex flex-wrap items-center gap-4 bg-haldi-tint p-4">
-      <p lang={lang} className="min-w-0 flex-1 text-[16px] font-semibold text-ink">
+    <div className="sticker flex flex-col items-start gap-3 bg-surface p-4 sm:flex-row sm:items-center sm:gap-4">
+      <p lang={lang} className="min-w-0 flex-1 text-[15.5px] font-medium text-ink">
         {t("onboard.enableMineHelp")}
       </p>
       <Button tone="haldi" onClick={async () => setPermission(await enableReminders("family"))}>
@@ -253,7 +264,7 @@ export function OnboardingPage() {
 
   return (
     <AuthLayout>
-      <h1 lang={lang} className="font-display text-4xl">
+      <h1 lang={lang} className="font-display text-4xl md:text-[44px]">
         {t("onboard.title")}
       </h1>
       {!created ? (
@@ -351,7 +362,7 @@ export function InviteAcceptPage() {
           }
         }}
       >
-        <h1 lang={lang} className="font-display text-4xl">
+        <h1 lang={lang} className="font-display text-4xl md:text-[44px]">
           {t("invite.title")}
         </h1>
         <LanguagePicker value={myLang} onChange={setMyLang} />

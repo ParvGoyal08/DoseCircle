@@ -33,7 +33,8 @@ export const mockApiEnabled = import.meta.env.DEV && !config.apiUrl;
 export async function api<T>(path: string, options: RequestOptions): Promise<T> {
   if (mockApiEnabled) {
     const { mockApi } = await import("./mock-api");
-    return (await mockApi(path, options.method ?? "GET")) as T;
+    const query = new URLSearchParams(Object.entries(options.query ?? {}).filter((entry): entry is [string, string] => entry[1] !== undefined)).toString();
+    return (await mockApi(query ? `${path}?${query}` : path, options.method ?? "GET")) as T;
   }
   const headers: Record<string, string> = {};
   if (options.body !== undefined) headers["content-type"] = "application/json";

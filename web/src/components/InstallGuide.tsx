@@ -46,7 +46,7 @@ export function InstallGuide({ lang: viewerLang, code }: { lang: string; code?: 
   };
 
   return (
-    <section className="sticker bg-marigold-tint p-5">
+    <section className="sticker bg-surface p-5">
       <h2 lang={lang} className="text-2xl font-semibold leading-snug">
         {t("install.title")}
       </h2>
