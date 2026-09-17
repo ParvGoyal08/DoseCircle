@@ -14,12 +14,37 @@ export interface ParentItem {
   consecutiveMisses: number;
   paused: boolean;
   slotTimes: Record<string, string>;
+  /** Last time any paired phone acknowledged a reminder: the family's "phone reachable" signal. */
+  lastReceiptAt?: string;
   ttl?: number;
+}
+
+export interface FamilyItem {
+  PK: string;
+  SK: string;
+  fid: string;
+  name: string;
+  ownerSub?: string;
+  createdAt: string;
+  ttl?: number;
+}
+
+export interface InviteItem {
+  PK: string;
+  SK: string;
+  kind: "member" | "parent";
+  fid: string;
+  pid?: string;
+  createdBy: string;
+  consumedAt?: string;
+  ttl: number;
 }
 
 export interface MemberItem {
   PK: string;
   SK: string;
+  GSI1PK?: string;
+  GSI1SK?: string;
   fid: string;
   mid: string;
   sub?: string;
@@ -94,7 +119,10 @@ export interface DoseItem {
 export interface DeviceItem {
   PK: string;
   SK: string;
+  GSI1PK?: string;
+  GSI1SK?: string;
   deviceId: string;
+  pairedAt?: string;
   fid: string;
   pid: string;
   lang: LanguageCode;

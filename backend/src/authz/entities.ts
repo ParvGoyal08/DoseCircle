@@ -92,11 +92,21 @@ export interface AuthorizationRequest {
   entities: CedarEntity[];
 }
 
-/** De-duplicates entities by uid so callers can pass overlapping lists. */
+/**
+ * De-duplicates entities by uid, and adds every Family that any entity references. Guardrail
+ * policies read `principal.family.demo`; Cedar skips a policy that errors on a missing entity, so a
+ * forgotten family would silently disable the guardrail. Adding them here makes that impossible.
+ */
 export function entityList(request: AuthorizationRequest): CedarEntity[] {
   const byKey = new Map<string, CedarEntity>();
-  for (const entity of [request.principal, request.resource, ...request.entities]) {
-    byKey.set(`${entity.uid.type}::${entity.uid.id}`, entity);
+  const add = (entity: CedarEntity) => byKey.set(`${entity.uid.type}::${entity.uid.id}`, entity);
+  for (const entity of [request.principal, request.resource, ...request.entities]) add(entity);
+  const familyType = `${NAMESPACE}::Family`;
+  for (const entity of [...byKey.values()]) {
+    for (const value of Object.values(entity.attrs)) {
+      const target = typeof value === "object" && value !== null && !Array.isArray(value) && "__entity" in value ? (value.__entity as EntityUid) : undefined;
+      if (target?.type === familyType && !byKey.has(`${familyType}::${target.id}`)) add(familyEntity(target.id));
+    }
   }
   return [...byKey.values()];
 }

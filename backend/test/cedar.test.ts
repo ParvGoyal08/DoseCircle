@@ -140,6 +140,13 @@ describe("who can do what", () => {
     expect(dose.reasons).toContain("demo-never-touches-real-families");
   });
 
+  it("keeps the demo guardrail working even when the caller passes no extra entities", () => {
+    const decision = decide({ principal: demoMember, action: "ViewTimeline", resource: escalatingDose, entities: [] });
+    expect(decision.allowed).toBe(false);
+    expect(decision.reasons).toContain("demo-never-touches-real-families");
+    expect(decision.errors).toEqual([]);
+  });
+
   it("produces no evaluation errors for any request", () => {
     expect(decide(request(stranger, "ClaimDose", escalatingDose)).errors).toEqual([]);
   });

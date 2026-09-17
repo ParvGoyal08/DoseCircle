@@ -4,7 +4,7 @@ import { ddb, isExpired } from "./aws.js";
 import { env } from "./env.js";
 import type { DeviceItem, DoseItem, MedicineItem, MemberItem, ParentItem, SlotItem } from "./model.js";
 
-async function get<T>(key: { PK: string; SK: string }, consistent = false): Promise<T | undefined> {
+export async function get<T>(key: { PK: string; SK: string }, consistent = false): Promise<T | undefined> {
   const result = await ddb.send(new GetCommand({ TableName: env.tableName, Key: key, ConsistentRead: consistent }));
   const item = result.Item as (T & { ttl?: number }) | undefined;
   return isExpired(item) ? undefined : item;
@@ -43,6 +43,51 @@ export async function listParentDevices(pid: string): Promise<DeviceItem[]> {
     }),
   );
   return ((result.Items ?? []) as DeviceItem[]).filter((d) => !d.revoked && !isExpired(d as DeviceItem & { ttl?: number }));
+}
+
+export async function listParents(fid: string): Promise<ParentItem[]> {
+  const result = await ddb.send(
+    new QueryCommand({
+      TableName: env.tableName,
+      KeyConditionExpression: "PK = :pk AND begins_with(SK, :parent)",
+      ExpressionAttributeValues: { ":pk": `FAM#${fid}`, ":parent": "PARENT#" },
+    }),
+  );
+  return ((result.Items ?? []) as ParentItem[]).filter((p) => !isExpired(p));
+}
+
+/** Doses for a parent between two "yyyyMMddHHmm" stamps, inclusive, oldest first. */
+export async function listDoses(pid: string, fromStamp: string, toStamp: string): Promise<DoseItem[]> {
+  const items: DoseItem[] = [];
+  let startKey: Record<string, unknown> | undefined;
+  do {
+    const page = await ddb.send(
+      new QueryCommand({
+        TableName: env.tableName,
+        KeyConditionExpression: "PK = :pk AND SK BETWEEN :from AND :to",
+        // "~" sorts after "#" and digits, so demo/test runs (DOSE#stamp#n) at the last minute are included.
+        ExpressionAttributeValues: { ":pk": `PARENT#${pid}`, ":from": `DOSE#${fromStamp}`, ":to": `DOSE#${toStamp}~` },
+        ExclusiveStartKey: startKey,
+      }),
+    );
+    items.push(...((page.Items ?? []) as DoseItem[]));
+    startKey = page.LastEvaluatedKey;
+  } while (startKey);
+  return items.filter((d) => !isExpired(d));
+}
+
+/** Doses currently escalating in a family (sparse GSI2). */
+export async function listOpenDoses(fid: string): Promise<DoseItem[]> {
+  const result = await ddb.send(
+    new QueryCommand({
+      TableName: env.tableName,
+      IndexName: "GSI2",
+      KeyConditionExpression: "GSI2PK = :pk",
+      ExpressionAttributeValues: { ":pk": `FAM#${fid}#OPEN` },
+      ScanIndexForward: false,
+    }),
+  );
+  return ((result.Items ?? []) as DoseItem[]).filter((d) => !isExpired(d));
 }
 
 /** A signed-in user's memberships (one family per user in this build). */
