@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1300" width="1000" height="1300">
+  <!-- Fictional prescription for the DoseCircle demo. Doctor, clinic, patient and registration number are invented. -->
+  <defs>
+    <filter id="paper" x="0" y="0" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" seed="7" result="noise"/>
+      <feColorMatrix type="matrix" values="0 0 0 0 0.35  0 0 0 0 0.3  0 0 0 0 0.2  0 0 0 0.05 0" in="noise" result="grain"/>
+      <feComposite in="grain" in2="SourceGraphic" operator="over"/>
+    </filter>
+  </defs>
+  <rect width="1000" height="1300" fill="#fffdf8" filter="url(#paper)"/>
+  <g font-family="Georgia, 'Times New Roman', serif" fill="#1f2a44">
+    <text x="80" y="104" font-size="38" font-weight="700">Dr. Kavya Rao, MBBS, MD (General Medicine)</text>
+    <text x="80" y="158" font-size="28" fill="#44506b">Sample Clinic, Mysuru · Reg. No. SAMPLE-0000</text>
+    <line x1="80" y1="200" x2="920" y2="200" stroke="#1f2a44" stroke-width="3"/>
+    <text x="80" y="283" font-size="30">Name: Shantha   Age/Sex: 68/F   Date: 12/09/2026</text>
+    <text x="80" y="380" font-size="56" font-style="italic" font-weight="700">Rx</text>
+    <text x="110" y="463" font-size="32" xml:space="preserve">1. Tab. Glycomet GP 1      1-0-1      PC      x 30 days</text>
+    <text x="110" y="563" font-size="32" xml:space="preserve">2. Tab. Telma 40      1-0-0      x 30 days</text>
+    <text x="110" y="763" font-size="32" xml:space="preserve">4. Tab. Dolo 650      SOS</text>
+    <text x="80" y="933" font-size="30">Review after one month</text>
+  </g>
+  <!-- Line 3 is handwritten in ink, slightly faint, as it would be when added at the visit. -->
+  <g font-family="'Segoe Script', 'Bradley Hand', 'Comic Sans MS', cursive" fill="#2b3f8f" opacity="0.72">
+    <text x="112" y="664" font-size="34" transform="rotate(-1.2 112 664)">3. Inj. Lantus 10 units HS</text>
+  </g>
+  <g font-family="'Segoe Script', 'Bradley Hand', cursive" fill="#2b3f8f" opacity="0.8">
+    <path d="M640 1120 c30 -40 60 -10 80 -30 s40 20 70 -10 s30 30 60 0" fill="none" stroke="#2b3f8f" stroke-width="3" stroke-linecap="round"/>
+    <text x="650" y="1170" font-size="24" font-family="Georgia, serif" fill="#44506b" opacity="1">Signature</text>
+  </g>
+  <text x="80" y="1250" font-size="20" font-family="Georgia, serif" fill="#8a8f9c">Sample for demonstration only. All names are fictional.</text>
+</svg>

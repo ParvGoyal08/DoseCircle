@@ -37,6 +37,7 @@ export interface OpenAlert {
   missClass: MissClass | null;
   critical: boolean;
   alertedMe: boolean;
+  alertedCount: number;
   claimedByName: string | null;
 }
 

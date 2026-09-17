@@ -77,6 +77,8 @@ export interface OpenAlert {
   critical: boolean;
   /** Whether the viewer has been alerted (and so may claim). */
   alertedMe: boolean;
+  /** How far down the family order the alerts have gone. */
+  alertedCount: number;
   claimedByName: string | null;
 }
 
@@ -99,6 +101,7 @@ export function openAlerts(
       missClass: d.missClass ?? null,
       critical: d.critical,
       alertedMe: new Set(d.alertedMemberIds ?? []).has(viewerMid),
+      alertedCount: new Set(d.alertedMemberIds ?? []).size,
       claimedByName: d.claimedBy ? (memberNames.get(d.claimedBy) ?? null) : null,
     }));
 }

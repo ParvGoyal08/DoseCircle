@@ -172,6 +172,7 @@ export function createSimulatedDemoClient(): DemoClient {
                 missClass: dose.missClass,
                 critical: dose.critical,
                 alertedMe: dose.alerted.includes(mid),
+                alertedCount: dose.alerted.length,
                 claimedByName: dose.claimedBy ? nameOf(dose.claimedBy) : null,
               },
             ]

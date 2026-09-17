@@ -408,9 +408,7 @@ function FamilyPane({ session, memberId, state, timeline }: { session: DemoSessi
 
   const alert = open ?? (receivedAlert ? lastAlert : null);
   const ladder = (state?.members ?? []).slice().sort((a, b) => a.position - b.position);
-  const alertedCount = timeline?.items.some((i) => i.kind === "family_alerted")
-    ? ladder.length
-    : ladder.filter((m) => timeline?.items.some((i) => i.kind === "member_alerted" && i.people?.includes(m.displayName))).length;
+  const alertedCount = alert?.alertedCount ?? 0;
 
   return (
     <PhoneFrame label={<PaneLabel name={member.displayName} role={member.relation} city={member.city} lang={member.lang} />}>

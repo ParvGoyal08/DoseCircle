@@ -1,56 +1,17 @@
 {
-  "_meta": {
-    "language": "hi",
-    "note": "Draft; needs review by a native Hindi speaker before reviewedBy is set."
-  },
+  "_meta": {"language": "hi", "note": "Draft; needs review by a native Hindi speaker before reviewedBy is set."},
   "strings": {
-    "push.remind.title.morning": {
-      "text": "सुबह की दवा",
-      "reviewedBy": null
-    },
-    "push.remind.title.afternoon": {
-      "text": "दोपहर की दवा",
-      "reviewedBy": null
-    },
-    "push.remind.title.evening": {
-      "text": "शाम की दवा",
-      "reviewedBy": null
-    },
-    "push.remind.title.night": {
-      "text": "रात की दवा",
-      "reviewedBy": null
-    },
-    "push.remind.body": {
-      "text": "दवा लेने का समय हो गया है। दवा लेने के बाद यहाँ दबाएँ।",
-      "reviewedBy": null
-    },
-    "push.nudge.body": {
-      "text": "फिर से याद दिला रहे हैं: कृपया दवा लें और यहाँ दबाएँ।",
-      "reviewedBy": null
-    },
-    "push.alert.body.missed": {
-      "text": "दवा लेने की पुष्टि अभी तक नहीं हुई है। रिमाइंडर फ़ोन तक पहुँच गया था।",
-      "reviewedBy": null
-    },
-    "push.alert.body.offline": {
-      "text": "दवा लेने की पुष्टि अभी तक नहीं हुई है। फ़ोन ऑफ़लाइन लग रहा है।",
-      "reviewedBy": null
-    },
-    "push.broadcast.body": {
-      "text": "छूटी हुई दवा पर अभी तक किसी ने जवाब नहीं दिया है।",
-      "reviewedBy": null
-    },
-    "push.standDown.body": {
-      "text": "ये छूटी हुई दवा का ध्यान रख रहे हैं। आपको कुछ करने की ज़रूरत नहीं है।",
-      "reviewedBy": null
-    },
-    "push.tookLate.body": {
-      "text": "अब दवा लेने की पुष्टि हो गई है।",
-      "reviewedBy": null
-    },
-    "push.refill.body": {
-      "text": "यह दवा खत्म होने वाली है। कृपया दोबारा मँगवा लें।",
-      "reviewedBy": null
-    }
+    "push.remind.title.morning": {"text": "सुबह की दवा", "reviewedBy": null},
+    "push.remind.title.afternoon": {"text": "दोपहर की दवा", "reviewedBy": null},
+    "push.remind.title.evening": {"text": "शाम की दवा", "reviewedBy": null},
+    "push.remind.title.night": {"text": "रात की दवा", "reviewedBy": null},
+    "push.remind.body": {"text": "दवा लेने का समय हो गया है। दवा लेने के बाद यहाँ दबाएँ।", "reviewedBy": null},
+    "push.nudge.body": {"text": "फिर से याद दिला रहे हैं: कृपया दवा लें और यहाँ दबाएँ।", "reviewedBy": null},
+    "push.alert.body.missed": {"text": "दवा लेने की पुष्टि अभी तक नहीं हुई है। रिमाइंडर फ़ोन तक पहुँच गया था।", "reviewedBy": null},
+    "push.alert.body.offline": {"text": "दवा लेने की पुष्टि अभी तक नहीं हुई है। फ़ोन ऑफ़लाइन लग रहा है।", "reviewedBy": null},
+    "push.broadcast.body": {"text": "छूटी हुई दवा पर अभी तक किसी ने जवाब नहीं दिया है।", "reviewedBy": null},
+    "push.standDown.body": {"text": "ये छूटी हुई दवा का ध्यान रख रहे हैं। आपको कुछ करने की ज़रूरत नहीं है।", "reviewedBy": null},
+    "push.tookLate.body": {"text": "अब दवा लेने की पुष्टि हो गई है।", "reviewedBy": null},
+    "push.refill.body": {"text": "यह दवा खत्म होने वाली है। कृपया दोबारा मँगवा लें।", "reviewedBy": null}
   }
 }

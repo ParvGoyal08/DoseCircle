@@ -1,324 +1,98 @@
 {
-  "_meta": {
-    "language": "kn",
-    "note": "Draft by the development team; needs review by two native Kannada speakers."
-  },
+  "_meta": {"language": "kn", "note": "Draft by the development team; needs review by two native Kannada speakers."},
   "strings": {
-    "app.name": {
-      "text": "DoseCircle",
-      "reviewedBy": null
-    },
-    "app.tagline": {
-      "text": "ಪೋಷಕರು ಔಷಧಿ ತೆಗೆದುಕೊಳ್ಳುವುದು ತಪ್ಪಿದಾಗ, ಕುಟುಂಬದ ಸರಿಯಾದ ವ್ಯಕ್ತಿಗೆ ತಿಳಿಯುತ್ತದೆ.",
-      "reviewedBy": null
-    },
-    "app.notMedicalAdvice": {
-      "text": "ಇದು ಜ್ಞಾಪನೆಗಳು ಮತ್ತು ಕುಟುಂಬದ ಎಚ್ಚರಿಕೆಗಳಿಗೆ ಮಾತ್ರ. ಇದು ವೈದ್ಯಕೀಯ ಸಲಹೆಯಲ್ಲ.",
-      "reviewedBy": null
-    },
-    "slot.morning": {
-      "text": "ಬೆಳಿಗ್ಗೆ",
-      "reviewedBy": null
-    },
-    "slot.afternoon": {
-      "text": "ಮಧ್ಯಾಹ್ನ",
-      "reviewedBy": null
-    },
-    "slot.evening": {
-      "text": "ಸಂಜೆ",
-      "reviewedBy": null
-    },
-    "slot.night": {
-      "text": "ರಾತ್ರಿ",
-      "reviewedBy": null
-    },
-    "parent.prompt.morning": {
-      "text": "ಬೆಳಿಗ್ಗೆಯ ಔಷಧಿ ತೆಗೆದುಕೊಳ್ಳುವ ಸಮಯವಾಗಿದೆ.",
-      "reviewedBy": null
-    },
-    "parent.prompt.afternoon": {
-      "text": "ಮಧ್ಯಾಹ್ನದ ಔಷಧಿ ತೆಗೆದುಕೊಳ್ಳುವ ಸಮಯವಾಗಿದೆ.",
-      "reviewedBy": null
-    },
-    "parent.prompt.evening": {
-      "text": "ಸಂಜೆಯ ಔಷಧಿ ತೆಗೆದುಕೊಳ್ಳುವ ಸಮಯವಾಗಿದೆ.",
-      "reviewedBy": null
-    },
-    "parent.prompt.night": {
-      "text": "ರಾತ್ರಿಯ ಔಷಧಿ ತೆಗೆದುಕೊಳ್ಳುವ ಸಮಯವಾಗಿದೆ.",
-      "reviewedBy": null
-    },
-    "parent.takenButton": {
-      "text": "ನಾನು ತೆಗೆದುಕೊಂಡೆ",
-      "reviewedBy": null
-    },
-    "parent.takenThanks": {
-      "text": "ತೆಗೆದುಕೊಂಡಿದ್ದೀರಿ ಎಂದು ಗುರುತಿಸಲಾಗಿದೆ. ಧನ್ಯವಾದಗಳು.",
-      "reviewedBy": null
-    },
-    "parent.undo": {
-      "text": "ರದ್ದುಮಾಡಿ",
-      "reviewedBy": null
-    },
-    "parent.undoHint": {
-      "text": "ತಪ್ಪಾಗಿ ಒತ್ತಿದಿರಾ? ಕೆಲವು ಸೆಕೆಂಡುಗಳ ಒಳಗೆ ರದ್ದುಮಾಡಬಹುದು.",
-      "reviewedBy": null
-    },
-    "parent.listen": {
-      "text": "ಕೇಳಿ",
-      "reviewedBy": null
-    },
-    "parent.food.before": {
-      "text": "ಊಟಕ್ಕೆ ಮೊದಲು",
-      "reviewedBy": null
-    },
-    "parent.food.after": {
-      "text": "ಊಟದ ನಂತರ",
-      "reviewedBy": null
-    },
-    "parent.important": {
-      "text": "ಈ ಔಷಧಿ ಮುಖ್ಯವಾದುದು. ದಯವಿಟ್ಟು ತಪ್ಪಿಸಬೇಡಿ.",
-      "reviewedBy": null
-    },
-    "parent.familyToldTaken": {
-      "text": "ನೀವು ತೆಗೆದುಕೊಂಡಿರುವುದನ್ನು ನಿಮ್ಮ ಕುಟುಂಬಕ್ಕೆ ತಿಳಿಸಲಾಗಿದೆ.",
-      "reviewedBy": null
-    },
-    "parent.alreadyClosed": {
-      "text": "ಈ ಜ್ಞಾಪನೆ ಈಗಾಗಲೇ ಮುಗಿದಿದೆ.",
-      "reviewedBy": null
-    },
-    "parent.today.title": {
-      "text": "ಇಂದಿನ ಔಷಧಿಗಳು",
-      "reviewedBy": null
-    },
-    "parent.today.none": {
-      "text": "ಇಂದು ಯಾವುದೇ ಔಷಧಿ ಇಲ್ಲ.",
-      "reviewedBy": null
-    },
-    "parent.today.paused": {
-      "text": "ಸದ್ಯಕ್ಕೆ ಜ್ಞಾಪನೆಗಳನ್ನು ನಿಲ್ಲಿಸಲಾಗಿದೆ.",
-      "reviewedBy": null
-    },
-    "parent.status.taken": {
-      "text": "ತೆಗೆದುಕೊಂಡಿದೆ",
-      "reviewedBy": null
-    },
-    "parent.status.waiting": {
-      "text": "ಇನ್ನೂ ಇಲ್ಲ",
-      "reviewedBy": null
-    },
-    "parent.status.later": {
-      "text": "ಇಂದು ನಂತರ",
-      "reviewedBy": null
-    },
-    "parent.status.missed": {
-      "text": "ತಪ್ಪಿಹೋಗಿದೆ",
-      "reviewedBy": null
-    },
-    "parent.status.familyHelping": {
-      "text": "ಕುಟುಂಬ ಸಹಾಯ ಮಾಡುತ್ತಿದೆ",
-      "reviewedBy": null
-    },
-    "parent.join.title": {
-      "text": "ನಿಮ್ಮ ಕುಟುಂಬ ಕಳುಹಿಸಿದ ಕೋಡ್ ಅನ್ನು ನಮೂದಿಸಿ.",
-      "reviewedBy": null
-    },
-    "parent.join.button": {
-      "text": "ಈ ಫೋನ್ ಅನ್ನು ಸಂಪರ್ಕಿಸಿ",
-      "reviewedBy": null
-    },
-    "parent.join.invalid": {
-      "text": "ಈ ಕೋಡ್ ಕೆಲಸ ಮಾಡಲಿಲ್ಲ. ದಯವಿಟ್ಟು ನಿಮ್ಮ ಕುಟುಂಬದಿಂದ ಹೊಸ ಕೋಡ್ ಕೇಳಿ.",
-      "reviewedBy": null
-    },
-    "parent.join.done": {
-      "text": "ಈ ಫೋನ್ ಸಂಪರ್ಕಗೊಂಡಿದೆ. ಈಗ ನಿಮ್ಮ ಕುಟುಂಬ ನಿಮ್ಮ ಜ್ಞಾಪನೆಗಳನ್ನು ಹೊಂದಿಸಬಹುದು.",
-      "reviewedBy": null
-    },
-    "parent.notify.why": {
-      "text": "ನಿಮ್ಮ ಔಷಧಿಯ ಜ್ಞಾಪನೆಗಳು ಈ ಫೋನ್‌ಗೆ ಬರಲು ಅಧಿಸೂಚನೆಗಳನ್ನು ಅನುಮತಿಸಿ.",
-      "reviewedBy": null
-    },
-    "parent.notify.button": {
-      "text": "ಜ್ಞಾಪನೆಗಳನ್ನು ಅನುಮತಿಸಿ",
-      "reviewedBy": null
-    },
-    "parent.notify.blocked": {
-      "text": "ಈ ಆ್ಯಪ್‌ಗೆ ಅಧಿಸೂಚನೆಗಳು ಆಫ್ ಆಗಿವೆ. ಅವುಗಳನ್ನು ಆನ್ ಮಾಡಲು ದಯವಿಟ್ಟು ನಿಮ್ಮ ಕುಟುಂಬದ ಸಹಾಯ ಕೇಳಿ.",
-      "reviewedBy": null
-    },
-    "parent.notify.ready": {
-      "text": "ಈ ಫೋನ್‌ನಲ್ಲಿ ಜ್ಞಾಪನೆಗಳು ಆನ್ ಆಗಿವೆ.",
-      "reviewedBy": null
-    },
-    "lang.choose": {
-      "text": "ನಿಮ್ಮ ಭಾಷೆಯನ್ನು ಆಯ್ಕೆಮಾಡಿ",
-      "reviewedBy": null
-    },
-    "lang.draft": {
-      "text": "ಕರಡು ಅನುವಾದ",
-      "reviewedBy": null
-    },
-    "status.escalating": {
-      "text": "ಯಾರಾದರೂ ಸ್ಪಂದಿಸಲು ಕಾಯುತ್ತಿದೆ",
-      "reviewedBy": null
-    },
-    "status.claimed": {
-      "text": "ನೋಡಿಕೊಳ್ಳಲಾಗುತ್ತಿದೆ",
-      "reviewedBy": null
-    },
-    "status.taken": {
-      "text": "ಸಮಯಕ್ಕೆ ತೆಗೆದುಕೊಂಡಿದೆ",
-      "reviewedBy": null
-    },
-    "status.takenLate": {
-      "text": "ತಡವಾಗಿ ತೆಗೆದುಕೊಂಡಿದೆ",
-      "reviewedBy": null
-    },
-    "status.unresolved": {
-      "text": "ಯಾರೂ ಸ್ಪಂದಿಸಲಿಲ್ಲ",
-      "reviewedBy": null
-    },
-    "status.pending": {
-      "text": "ಜ್ಞಾಪನೆ ಕಳುಹಿಸಲಾಗಿದೆ",
-      "reviewedBy": null
-    },
-    "status.skipped": {
-      "text": "ನಿಲ್ಲಿಸಲಾಗಿದೆ",
-      "reviewedBy": null
-    },
-    "status.critical": {
-      "text": "ಮುಖ್ಯವಾದ ಔಷಧಿ",
-      "reviewedBy": null
-    },
-    "alert.missed": {
-      "text": "ಔಷಧಿ ತೆಗೆದುಕೊಂಡಿರುವುದು ಇನ್ನೂ ಖಚಿತವಾಗಿಲ್ಲ. ಜ್ಞಾಪನೆ ಫೋನ್‌ಗೆ ತಲುಪಿದೆ.",
-      "reviewedBy": null
-    },
-    "alert.offline": {
-      "text": "ಔಷಧಿ ತೆಗೆದುಕೊಂಡಿರುವುದು ಇನ್ನೂ ಖಚಿತವಾಗಿಲ್ಲ. ಫೋನ್ ಆಫ್‌ಲೈನ್ ಇರುವಂತೆ ಕಾಣುತ್ತದೆ.",
-      "reviewedBy": null
-    },
-    "alert.claimButton": {
-      "text": "ನಾನು ನೋಡಿಕೊಳ್ಳುತ್ತೇನೆ",
-      "reviewedBy": null
-    },
-    "alert.claimedByYou": {
-      "text": "ನೀವು ಇದನ್ನು ನೋಡಿಕೊಳ್ಳುತ್ತಿದ್ದೀರಿ. ಉಳಿದವರೆಲ್ಲರಿಗೂ ತಿಳಿಸಲಾಗಿದೆ.",
-      "reviewedBy": null
-    },
-    "alert.claimedByOther": {
-      "text": "ಈಗ ಇದನ್ನು ನೋಡಿಕೊಳ್ಳುತ್ತಿದ್ದಾರೆ.",
-      "reviewedBy": null
-    },
-    "alert.notYourTurn": {
-      "text": "ಕುಟುಂಬದ ಕ್ರಮದಲ್ಲಿ ನಿಮಗಿಂತ ಮೊದಲಿರುವವರನ್ನು ಮೊದಲು ಕೇಳಲಾಗಿದೆ.",
-      "reviewedBy": null
-    },
-    "alert.parentTookIt": {
-      "text": "ಔಷಧಿ ತೆಗೆದುಕೊಂಡಿರುವುದು ಈಗ ಖಚಿತವಾಗಿದೆ.",
-      "reviewedBy": null
-    },
-    "alert.why": {
-      "text": "ನಾನು ಇದನ್ನು ಏಕೆ ನೋಡುತ್ತಿದ್ದೇನೆ?",
-      "reviewedBy": null
-    },
-    "alert.lostRace": {
-      "text": "ಬೇರೆಯವರು ಈಗಾಗಲೇ ಇದನ್ನು ವಹಿಸಿಕೊಂಡಿದ್ದಾರೆ.",
-      "reviewedBy": null
-    },
-    "timeline.title": {
-      "text": "ಏನಾಯಿತು",
-      "reviewedBy": null
-    },
-    "timeline.reminder_sent": {
-      "text": "ಪೋಷಕರ ಫೋನ್‌ಗೆ ಜ್ಞಾಪನೆ ಕಳುಹಿಸಲಾಗಿದೆ.",
-      "reviewedBy": null
-    },
-    "timeline.nudge_sent": {
-      "text": "ಎರಡನೇ ಜ್ಞಾಪನೆ ಕಳುಹಿಸಲಾಗಿದೆ.",
-      "reviewedBy": null
-    },
-    "timeline.reached_phone": {
-      "text": "ಜ್ಞಾಪನೆ ಫೋನ್‌ಗೆ ತಲುಪಿದೆ.",
-      "reviewedBy": null
-    },
-    "timeline.no_confirmation": {
-      "text": "ಯಾರೂ ಖಚಿತಪಡಿಸಲು ಒತ್ತಲಿಲ್ಲ.",
-      "reviewedBy": null
-    },
-    "timeline.reminder_reached_phone": {
-      "text": "ಜ್ಞಾಪನೆ ಫೋನ್‌ಗೆ ತಲುಪಿತ್ತು, ಆದ್ದರಿಂದ ಇದು ತಪ್ಪಿದ ಡೋಸ್.",
-      "reviewedBy": null
-    },
-    "timeline.phone_seemed_offline": {
-      "text": "ಜ್ಞಾಪನೆ ಫೋನ್‌ಗೆ ತಲುಪಲೇ ಇಲ್ಲ, ಆದ್ದರಿಂದ ಫೋನ್ ಆಫ್‌ಲೈನ್ ಇರಬಹುದು.",
-      "reviewedBy": null
-    },
-    "timeline.member_alerted": {
-      "text": "ಕುಟುಂಬ ಆಯ್ಕೆಮಾಡಿದ ಕ್ರಮದಲ್ಲಿ ಕುಟುಂಬದ ಸದಸ್ಯರಿಗೆ ಎಚ್ಚರಿಕೆ ನೀಡಲಾಗಿದೆ.",
-      "reviewedBy": null
-    },
-    "timeline.family_alerted": {
-      "text": "ಸಮಯಕ್ಕೆ ಯಾರೂ ಸ್ಪಂದಿಸಲಿಲ್ಲ, ಆದ್ದರಿಂದ ಎಲ್ಲರಿಗೂ ಎಚ್ಚರಿಕೆ ನೀಡಲಾಗಿದೆ.",
-      "reviewedBy": null
-    },
-    "timeline.claimed": {
-      "text": "ವಹಿಸಿಕೊಳ್ಳಲಾಗಿದೆ: ಈ ವ್ಯಕ್ತಿ ಇದನ್ನು ನೋಡಿಕೊಳ್ಳುತ್ತಿದ್ದಾರೆ.",
-      "reviewedBy": null
-    },
-    "timeline.taken": {
-      "text": "ಪೋಷಕರು ಔಷಧಿ ತೆಗೆದುಕೊಂಡಿರುವುದನ್ನು ಖಚಿತಪಡಿಸಿದ್ದಾರೆ.",
-      "reviewedBy": null
-    },
-    "timeline.others_stood_down": {
-      "text": "ಉಳಿದವರಿಗೆ ಇನ್ನು ಏನೂ ಮಾಡುವ ಅಗತ್ಯವಿಲ್ಲ ಎಂದು ತಿಳಿಸಲಾಗಿದೆ.",
-      "reviewedBy": null
-    },
-    "timeline.family_told_taken": {
-      "text": "ಔಷಧಿ ತೆಗೆದುಕೊಂಡಿರುವುದನ್ನು ಕುಟುಂಬಕ್ಕೆ ತಿಳಿಸಲಾಗಿದೆ.",
-      "reviewedBy": null
-    },
-    "timeline.nobody_responded": {
-      "text": "ಯಾರೂ ಸ್ಪಂದಿಸಲಿಲ್ಲ. ಈ ಡೋಸ್ ಅನ್ನು ಬಗೆಹರಿಯದ್ದು ಎಂದು ಗುರುತಿಸಲಾಗಿದೆ.",
-      "reviewedBy": null
-    },
-    "timeline.stateTag": {
-      "text": "ಕಾರ್ಯಪ್ರವಾಹದ ಹಂತ",
-      "reviewedBy": null
-    },
-    "timeline.allowedBy": {
-      "text": "ಅನುಮತಿಸಿದ ನೀತಿ",
-      "reviewedBy": null
-    },
-    "common.close": {
-      "text": "ಮುಚ್ಚಿ",
-      "reviewedBy": null
-    },
-    "common.retry": {
-      "text": "ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ",
-      "reviewedBy": null
-    },
-    "common.offline": {
-      "text": "ನೀವು ಆಫ್‌ಲೈನ್ ಇದ್ದೀರಿ. ಮತ್ತೆ ಸಂಪರ್ಕಗೊಂಡಾಗ ಬದಲಾವಣೆಗಳನ್ನು ಕಳುಹಿಸಲಾಗುತ್ತದೆ.",
-      "reviewedBy": null
-    },
-    "common.error": {
-      "text": "ಏನೋ ತಪ್ಪಾಗಿದೆ. ದಯವಿಟ್ಟು ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.",
-      "reviewedBy": null
-    },
-    "common.loading": {
-      "text": "ಲೋಡ್ ಆಗುತ್ತಿದೆ",
-      "reviewedBy": null
-    },
-    "common.notification": {
-      "text": "ಅಧಿಸೂಚನೆ",
-      "reviewedBy": null
-    },
-    "common.now": {
-      "text": "ಈಗ",
-      "reviewedBy": null
-    }
+    "app.name": {"text": "DoseCircle", "reviewedBy": null},
+    "app.tagline": {"text": "ಪೋಷಕರು ಔಷಧಿ ತೆಗೆದುಕೊಳ್ಳುವುದು ತಪ್ಪಿದಾಗ, ಕುಟುಂಬದ ಸರಿಯಾದ ವ್ಯಕ್ತಿಗೆ ತಿಳಿಯುತ್ತದೆ.", "reviewedBy": null},
+    "app.notMedicalAdvice": {"text": "ಇದು ಜ್ಞಾಪನೆಗಳು ಮತ್ತು ಕುಟುಂಬದ ಎಚ್ಚರಿಕೆಗಳಿಗೆ ಮಾತ್ರ. ಇದು ವೈದ್ಯಕೀಯ ಸಲಹೆಯಲ್ಲ.", "reviewedBy": null},
+    "slot.morning": {"text": "ಬೆಳಿಗ್ಗೆ", "reviewedBy": null},
+    "slot.afternoon": {"text": "ಮಧ್ಯಾಹ್ನ", "reviewedBy": null},
+    "slot.evening": {"text": "ಸಂಜೆ", "reviewedBy": null},
+    "slot.night": {"text": "ರಾತ್ರಿ", "reviewedBy": null},
+    "parent.prompt.morning": {"text": "ಬೆಳಿಗ್ಗೆಯ ಔಷಧಿ ತೆಗೆದುಕೊಳ್ಳುವ ಸಮಯವಾಗಿದೆ.", "reviewedBy": null},
+    "parent.prompt.afternoon": {"text": "ಮಧ್ಯಾಹ್ನದ ಔಷಧಿ ತೆಗೆದುಕೊಳ್ಳುವ ಸಮಯವಾಗಿದೆ.", "reviewedBy": null},
+    "parent.prompt.evening": {"text": "ಸಂಜೆಯ ಔಷಧಿ ತೆಗೆದುಕೊಳ್ಳುವ ಸಮಯವಾಗಿದೆ.", "reviewedBy": null},
+    "parent.prompt.night": {"text": "ರಾತ್ರಿಯ ಔಷಧಿ ತೆಗೆದುಕೊಳ್ಳುವ ಸಮಯವಾಗಿದೆ.", "reviewedBy": null},
+    "parent.takenButton": {"text": "ನಾನು ತೆಗೆದುಕೊಂಡೆ", "reviewedBy": null},
+    "parent.takenThanks": {"text": "ತೆಗೆದುಕೊಂಡಿದ್ದೀರಿ ಎಂದು ಗುರುತಿಸಲಾಗಿದೆ. ಧನ್ಯವಾದಗಳು.", "reviewedBy": null},
+    "parent.undo": {"text": "ರದ್ದುಮಾಡಿ", "reviewedBy": null},
+    "parent.undoHint": {"text": "ತಪ್ಪಾಗಿ ಒತ್ತಿದಿರಾ? ಕೆಲವು ಸೆಕೆಂಡುಗಳ ಒಳಗೆ ರದ್ದುಮಾಡಬಹುದು.", "reviewedBy": null},
+    "parent.listen": {"text": "ಕೇಳಿ", "reviewedBy": null},
+    "parent.food.before": {"text": "ಊಟಕ್ಕೆ ಮೊದಲು", "reviewedBy": null},
+    "parent.food.after": {"text": "ಊಟದ ನಂತರ", "reviewedBy": null},
+    "parent.important": {"text": "ಈ ಔಷಧಿ ಮುಖ್ಯವಾದುದು. ದಯವಿಟ್ಟು ತಪ್ಪಿಸಬೇಡಿ.", "reviewedBy": null},
+    "parent.familyToldTaken": {"text": "ನೀವು ತೆಗೆದುಕೊಂಡಿರುವುದನ್ನು ನಿಮ್ಮ ಕುಟುಂಬಕ್ಕೆ ತಿಳಿಸಲಾಗಿದೆ.", "reviewedBy": null},
+    "parent.alreadyClosed": {"text": "ಈ ಜ್ಞಾಪನೆ ಈಗಾಗಲೇ ಮುಗಿದಿದೆ.", "reviewedBy": null},
+    "parent.today.title": {"text": "ಇಂದಿನ ಔಷಧಿಗಳು", "reviewedBy": null},
+    "parent.today.none": {"text": "ಇಂದು ಯಾವುದೇ ಔಷಧಿ ಇಲ್ಲ.", "reviewedBy": null},
+    "parent.today.paused": {"text": "ಸದ್ಯಕ್ಕೆ ಜ್ಞಾಪನೆಗಳನ್ನು ನಿಲ್ಲಿಸಲಾಗಿದೆ.", "reviewedBy": null},
+    "parent.status.taken": {"text": "ತೆಗೆದುಕೊಂಡಿದೆ", "reviewedBy": null},
+    "parent.status.waiting": {"text": "ಇನ್ನೂ ಇಲ್ಲ", "reviewedBy": null},
+    "parent.status.later": {"text": "ಇಂದು ನಂತರ", "reviewedBy": null},
+    "parent.status.missed": {"text": "ತಪ್ಪಿಹೋಗಿದೆ", "reviewedBy": null},
+    "parent.status.familyHelping": {"text": "ಕುಟುಂಬ ಸಹಾಯ ಮಾಡುತ್ತಿದೆ", "reviewedBy": null},
+    "parent.join.title": {"text": "ನಿಮ್ಮ ಕುಟುಂಬ ಕಳುಹಿಸಿದ ಕೋಡ್ ಅನ್ನು ನಮೂದಿಸಿ.", "reviewedBy": null},
+    "parent.join.button": {"text": "ಈ ಫೋನ್ ಅನ್ನು ಸಂಪರ್ಕಿಸಿ", "reviewedBy": null},
+    "parent.join.invalid": {"text": "ಈ ಕೋಡ್ ಕೆಲಸ ಮಾಡಲಿಲ್ಲ. ದಯವಿಟ್ಟು ನಿಮ್ಮ ಕುಟುಂಬದಿಂದ ಹೊಸ ಕೋಡ್ ಕೇಳಿ.", "reviewedBy": null},
+    "parent.join.done": {"text": "ಈ ಫೋನ್ ಸಂಪರ್ಕಗೊಂಡಿದೆ. ಈಗ ನಿಮ್ಮ ಕುಟುಂಬ ನಿಮ್ಮ ಜ್ಞಾಪನೆಗಳನ್ನು ಹೊಂದಿಸಬಹುದು.", "reviewedBy": null},
+    "parent.notify.why": {"text": "ನಿಮ್ಮ ಔಷಧಿಯ ಜ್ಞಾಪನೆಗಳು ಈ ಫೋನ್‌ಗೆ ಬರಲು ಅಧಿಸೂಚನೆಗಳನ್ನು ಅನುಮತಿಸಿ.", "reviewedBy": null},
+    "parent.notify.button": {"text": "ಜ್ಞಾಪನೆಗಳನ್ನು ಅನುಮತಿಸಿ", "reviewedBy": null},
+    "parent.notify.blocked": {"text": "ಈ ಆ್ಯಪ್‌ಗೆ ಅಧಿಸೂಚನೆಗಳು ಆಫ್ ಆಗಿವೆ. ಅವುಗಳನ್ನು ಆನ್ ಮಾಡಲು ದಯವಿಟ್ಟು ನಿಮ್ಮ ಕುಟುಂಬದ ಸಹಾಯ ಕೇಳಿ.", "reviewedBy": null},
+    "parent.notify.ready": {"text": "ಈ ಫೋನ್‌ನಲ್ಲಿ ಜ್ಞಾಪನೆಗಳು ಆನ್ ಆಗಿವೆ.", "reviewedBy": null},
+    "lang.choose": {"text": "ನಿಮ್ಮ ಭಾಷೆಯನ್ನು ಆಯ್ಕೆಮಾಡಿ", "reviewedBy": null},
+    "lang.draft": {"text": "ಕರಡು ಅನುವಾದ", "reviewedBy": null},
+    "status.escalating": {"text": "ಯಾರಾದರೂ ಸ್ಪಂದಿಸಲು ಕಾಯುತ್ತಿದೆ", "reviewedBy": null},
+    "status.claimed": {"text": "ನೋಡಿಕೊಳ್ಳಲಾಗುತ್ತಿದೆ", "reviewedBy": null},
+    "status.taken": {"text": "ಸಮಯಕ್ಕೆ ತೆಗೆದುಕೊಂಡಿದೆ", "reviewedBy": null},
+    "status.takenLate": {"text": "ತಡವಾಗಿ ತೆಗೆದುಕೊಂಡಿದೆ", "reviewedBy": null},
+    "status.unresolved": {"text": "ಯಾರೂ ಸ್ಪಂದಿಸಲಿಲ್ಲ", "reviewedBy": null},
+    "status.pending": {"text": "ಜ್ಞಾಪನೆ ಕಳುಹಿಸಲಾಗಿದೆ", "reviewedBy": null},
+    "status.skipped": {"text": "ನಿಲ್ಲಿಸಲಾಗಿದೆ", "reviewedBy": null},
+    "status.critical": {"text": "ಮುಖ್ಯವಾದ ಔಷಧಿ", "reviewedBy": null},
+    "alert.missed": {"text": "ಔಷಧಿ ತೆಗೆದುಕೊಂಡಿರುವುದು ಇನ್ನೂ ಖಚಿತವಾಗಿಲ್ಲ. ಜ್ಞಾಪನೆ ಫೋನ್‌ಗೆ ತಲುಪಿದೆ.", "reviewedBy": null},
+    "alert.offline": {"text": "ಔಷಧಿ ತೆಗೆದುಕೊಂಡಿರುವುದು ಇನ್ನೂ ಖಚಿತವಾಗಿಲ್ಲ. ಫೋನ್ ಆಫ್‌ಲೈನ್ ಇರುವಂತೆ ಕಾಣುತ್ತದೆ.", "reviewedBy": null},
+    "alert.claimButton": {"text": "ನಾನು ನೋಡಿಕೊಳ್ಳುತ್ತೇನೆ", "reviewedBy": null},
+    "alert.claimedByYou": {"text": "ನೀವು ಇದನ್ನು ನೋಡಿಕೊಳ್ಳುತ್ತಿದ್ದೀರಿ. ಉಳಿದವರೆಲ್ಲರಿಗೂ ತಿಳಿಸಲಾಗಿದೆ.", "reviewedBy": null},
+    "alert.claimedByOther": {"text": "ಈಗ ಇದನ್ನು ನೋಡಿಕೊಳ್ಳುತ್ತಿದ್ದಾರೆ.", "reviewedBy": null},
+    "alert.notYourTurn": {"text": "ಕುಟುಂಬದ ಕ್ರಮದಲ್ಲಿ ನಿಮಗಿಂತ ಮೊದಲಿರುವವರನ್ನು ಮೊದಲು ಕೇಳಲಾಗಿದೆ.", "reviewedBy": null},
+    "alert.parentTookIt": {"text": "ಔಷಧಿ ತೆಗೆದುಕೊಂಡಿರುವುದು ಈಗ ಖಚಿತವಾಗಿದೆ.", "reviewedBy": null},
+    "alert.why": {"text": "ನಾನು ಇದನ್ನು ಏಕೆ ನೋಡುತ್ತಿದ್ದೇನೆ?", "reviewedBy": null},
+    "alert.lostRace": {"text": "ಬೇರೆಯವರು ಈಗಾಗಲೇ ಇದನ್ನು ವಹಿಸಿಕೊಂಡಿದ್ದಾರೆ.", "reviewedBy": null},
+    "timeline.title": {"text": "ಏನಾಯಿತು", "reviewedBy": null},
+    "timeline.reminder_sent": {"text": "ಪೋಷಕರ ಫೋನ್‌ಗೆ ಜ್ಞಾಪನೆ ಕಳುಹಿಸಲಾಗಿದೆ.", "reviewedBy": null},
+    "timeline.nudge_sent": {"text": "ಎರಡನೇ ಜ್ಞಾಪನೆ ಕಳುಹಿಸಲಾಗಿದೆ.", "reviewedBy": null},
+    "timeline.reached_phone": {"text": "ಜ್ಞಾಪನೆ ಫೋನ್‌ಗೆ ತಲುಪಿದೆ.", "reviewedBy": null},
+    "timeline.no_confirmation": {"text": "ಯಾರೂ ಖಚಿತಪಡಿಸಲು ಒತ್ತಲಿಲ್ಲ.", "reviewedBy": null},
+    "timeline.reminder_reached_phone": {"text": "ಜ್ಞಾಪನೆ ಫೋನ್‌ಗೆ ತಲುಪಿತ್ತು, ಆದ್ದರಿಂದ ಇದು ತಪ್ಪಿದ ಡೋಸ್.", "reviewedBy": null},
+    "timeline.phone_seemed_offline": {"text": "ಜ್ಞಾಪನೆ ಫೋನ್‌ಗೆ ತಲುಪಲೇ ಇಲ್ಲ, ಆದ್ದರಿಂದ ಫೋನ್ ಆಫ್‌ಲೈನ್ ಇರಬಹುದು.", "reviewedBy": null},
+    "timeline.member_alerted": {"text": "ಕುಟುಂಬ ಆಯ್ಕೆಮಾಡಿದ ಕ್ರಮದಲ್ಲಿ ಕುಟುಂಬದ ಸದಸ್ಯರಿಗೆ ಎಚ್ಚರಿಕೆ ನೀಡಲಾಗಿದೆ.", "reviewedBy": null},
+    "timeline.family_alerted": {"text": "ಸಮಯಕ್ಕೆ ಯಾರೂ ಸ್ಪಂದಿಸಲಿಲ್ಲ, ಆದ್ದರಿಂದ ಎಲ್ಲರಿಗೂ ಎಚ್ಚರಿಕೆ ನೀಡಲಾಗಿದೆ.", "reviewedBy": null},
+    "timeline.claimed": {"text": "ವಹಿಸಿಕೊಳ್ಳಲಾಗಿದೆ: ಈ ವ್ಯಕ್ತಿ ಇದನ್ನು ನೋಡಿಕೊಳ್ಳುತ್ತಿದ್ದಾರೆ.", "reviewedBy": null},
+    "timeline.taken": {"text": "ಪೋಷಕರು ಔಷಧಿ ತೆಗೆದುಕೊಂಡಿರುವುದನ್ನು ಖಚಿತಪಡಿಸಿದ್ದಾರೆ.", "reviewedBy": null},
+    "timeline.others_stood_down": {"text": "ಉಳಿದವರಿಗೆ ಇನ್ನು ಏನೂ ಮಾಡುವ ಅಗತ್ಯವಿಲ್ಲ ಎಂದು ತಿಳಿಸಲಾಗಿದೆ.", "reviewedBy": null},
+    "timeline.family_told_taken": {"text": "ಔಷಧಿ ತೆಗೆದುಕೊಂಡಿರುವುದನ್ನು ಕುಟುಂಬಕ್ಕೆ ತಿಳಿಸಲಾಗಿದೆ.", "reviewedBy": null},
+    "timeline.nobody_responded": {"text": "ಯಾರೂ ಸ್ಪಂದಿಸಲಿಲ್ಲ. ಈ ಡೋಸ್ ಅನ್ನು ಬಗೆಹರಿಯದ್ದು ಎಂದು ಗುರುತಿಸಲಾಗಿದೆ.", "reviewedBy": null},
+    "timeline.stateTag": {"text": "ಕಾರ್ಯಪ್ರವಾಹದ ಹಂತ", "reviewedBy": null},
+    "timeline.allowedBy": {"text": "ಅನುಮತಿಸಿದ ನೀತಿ", "reviewedBy": null},
+    "common.close": {"text": "ಮುಚ್ಚಿ", "reviewedBy": null},
+    "common.retry": {"text": "ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ", "reviewedBy": null},
+    "common.offline": {"text": "ನೀವು ಆಫ್‌ಲೈನ್ ಇದ್ದೀರಿ. ಮತ್ತೆ ಸಂಪರ್ಕಗೊಂಡಾಗ ಬದಲಾವಣೆಗಳನ್ನು ಕಳುಹಿಸಲಾಗುತ್ತದೆ.", "reviewedBy": null},
+    "common.error": {"text": "ಏನೋ ತಪ್ಪಾಗಿದೆ. ದಯವಿಟ್ಟು ಮತ್ತೆ ಪ್ರಯತ್ನಿಸಿ.", "reviewedBy": null},
+    "common.loading": {"text": "ಲೋಡ್ ಆಗುತ್ತಿದೆ", "reviewedBy": null},
+    "common.notification": {"text": "ಅಧಿಸೂಚನೆ", "reviewedBy": null},
+    "common.now": {"text": "ಈಗ", "reviewedBy": null},
+    "install.title": {"text": "ಮೊದಲು, DoseCircle ಅನ್ನು ನಿಮ್ಮ ಹೋಮ್ ಸ್ಕ್ರೀನ್‌ಗೆ ಸೇರಿಸಿ.", "reviewedBy": null},
+    "install.why": {"text": "ಆ್ಯಪ್ ಹೋಮ್ ಸ್ಕ್ರೀನ್‌ನಲ್ಲಿದ್ದಾಗ ಮಾತ್ರ ಜ್ಞಾಪನೆಗಳು ಈ ಫೋನ್‌ಗೆ ಬರುತ್ತವೆ.", "reviewedBy": null},
+    "install.ios.step1": {"text": "Safari ಕೆಳಭಾಗದಲ್ಲಿರುವ Share ಬಟನ್ ಒತ್ತಿ.", "reviewedBy": null},
+    "install.ios.step2": {"text": "ಕೆಳಗೆ ಸ್ಕ್ರೋಲ್ ಮಾಡಿ Add to Home Screen ಒತ್ತಿ.", "reviewedBy": null},
+    "install.ios.step3": {"text": "ಹೋಮ್ ಸ್ಕ್ರೀನ್‌ನಿಂದ DoseCircle ತೆರೆದು ಕೋಡ್ ಅನ್ನು ಮತ್ತೆ ನಮೂದಿಸಿ.", "reviewedBy": null},
+    "install.android.button": {"text": "ಹೋಮ್ ಸ್ಕ್ರೀನ್‌ಗೆ ಸೇರಿಸಿ", "reviewedBy": null},
+    "install.android.manual": {"text": "ಬ್ರೌಸರ್ ಮೆನು ತೆರೆದು Add to Home screen ಅಥವಾ Install app ಒತ್ತಿ.", "reviewedBy": null},
+    "install.keepCode": {"text": "ಈ ಕೋಡ್ ಅನ್ನು ಇಟ್ಟುಕೊಳ್ಳಿ. ಆ್ಯಪ್‌ನೊಳಗೆ ಇದು ಬೇಕಾಗುತ್ತದೆ.", "reviewedBy": null},
+    "install.done": {"text": "ಆ್ಯಪ್ ಹೋಮ್ ಸ್ಕ್ರೀನ್‌ನಲ್ಲಿದೆ.", "reviewedBy": null},
+    "parent.join.codeLabel": {"text": "ಕೋಡ್", "reviewedBy": null},
+    "parent.home.next": {"text": "ಮುಂದಿನ ಜ್ಞಾಪನೆ", "reviewedBy": null},
+    "parent.home.changeLanguage": {"text": "ಭಾಷೆ ಬದಲಿಸಿ", "reviewedBy": null},
+    "parent.home.notConnected": {"text": "ಈ ಫೋನ್ ಇನ್ನೂ ಸಂಪರ್ಕಗೊಂಡಿಲ್ಲ.", "reviewedBy": null},
+    "parent.home.battery": {"text": "ಜ್ಞಾಪನೆಗಳು ಸಮಯಕ್ಕೆ ಬರಲು, ಈ ಆ್ಯಪ್‌ಗೆ ಬ್ಯಾಟರಿ ಉಳಿತಾಯವನ್ನು ಆಫ್ ಮಾಡಲು ನಿಮ್ಮ ಕುಟುಂಬವನ್ನು ಕೇಳಿ.", "reviewedBy": null}
   }
 }

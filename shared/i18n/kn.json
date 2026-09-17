@@ -1,56 +1,17 @@
 {
-  "_meta": {
-    "language": "kn",
-    "note": "Draft; needs review by two native Kannada speakers before reviewedBy is set."
-  },
+  "_meta": {"language": "kn", "note": "Draft; needs review by two native Kannada speakers before reviewedBy is set."},
   "strings": {
-    "push.remind.title.morning": {
-      "text": "ಬೆಳಿಗ್ಗೆಯ ಔಷಧಿ",
-      "reviewedBy": null
-    },
-    "push.remind.title.afternoon": {
-      "text": "ಮಧ್ಯಾಹ್ನದ ಔಷಧಿ",
-      "reviewedBy": null
-    },
-    "push.remind.title.evening": {
-      "text": "ಸಂಜೆಯ ಔಷಧಿ",
-      "reviewedBy": null
-    },
-    "push.remind.title.night": {
-      "text": "ರಾತ್ರಿಯ ಔಷಧಿ",
-      "reviewedBy": null
-    },
-    "push.remind.body": {
-      "text": "ಔಷಧಿ ತೆಗೆದುಕೊಳ್ಳುವ ಸಮಯವಾಗಿದೆ. ತೆಗೆದುಕೊಂಡ ನಂತರ ಇಲ್ಲಿ ಒತ್ತಿ.",
-      "reviewedBy": null
-    },
-    "push.nudge.body": {
-      "text": "ಮತ್ತೊಮ್ಮೆ ನೆನಪಿಸುತ್ತಿದ್ದೇವೆ: ದಯವಿಟ್ಟು ಔಷಧಿ ತೆಗೆದುಕೊಂಡು ಇಲ್ಲಿ ಒತ್ತಿ.",
-      "reviewedBy": null
-    },
-    "push.alert.body.missed": {
-      "text": "ಔಷಧಿ ತೆಗೆದುಕೊಂಡಿರುವುದು ಇನ್ನೂ ಖಚಿತವಾಗಿಲ್ಲ. ಜ್ಞಾಪನೆ ಫೋನ್‌ಗೆ ತಲುಪಿದೆ.",
-      "reviewedBy": null
-    },
-    "push.alert.body.offline": {
-      "text": "ಔಷಧಿ ತೆಗೆದುಕೊಂಡಿರುವುದು ಇನ್ನೂ ಖಚಿತವಾಗಿಲ್ಲ. ಫೋನ್ ಆಫ್‌ಲೈನ್ ಇರುವಂತೆ ಕಾಣುತ್ತದೆ.",
-      "reviewedBy": null
-    },
-    "push.broadcast.body": {
-      "text": "ತಪ್ಪಿದ ಔಷಧಿಗೆ ಇನ್ನೂ ಯಾರೂ ಸ್ಪಂದಿಸಿಲ್ಲ.",
-      "reviewedBy": null
-    },
-    "push.standDown.body": {
-      "text": "ಅವರು ತಪ್ಪಿದ ಔಷಧಿಯನ್ನು ನೋಡಿಕೊಳ್ಳುತ್ತಿದ್ದಾರೆ. ನೀವು ಏನೂ ಮಾಡಬೇಕಾಗಿಲ್ಲ.",
-      "reviewedBy": null
-    },
-    "push.tookLate.body": {
-      "text": "ಔಷಧಿ ತೆಗೆದುಕೊಂಡಿರುವುದು ಈಗ ಖಚಿತವಾಗಿದೆ.",
-      "reviewedBy": null
-    },
-    "push.refill.body": {
-      "text": "ಈ ಔಷಧಿ ಮುಗಿಯುತ್ತಾ ಬಂದಿದೆ. ದಯವಿಟ್ಟು ಮತ್ತೆ ತರಿಸಿಕೊಳ್ಳಿ.",
-      "reviewedBy": null
-    }
+    "push.remind.title.morning": {"text": "ಬೆಳಿಗ್ಗೆಯ ಔಷಧಿ", "reviewedBy": null},
+    "push.remind.title.afternoon": {"text": "ಮಧ್ಯಾಹ್ನದ ಔಷಧಿ", "reviewedBy": null},
+    "push.remind.title.evening": {"text": "ಸಂಜೆಯ ಔಷಧಿ", "reviewedBy": null},
+    "push.remind.title.night": {"text": "ರಾತ್ರಿಯ ಔಷಧಿ", "reviewedBy": null},
+    "push.remind.body": {"text": "ಔಷಧಿ ತೆಗೆದುಕೊಳ್ಳುವ ಸಮಯವಾಗಿದೆ. ತೆಗೆದುಕೊಂಡ ನಂತರ ಇಲ್ಲಿ ಒತ್ತಿ.", "reviewedBy": null},
+    "push.nudge.body": {"text": "ಮತ್ತೊಮ್ಮೆ ನೆನಪಿಸುತ್ತಿದ್ದೇವೆ: ದಯವಿಟ್ಟು ಔಷಧಿ ತೆಗೆದುಕೊಂಡು ಇಲ್ಲಿ ಒತ್ತಿ.", "reviewedBy": null},
+    "push.alert.body.missed": {"text": "ಔಷಧಿ ತೆಗೆದುಕೊಂಡಿರುವುದು ಇನ್ನೂ ಖಚಿತವಾಗಿಲ್ಲ. ಜ್ಞಾಪನೆ ಫೋನ್‌ಗೆ ತಲುಪಿದೆ.", "reviewedBy": null},
+    "push.alert.body.offline": {"text": "ಔಷಧಿ ತೆಗೆದುಕೊಂಡಿರುವುದು ಇನ್ನೂ ಖಚಿತವಾಗಿಲ್ಲ. ಫೋನ್ ಆಫ್‌ಲೈನ್ ಇರುವಂತೆ ಕಾಣುತ್ತದೆ.", "reviewedBy": null},
+    "push.broadcast.body": {"text": "ತಪ್ಪಿದ ಔಷಧಿಗೆ ಇನ್ನೂ ಯಾರೂ ಸ್ಪಂದಿಸಿಲ್ಲ.", "reviewedBy": null},
+    "push.standDown.body": {"text": "ಅವರು ತಪ್ಪಿದ ಔಷಧಿಯನ್ನು ನೋಡಿಕೊಳ್ಳುತ್ತಿದ್ದಾರೆ. ನೀವು ಏನೂ ಮಾಡಬೇಕಾಗಿಲ್ಲ.", "reviewedBy": null},
+    "push.tookLate.body": {"text": "ಔಷಧಿ ತೆಗೆದುಕೊಂಡಿರುವುದು ಈಗ ಖಚಿತವಾಗಿದೆ.", "reviewedBy": null},
+    "push.refill.body": {"text": "ಈ ಔಷಧಿ ಮುಗಿಯುತ್ತಾ ಬಂದಿದೆ. ದಯವಿಟ್ಟು ಮತ್ತೆ ತರಿಸಿಕೊಳ್ಳಿ.", "reviewedBy": null}
   }
 }
