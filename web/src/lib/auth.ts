@@ -41,6 +41,7 @@ setTokenProvider("family", async () => {
 
 /** In the local preview (no AWS), sign-in is simulated so every screen can be tried. */
 async function mock() {
+  if (!import.meta.env.DEV) throw new Error("Not available in production");
   return import("./mock-api");
 }
 

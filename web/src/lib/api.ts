@@ -31,7 +31,7 @@ export interface RequestOptions {
 export const mockApiEnabled = import.meta.env.DEV && !config.apiUrl;
 
 export async function api<T>(path: string, options: RequestOptions): Promise<T> {
-  if (mockApiEnabled) {
+  if (import.meta.env.DEV && mockApiEnabled) {
     const { mockApi } = await import("./mock-api");
     const query = new URLSearchParams(Object.entries(options.query ?? {}).filter((entry): entry is [string, string] => entry[1] !== undefined)).toString();
     return (await mockApi(query ? `${path}?${query}` : path, options.method ?? "GET", options.body as Record<string, unknown> | undefined)) as T;
