@@ -2,6 +2,7 @@ import type { DoseStatus, MissClass, SlotName } from "@dosecircle/shared";
 import { CircleCheck, CircleDashed, Clock, HeartPulse, Hand, Moon, Sun, Sunrise, Sunset, TriangleAlert, WifiOff, type LucideIcon } from "lucide-react";
 import type { ButtonHTMLAttributes, ReactNode } from "react";
 import type { TFunction } from "i18next";
+import { InitialBadge } from "./illustrations/Characters";
 
 export function cx(...classes: (string | false | null | undefined)[]): string {
   return classes.filter(Boolean).join(" ");
@@ -10,12 +11,12 @@ export function cx(...classes: (string | false | null | undefined)[]): string {
 type Tone = "ink" | "taken" | "claimed" | "quiet" | "danger" | "haldi";
 
 const TONES: Record<Tone, string> = {
-  ink: "bg-ink text-paper hover:bg-ink/90 disabled:bg-ink/40",
-  taken: "bg-taken text-white hover:bg-taken/92 disabled:bg-taken/40",
-  claimed: "bg-claimed text-white hover:bg-claimed/92 disabled:bg-claimed/40",
-  danger: "bg-missed text-white hover:bg-missed/92",
-  haldi: "bg-haldi text-ink hover:bg-haldi/90",
-  quiet: "bg-surface text-ink border border-line-strong hover:bg-paper",
+  ink: "bg-ink text-paper disabled:bg-ink/40 disabled:shadow-none",
+  taken: "bg-taken text-white disabled:opacity-50",
+  claimed: "bg-claimed text-white disabled:opacity-50",
+  danger: "bg-missed text-white",
+  haldi: "bg-haldi text-ink disabled:opacity-50",
+  quiet: "bg-surface text-ink disabled:opacity-50",
 };
 
 export function Button({
@@ -29,7 +30,7 @@ export function Button({
     <button
       type="button"
       className={cx(
-        "inline-flex items-center justify-center gap-2 rounded-[var(--radius-button)] font-semibold transition-[background-color,transform] duration-150 active:scale-[0.98] disabled:cursor-not-allowed",
+        "pressable inline-flex items-center justify-center gap-2 rounded-[var(--radius-button)] border-2 border-ink font-bold shadow-[3px_3px_0_var(--color-ink)] disabled:cursor-not-allowed disabled:shadow-none",
         size === "sm" && "min-h-10 px-3.5 text-[15px]",
         size === "md" && "min-h-12 px-5 text-[17px]",
         size === "lg" && "min-h-14 px-6 text-lg",
@@ -75,7 +76,7 @@ export function statusLook(status: DoseStatus, missClass?: MissClass | null): St
 
 export function Pill({ icon: Icon, className, children }: { icon?: LucideIcon; className?: string; children: ReactNode }) {
   return (
-    <span className={cx("inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[13px] font-semibold leading-none", className)}>
+    <span className={cx("inline-flex items-center gap-1.5 rounded-full border-[1.5px] border-ink px-2.5 py-1 text-[13px] font-bold leading-none", className)}>
       {Icon && <Icon aria-hidden className="size-3.5" strokeWidth={2.5} />}
       {children}
     </span>
@@ -99,21 +100,11 @@ export function CriticalPill({ t, lang }: { t: TFunction; lang: string }) {
   );
 }
 
-/** Initial-letter avatar with a stable warm colour; people are never shown as grey silhouettes. */
-export function Avatar({ name, size = 36, ring }: { name: string; size?: number; ring?: string }) {
-  const hues = ["#F4B400", "#E8A0A0", "#9CC5A1", "#A7B8E8", "#D9B38C", "#C9A7E0"];
-  const hue = hues[[...name].reduce((sum, ch) => sum + ch.charCodeAt(0), 0) % hues.length];
-  return (
-    <span
-      aria-hidden
-      className={cx("inline-grid shrink-0 place-items-center rounded-full font-semibold text-ink", ring)}
-      style={{ width: size, height: size, background: hue, fontSize: size * 0.42 }}
-    >
-      {[...name][0]?.toUpperCase()}
-    </span>
-  );
+/** Initial badge for real people; the demo family has drawn characters instead. */
+export function Avatar({ name, size = 36 }: { name: string; size?: number; ring?: string }) {
+  return <InitialBadge name={name} size={size} />;
 }
 
 export function Card({ className, children }: { className?: string; children: ReactNode }) {
-  return <div className={cx("rounded-[var(--radius-card)] border border-line bg-surface", className)}>{children}</div>;
+  return <div className={cx("sticker bg-surface", className)}>{children}</div>;
 }

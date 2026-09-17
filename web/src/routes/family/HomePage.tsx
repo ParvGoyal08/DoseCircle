@@ -46,11 +46,11 @@ function Home({ fid, lang: myLang, mid }: { fid: string; lang: string; mid: stri
           <EnableMyAlerts lang={myLang} />
 
           <section aria-labelledby="alerts-heading">
-            <h2 id="alerts-heading" lang={lang} className="mb-3 text-[15px] font-semibold uppercase tracking-wider text-muted">
+            <h2 id="alerts-heading" lang={lang} className="font-display mb-4 text-4xl">
               {t("home.openAlerts")}
             </h2>
             {data.openAlerts.length === 0 ? (
-              <p lang={lang} className="flex items-center gap-3 rounded-[var(--radius-card)] border border-taken/25 bg-taken-tint px-4 py-3 text-[16px] font-medium text-taken">
+              <p lang={lang} className="sticker flex items-center gap-3 bg-mint-tint px-5 py-4 text-lg font-bold text-taken">
                 <BellRing aria-hidden className="size-5" strokeWidth={2.25} />
                 {t("home.allCalm")}
               </p>
@@ -107,10 +107,10 @@ function ParentSummary({ parent, fid, myLang }: { parent: ParentCard; fid: strin
   return (
     <section aria-label={parent.displayName}>
       <Card className="overflow-hidden">
-        <div className="flex flex-wrap items-center gap-3 border-b border-line p-4">
-          <Avatar name={parent.displayName} size={48} />
+        <div className="flex flex-wrap items-center gap-3 border-b-2 border-ink bg-marigold-tint p-4">
+          <Avatar name={parent.displayName} size={56} />
           <div className="min-w-0 flex-1">
-            <h2 className="text-2xl font-semibold leading-tight">{parent.displayName}</h2>
+            <h2 className="font-display text-4xl">{parent.displayName}</h2>
             <p className="flex flex-wrap items-center gap-x-2 text-[14px] text-muted">
               <Smartphone aria-hidden className="size-4" />
               {parent.lastReceiptAt ? (
@@ -124,8 +124,8 @@ function ParentSummary({ parent, fid, myLang }: { parent: ParentCard; fid: strin
             </p>
           </div>
           {parent.myLadderPosition !== null ? (
-            <div className="flex items-center gap-2 rounded-full bg-paper py-1 pl-1 pr-3" title={t("home.yourPosition")}>
-              <span className="tabular grid size-8 place-items-center rounded-full bg-ink text-[15px] font-semibold text-paper">{formatNumber(parent.myLadderPosition, lang)}</span>
+            <div className="flex items-center gap-2 rounded-full border-2 border-ink bg-surface py-1 pl-1 pr-3 shadow-[2px_2px_0_var(--color-ink)]" title={t("home.yourPosition")}>
+              <span className="tabular grid size-9 place-items-center rounded-full bg-ink text-[17px] font-extrabold text-haldi">{formatNumber(parent.myLadderPosition, lang)}</span>
               <span lang={lang} className="max-w-36 text-[13px] leading-tight text-muted">
                 {t("home.yourPosition")}
               </span>
@@ -153,7 +153,7 @@ function ParentSummary({ parent, fid, myLang }: { parent: ParentCard; fid: strin
                 {t("home.noMedicines")}
               </p>
             ) : (
-              <ul className="divide-y divide-line rounded-xl border border-line">
+              <ul className="divide-y-2 divide-ink/15 overflow-hidden rounded-xl border-2 border-ink">
                 {[...parent.slots]
                   .sort((a, b) => SLOT_ORDER.indexOf(a.slotName) - SLOT_ORDER.indexOf(b.slotName))
                   .map((slot) => {
@@ -200,7 +200,7 @@ function ParentSummary({ parent, fid, myLang }: { parent: ParentCard; fid: strin
                   {parent.refills
                     .filter((r) => r.level !== "ok")
                     .map((r) => (
-                      <li key={r.medId} className={cx("inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-[14px] font-semibold", r.level === "critical" ? "bg-missed-tint text-missed" : r.level === "recount" ? "bg-offline-tint text-offline" : "bg-due-tint text-due")}>
+                      <li key={r.medId} className={cx("inline-flex items-center gap-2 rounded-full border-2 border-ink px-3 py-1.5 text-[14px] font-bold", r.level === "critical" ? "bg-missed-tint text-missed" : r.level === "recount" ? "bg-offline-tint text-offline" : "bg-due-tint text-due")}>
                         <Pill aria-hidden className="size-4" strokeWidth={2.25} />
                         <span lang="en" className="medicine-name">
                           {r.nameAsPrinted}
@@ -218,13 +218,13 @@ function ParentSummary({ parent, fid, myLang }: { parent: ParentCard; fid: strin
           </div>
         </div>
 
-        <nav className="flex flex-wrap gap-2 border-t border-line bg-paper/50 p-3">
+        <nav className="flex flex-wrap gap-2 border-t-2 border-ink bg-haldi-tint/60 p-3">
           {[
             { to: `${base}/medicines`, icon: Pill, label: t("action.medicines") },
             { to: `${base}/report`, icon: FileText, label: t("action.report") },
             { to: `${base}/settings`, icon: Settings, label: t("action.settings") },
           ].map(({ to, icon: Icon, label }) => (
-            <Link key={to} to={to} className="inline-flex min-h-11 items-center gap-2 rounded-full border border-line bg-surface px-3.5 text-[15px] font-semibold hover:border-line-strong">
+            <Link key={to} to={to} className="pressable inline-flex min-h-11 items-center gap-2 rounded-full border-2 border-ink bg-surface px-3.5 text-[15px] font-bold shadow-[2px_2px_0_var(--color-ink)]">
               <Icon aria-hidden className="size-4.5" strokeWidth={2.25} />
               <span lang={lang}>{label}</span>
             </Link>

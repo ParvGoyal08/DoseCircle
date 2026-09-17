@@ -14,7 +14,7 @@ export function PhoneFrame({ children, offline = false, label, className }: { ch
 
   return (
     <figure className={cx("flex flex-col items-center gap-3", className)}>
-      <div className="relative w-full max-w-[340px] rounded-[46px] bg-ink p-[9px] shadow-[0_24px_48px_-24px_rgb(28_25_23/0.45)]">
+      <div className="relative w-full max-w-[340px] rounded-[46px] border-2 border-ink bg-ink p-[9px] shadow-[7px_7px_0_var(--color-ink)]">
         <div className="relative flex h-[680px] flex-col overflow-hidden rounded-[38px] bg-paper">
           <div className="flex h-11 shrink-0 items-center justify-between px-7 text-[13px] font-semibold text-ink">
             <span className="tabular">{formatTime(now, "en-IN").replace(/\s?[ap]m$/i, "")}</span>
@@ -64,7 +64,7 @@ export function NotificationBanner({ notification, onOpen, onDismiss }: { notifi
             animate={{ y: 0, opacity: 1 }}
             exit={reduceMotion ? { opacity: 0 } : { y: -90, opacity: 0 }}
             transition={{ type: "spring", stiffness: 420, damping: 34 }}
-            className="pointer-events-auto flex w-full items-start gap-3 rounded-[22px] border border-line bg-surface p-3 text-left shadow-[0_12px_28px_-12px_rgb(28_25_23/0.35)]"
+            className="pointer-events-auto flex w-full items-start gap-3 rounded-[22px] border-2 border-ink bg-surface p-3 text-left shadow-[3px_3px_0_var(--color-ink)]"
           >
             <img src="/icons/favicon.svg" alt="" className="mt-0.5 size-9 rounded-[10px]" />
             <span className="min-w-0 flex-1">

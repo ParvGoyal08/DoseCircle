@@ -50,7 +50,7 @@ export function WeekStrip({ week, t, lang }: { week: { date: string; outcomes: R
   return (
     <ol className="grid grid-cols-7 gap-1.5">
       {week.map((day, index) => (
-        <li key={day.date} className={cx("flex flex-col items-center gap-1.5 rounded-lg py-2", index === week.length - 1 ? "bg-haldi-tint/70" : "bg-paper")}>
+        <li key={day.date} className={cx("flex flex-col items-center gap-1.5 rounded-xl border-2 py-2", index === week.length - 1 ? "border-ink bg-haldi-tint" : "border-ink/15 bg-paper")}>
           <span className="text-[12px] font-semibold text-muted">{formatDay(day.date, lang, { weekday: "narrow" })}</span>
           <span className="flex min-h-[34px] flex-col items-center justify-start gap-1">
             {day.outcomes.length === 0 ? (

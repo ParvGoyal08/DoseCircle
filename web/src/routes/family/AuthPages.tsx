@@ -156,14 +156,14 @@ export function PhoneInvite({ fid, pid, parentName, lang: viewerLang }: { fid: s
 
   const whatsapp = `https://wa.me/?text=${encodeURIComponent(`${t("onboard.shareMessage")}\n${invite.link}`)}`;
   return (
-    <div className="rounded-[var(--radius-card)] border border-line bg-surface p-4">
-      <p className="text-lg font-semibold">{parentName}</p>
+    <div className="sticker bg-surface p-4">
+      <p className="text-lg font-bold">{parentName}</p>
       <p lang={lang} className="mt-1 text-[15px] text-muted">
         {t("onboard.connectPhoneHelp")}
       </p>
       <p className="tabular mt-3 font-mono text-3xl font-semibold tracking-[0.2em]">{invite.code}</p>
       <div className="mt-3 flex flex-wrap gap-2">
-        <a href={whatsapp} target="_blank" rel="noreferrer" className="inline-flex min-h-12 items-center gap-2 rounded-[var(--radius-button)] bg-taken px-4 font-semibold text-white">
+        <a href={whatsapp} target="_blank" rel="noreferrer" className="pressable inline-flex min-h-12 items-center gap-2 rounded-[var(--radius-button)] border-2 border-ink bg-taken px-4 font-bold text-white shadow-[3px_3px_0_var(--color-ink)]">
           <MessageCircle aria-hidden className="size-5" strokeWidth={2.25} />
           <span lang={lang}>{t("onboard.shareWhatsApp")}</span>
         </a>
@@ -198,11 +198,11 @@ export function EnableMyAlerts({ lang: viewerLang }: { lang: string }) {
   const [permission, setPermission] = useState(() => ("Notification" in window ? Notification.permission : "denied"));
   if (pushSupport() !== "supported" || permission === "granted") return null;
   return (
-    <div className="rounded-[var(--radius-card)] border border-line bg-surface p-4">
-      <p lang={lang} className="text-[15px] text-ink">
+    <div className="sticker flex flex-wrap items-center gap-4 bg-haldi-tint p-4">
+      <p lang={lang} className="min-w-0 flex-1 text-[16px] font-semibold text-ink">
         {t("onboard.enableMineHelp")}
       </p>
-      <Button tone="quiet" className="mt-3" onClick={async () => setPermission(await enableReminders("family"))}>
+      <Button tone="haldi" onClick={async () => setPermission(await enableReminders("family"))}>
         <Bell aria-hidden className="size-5" strokeWidth={2.25} />
         <span lang={lang}>{t("onboard.enableMine")}</span>
       </Button>

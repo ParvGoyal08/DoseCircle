@@ -1,6 +1,6 @@
 import { ChevronRight, Hand, Info } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { useT } from "../i18n";
 import { formatAgo, formatTime } from "../lib/format";
 import type { OpenAlert } from "../lib/types";
@@ -22,13 +22,15 @@ export interface FamilyAlertProps {
   onClaim: () => Promise<"claimed" | "lost">;
   onWhy: () => void;
   now?: number;
+  /** The demo shows the drawn character; real families show an initial badge. */
+  parentAvatar?: ReactNode;
 }
 
 /**
  * The family member's alert: who, which dose, whether the phone was reachable, where the family order
  * has reached, and one button to take responsibility. Once someone claims, everyone sees who.
  */
-export function FamilyAlert({ alert, viewerLang, viewerMid, ladder, alertedCount, onClaim, onWhy, now = Date.now() }: FamilyAlertProps) {
+export function FamilyAlert({ alert, viewerLang, viewerMid, ladder, alertedCount, onClaim, onWhy, now = Date.now(), parentAvatar }: FamilyAlertProps) {
   const { t, lang } = useT(viewerLang);
   const reduceMotion = useReducedMotion();
   const [claiming, setClaiming] = useState(false);
@@ -47,10 +49,11 @@ export function FamilyAlert({ alert, viewerLang, viewerMid, ladder, alertedCount
     }
   };
 
-  const tone = alert.status === "CLAIMED" ? "border-claimed/30" : resolvedByParent ? "border-taken/30" : alert.critical ? "border-critical/40" : alert.missClass === "OFFLINE" ? "border-offline/30" : "border-missed/30";
+  const band = alert.status === "CLAIMED" ? "bg-claimed" : resolvedByParent ? "bg-taken" : alert.critical ? "bg-critical" : alert.missClass === "OFFLINE" ? "bg-offline" : "bg-missed";
 
   return (
-    <article className={cx("overflow-hidden rounded-[var(--radius-card)] border-2 bg-surface", tone)}>
+    <article className="sticker overflow-hidden bg-surface">
+      <div aria-hidden className={cx("h-2.5 border-b-2 border-ink", band)} />
       <div className="p-4">
         <div className="flex flex-wrap items-center gap-2">
           <StatusPill status={alert.status} missClass={alert.missClass} t={t} lang={lang} />
@@ -58,9 +61,9 @@ export function FamilyAlert({ alert, viewerLang, viewerMid, ladder, alertedCount
         </div>
 
         <div className="mt-3 flex items-center gap-3">
-          <Avatar name={alert.parentName} size={44} />
+          {parentAvatar ?? <Avatar name={alert.parentName} size={48} />}
           <div className="min-w-0">
-            <h2 className="truncate text-2xl font-semibold leading-tight text-ink">{alert.parentName}</h2>
+            <h2 className="truncate text-[26px] font-extrabold leading-tight text-ink">{alert.parentName}</h2>
             <p className="flex flex-wrap items-center gap-x-1.5 text-[15px] text-muted">
               <span className="inline-flex items-center gap-1.5 whitespace-nowrap">
                 <SlotIcon aria-hidden className="size-4" strokeWidth={2.25} />
@@ -74,7 +77,7 @@ export function FamilyAlert({ alert, viewerLang, viewerMid, ladder, alertedCount
         </div>
 
         {!resolvedByParent && (
-          <p lang={lang} className="mt-3 text-[17px] font-medium leading-snug text-ink">
+          <p lang={lang} className="mt-3 text-[17px] font-semibold leading-snug text-ink">
             {t(alert.missClass === "OFFLINE" ? "alert.offline" : "alert.missed")}
           </p>
         )}
@@ -89,8 +92,8 @@ export function FamilyAlert({ alert, viewerLang, viewerMid, ladder, alertedCount
                   {index > 0 && <ChevronRight aria-hidden className={cx("size-4", asked ? "text-ink" : "text-line-strong")} />}
                   <span
                     className={cx(
-                      "inline-flex items-center gap-1.5 rounded-full py-1 pl-1 pr-2.5 text-sm font-semibold",
-                      current ? "bg-haldi-tint text-ink ring-2 ring-haldi" : asked ? "bg-paper text-ink" : "bg-paper text-muted",
+                      "inline-flex items-center gap-1.5 rounded-full border-2 py-0.5 pl-0.5 pr-2.5 text-sm font-bold",
+                      current ? "border-ink bg-haldi text-ink shadow-[2px_2px_0_var(--color-ink)]" : asked ? "border-ink bg-paper text-ink" : "border-ink/20 bg-paper text-muted",
                     )}
                   >
                     <Avatar name={person.displayName} size={22} />
@@ -105,7 +108,7 @@ export function FamilyAlert({ alert, viewerLang, viewerMid, ladder, alertedCount
 
       <AnimatePresence mode="wait" initial={false}>
         {alert.status === "ESCALATING" && (
-          <motion.div key="open" exit={{ opacity: 0 }} className="border-t border-line bg-paper/60 p-4">
+          <motion.div key="open" exit={{ opacity: 0 }} className="border-t-2 border-ink bg-haldi-tint/50 p-4">
             {alert.alertedMe ? (
               <Button tone="claimed" size="lg" className="w-full" onClick={claim} disabled={claiming}>
                 <Hand aria-hidden className="size-5" strokeWidth={2.5} />
@@ -130,7 +133,7 @@ export function FamilyAlert({ alert, viewerLang, viewerMid, ladder, alertedCount
             initial={reduceMotion ? { opacity: 0 } : { opacity: 0, x: 24 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.22, ease: [0.22, 1, 0.36, 1] }}
-            className="flex items-center gap-3 border-t border-claimed/20 bg-claimed-tint p-4"
+            className="flex items-center gap-3 border-t-2 border-ink bg-claimed-tint p-4"
             role="status"
           >
             <Avatar name={alert.claimedByName ?? "?"} size={36} ring="ring-2 ring-claimed" />
@@ -152,13 +155,13 @@ export function FamilyAlert({ alert, viewerLang, viewerMid, ladder, alertedCount
         )}
 
         {resolvedByParent && (
-          <motion.p key="taken" initial={{ opacity: 0 }} animate={{ opacity: 1 }} lang={lang} className="border-t border-taken/20 bg-taken-tint p-4 text-[16px] font-semibold text-taken" role="status">
+          <motion.p key="taken" initial={{ opacity: 0 }} animate={{ opacity: 1 }} lang={lang} className="border-t-2 border-ink bg-taken-tint p-4 text-[16px] font-bold text-taken" role="status">
             {t("alert.parentTookIt")}
           </motion.p>
         )}
       </AnimatePresence>
 
-      <button type="button" onClick={onWhy} className="flex w-full items-center gap-2 border-t border-line px-4 py-3 text-left text-[15px] font-semibold text-ink hover:bg-paper">
+      <button type="button" onClick={onWhy} className="flex w-full items-center gap-2 border-t-2 border-ink px-4 py-3 text-left text-[15px] font-bold text-ink hover:bg-haldi-tint">
         <Info aria-hidden className="size-4.5" strokeWidth={2.25} />
         <span lang={lang} className="flex-1">
           {t("alert.why")}
