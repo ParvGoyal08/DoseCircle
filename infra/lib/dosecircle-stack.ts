@@ -18,6 +18,7 @@ import { DefinitionBody, LogLevel, StateMachine, StateMachineType } from "aws-cd
 import type { Construct } from "constructs";
 import { fileURLToPath } from "node:url";
 import { doseCircleFunction } from "./functions.js";
+import { Observability } from "./observability.js";
 import { DEMO_ROUTE_KEYS, FAMILY_ROUTE_KEYS, PARENT_ROUTE_KEYS } from "./routes.js";
 
 export interface DoseCircleStackProps extends StackProps {
@@ -29,6 +30,8 @@ export interface DoseCircleStackProps extends StackProps {
   sesFromEmail?: string;
   /** Bedrock inference profile for prescription reading. Only Global profiles serve Claude from Mumbai. */
   bedrockModelId?: string;
+  /** Receives alarm and budget emails. */
+  alarmEmail?: string;
 }
 
 export class DoseCircleStack extends Stack {
@@ -339,6 +342,15 @@ export class DoseCircleStack extends Stack {
       "POST /families/{fid}/parents/{pid}/test-dose": { ThrottlingRateLimit: 1, ThrottlingBurstLimit: 2 },
       "POST /families/{fid}/prescriptions": { ThrottlingRateLimit: 1, ThrottlingBurstLimit: 3 },
     };
+
+    new Observability(this, "Observability", {
+      api,
+      stateMachine,
+      schedulerDeadLetters: schedulerDlq,
+      scheduleGroupName: scheduleGroup.name!,
+      alarmEmail: props.alarmEmail,
+      monthlyBudgetUsd: 25,
+    });
 
     // ── Outputs for the web app's environment ───────────────────────────────
     new CfnOutput(this, "ApiUrl", { value: api.apiEndpoint });

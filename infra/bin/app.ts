@@ -11,6 +11,7 @@ new DoseCircleStack(app, "DoseCircle", {
   ssmPrefix: context("ssmPrefix", "/dosecircle"),
   sesFromEmail: context("sesFromEmail", "") || undefined,
   bedrockModelId: context("bedrockModelId", "global.anthropic.claude-sonnet-4-6"),
+  alarmEmail: context("alarmEmail", "") || undefined,
   description: "DoseCircle: family medicine escalation (WeMakeDevs x AWS First Commit)",
 });
 

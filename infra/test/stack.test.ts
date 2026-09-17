@@ -60,6 +60,7 @@ describe("DoseCircleStack", () => {
       env: { account: "111111111111", region: "ap-south-1" },
       appOrigin: "https://example.test",
       ssmPrefix: "/dosecircle",
+      alarmEmail: "alerts@example.test",
     });
     template = Template.fromStack(stack);
   });
@@ -187,5 +188,13 @@ describe("DoseCircleStack", () => {
         ],
       },
     });
+  });
+
+  it("stays within CloudWatch's free alarms and watches spend", () => {
+    const alarms = Object.keys(template.findResources("AWS::CloudWatch::Alarm"));
+    expect(alarms.length).toBeGreaterThan(0);
+    expect(alarms.length).toBeLessThanOrEqual(10);
+    template.resourceCountIs("AWS::CloudWatch::Dashboard", 1);
+    template.hasResourceProperties("AWS::Budgets::Budget", { Budget: Match.objectLike({ BudgetType: "COST", TimeUnit: "MONTHLY" }) });
   });
 });

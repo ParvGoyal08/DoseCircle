@@ -50,7 +50,7 @@ export async function notifyResolution(input: NotifyResolutionInput): Promise<vo
     }),
   );
   await recordDoseEvent({ doseId: dose.doseId, type: "STAND_DOWN_SENT", dedupeKey: input.outcome, detail: { outcome: input.outcome, recipients: recipients.map((m) => m.mid) }, ttl: dose.ttl });
-  metrics.addMetric(input.outcome === "CLAIMED" ? "EscalationsClaimed" : "TakenLate", "Count", 1);
+  metrics.addMetric(input.outcome === "CLAIMED" ? "EscalationsClaimed" : "FamilyToldTaken", "Count", 1);
   metrics.publishStoredMetrics();
 }
 
