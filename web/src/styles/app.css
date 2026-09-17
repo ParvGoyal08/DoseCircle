@@ -1,0 +1,117 @@
+@import "tailwindcss";
+@import "@fontsource-variable/anek-latin/wdth.css";
+@import "@fontsource-variable/anek-kannada/wdth.css";
+@import "@fontsource-variable/anek-devanagari/wdth.css";
+
+/*
+ * "Haldi & Ink" — warm paper, near-black ink, turmeric for focus and brand.
+ * Every status has a colour, an icon and a word; colour is never the only signal.
+ * Contrast on paper (WCAG): ink 16.4, muted 7.1, taken 6.1, due 6.2, missed 6.2, critical 9.5, offline 7.2, claimed 6.3.
+ * Each status colour stays above 5.4:1 on its own tint, and white text on it stays above 6:1.
+ */
+@theme {
+  --color-paper: #fbf7f0;
+  --color-surface: #ffffff;
+  --color-ink: #1c1917;
+  --color-muted: #57534e;
+  --color-line: #e7e0d4;
+  --color-line-strong: #d6cbb8;
+  --color-haldi: #f4b400;
+  --color-haldi-tint: #fdf1cc;
+  --color-haldi-deep: #7a5a00;
+
+  --color-taken: #146c3e;
+  --color-taken-tint: #e7f4ec;
+  --color-due: #96460a;
+  --color-due-tint: #fef3e2;
+  --color-missed: #b42318;
+  --color-missed-tint: #fdecea;
+  --color-critical: #7a1e3a;
+  --color-critical-tint: #f7e8ed;
+  --color-offline: #475467;
+  --color-offline-tint: #eef0f3;
+  --color-claimed: #1d4ed8;
+  --color-claimed-tint: #e8eefd;
+
+  --font-sans: "Anek Latin Variable", "Anek Kannada Variable", "Anek Devanagari Variable", ui-sans-serif, system-ui, sans-serif;
+
+  --radius-card: 12px;
+  --radius-button: 16px;
+
+  --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@layer base {
+  html {
+    background: var(--color-paper);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    -webkit-text-size-adjust: 100%;
+    text-rendering: optimizeLegibility;
+  }
+  body {
+    min-height: 100dvh;
+    background: var(--color-paper);
+    line-height: 1.5;
+    font-stretch: 100%;
+  }
+
+  /* Indic scripts need taller lines: Kannada vowel signs sit well above and below the line. */
+  :lang(kn) {
+    font-family: "Anek Kannada Variable", "Noto Sans Kannada", "Anek Latin Variable", sans-serif;
+    line-height: 1.75;
+  }
+  :lang(hi),
+  :lang(mr) {
+    font-family: "Anek Devanagari Variable", "Noto Sans Devanagari", "Anek Latin Variable", sans-serif;
+    line-height: 1.65;
+  }
+  /* Medicine names stay in Latin script exactly as printed, whatever the surrounding language. */
+  .medicine-name {
+    font-family: "Anek Latin Variable", ui-sans-serif, sans-serif;
+    line-height: 1.2;
+    font-variant-numeric: tabular-nums;
+  }
+
+  :focus-visible {
+    outline: 3px solid var(--color-haldi);
+    outline-offset: 2px;
+  }
+
+  button {
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+@layer utilities {
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+  .safe-bottom {
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  }
+  .paper-grain {
+    background-image: radial-gradient(rgb(28 25 23 / 0.035) 1px, transparent 1px);
+    background-size: 4px 4px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@media print {
+  html,
+  body {
+    background: #fff;
+  }
+  .no-print {
+    display: none !important;
+  }
+}

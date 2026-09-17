@@ -19,3 +19,5 @@ fixtures-private/
 
 .DS_Store
 *.log
+web/dist/
+web/dev-dist/

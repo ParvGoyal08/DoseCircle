@@ -1,0 +1,324 @@
+{
+  "_meta": {
+    "language": "hi",
+    "note": "Draft by the development team; needs review by a native Hindi speaker."
+  },
+  "strings": {
+    "app.name": {
+      "text": "DoseCircle",
+      "reviewedBy": null
+    },
+    "app.tagline": {
+      "text": "जब माता-पिता की दवा छूट जाए, तो परिवार में सही व्यक्ति को पता चलता है।",
+      "reviewedBy": null
+    },
+    "app.notMedicalAdvice": {
+      "text": "यह केवल रिमाइंडर और परिवार को सूचना देने के लिए है। यह चिकित्सा सलाह नहीं है।",
+      "reviewedBy": null
+    },
+    "slot.morning": {
+      "text": "सुबह",
+      "reviewedBy": null
+    },
+    "slot.afternoon": {
+      "text": "दोपहर",
+      "reviewedBy": null
+    },
+    "slot.evening": {
+      "text": "शाम",
+      "reviewedBy": null
+    },
+    "slot.night": {
+      "text": "रात",
+      "reviewedBy": null
+    },
+    "parent.prompt.morning": {
+      "text": "सुबह की दवा लेने का समय हो गया है।",
+      "reviewedBy": null
+    },
+    "parent.prompt.afternoon": {
+      "text": "दोपहर की दवा लेने का समय हो गया है।",
+      "reviewedBy": null
+    },
+    "parent.prompt.evening": {
+      "text": "शाम की दवा लेने का समय हो गया है।",
+      "reviewedBy": null
+    },
+    "parent.prompt.night": {
+      "text": "रात की दवा लेने का समय हो गया है।",
+      "reviewedBy": null
+    },
+    "parent.takenButton": {
+      "text": "मैंने दवा ले ली",
+      "reviewedBy": null
+    },
+    "parent.takenThanks": {
+      "text": "दर्ज हो गया कि आपने दवा ले ली। धन्यवाद।",
+      "reviewedBy": null
+    },
+    "parent.undo": {
+      "text": "वापस लें",
+      "reviewedBy": null
+    },
+    "parent.undoHint": {
+      "text": "गलती से दब गया? आप कुछ सेकंड तक इसे वापस ले सकते हैं।",
+      "reviewedBy": null
+    },
+    "parent.listen": {
+      "text": "सुनें",
+      "reviewedBy": null
+    },
+    "parent.food.before": {
+      "text": "खाने से पहले",
+      "reviewedBy": null
+    },
+    "parent.food.after": {
+      "text": "खाने के बाद",
+      "reviewedBy": null
+    },
+    "parent.important": {
+      "text": "यह दवा ज़रूरी है। कृपया इसे न छोड़ें।",
+      "reviewedBy": null
+    },
+    "parent.familyToldTaken": {
+      "text": "आपके परिवार को बता दिया गया है कि आपने दवा ले ली।",
+      "reviewedBy": null
+    },
+    "parent.alreadyClosed": {
+      "text": "यह रिमाइंडर पहले ही बंद हो चुका है।",
+      "reviewedBy": null
+    },
+    "parent.today.title": {
+      "text": "आज की दवाइयाँ",
+      "reviewedBy": null
+    },
+    "parent.today.none": {
+      "text": "आज कोई दवा नहीं लेनी है।",
+      "reviewedBy": null
+    },
+    "parent.today.paused": {
+      "text": "अभी रिमाइंडर रोके गए हैं।",
+      "reviewedBy": null
+    },
+    "parent.status.taken": {
+      "text": "ले ली",
+      "reviewedBy": null
+    },
+    "parent.status.waiting": {
+      "text": "अभी नहीं",
+      "reviewedBy": null
+    },
+    "parent.status.later": {
+      "text": "आज बाद में",
+      "reviewedBy": null
+    },
+    "parent.status.missed": {
+      "text": "छूट गई",
+      "reviewedBy": null
+    },
+    "parent.status.familyHelping": {
+      "text": "परिवार मदद कर रहा है",
+      "reviewedBy": null
+    },
+    "parent.join.title": {
+      "text": "आपके परिवार ने जो कोड भेजा है, उसे डालें।",
+      "reviewedBy": null
+    },
+    "parent.join.button": {
+      "text": "यह फ़ोन जोड़ें",
+      "reviewedBy": null
+    },
+    "parent.join.invalid": {
+      "text": "यह कोड काम नहीं किया। कृपया अपने परिवार से नया कोड माँगें।",
+      "reviewedBy": null
+    },
+    "parent.join.done": {
+      "text": "यह फ़ोन जुड़ गया है। अब आपका परिवार आपके रिमाइंडर सेट कर सकता है।",
+      "reviewedBy": null
+    },
+    "parent.notify.why": {
+      "text": "सूचनाओं की अनुमति दें, ताकि दवा के रिमाइंडर इस फ़ोन तक पहुँच सकें।",
+      "reviewedBy": null
+    },
+    "parent.notify.button": {
+      "text": "रिमाइंडर चालू करें",
+      "reviewedBy": null
+    },
+    "parent.notify.blocked": {
+      "text": "इस ऐप के लिए सूचनाएँ बंद हैं। इन्हें चालू करने के लिए कृपया अपने परिवार की मदद लें।",
+      "reviewedBy": null
+    },
+    "parent.notify.ready": {
+      "text": "इस फ़ोन पर रिमाइंडर चालू हैं।",
+      "reviewedBy": null
+    },
+    "lang.choose": {
+      "text": "अपनी भाषा चुनें",
+      "reviewedBy": null
+    },
+    "lang.draft": {
+      "text": "मसौदा अनुवाद",
+      "reviewedBy": null
+    },
+    "status.escalating": {
+      "text": "किसी के जवाब का इंतज़ार",
+      "reviewedBy": null
+    },
+    "status.claimed": {
+      "text": "कोई संभाल रहा है",
+      "reviewedBy": null
+    },
+    "status.taken": {
+      "text": "समय पर ली गई",
+      "reviewedBy": null
+    },
+    "status.takenLate": {
+      "text": "देर से ली गई",
+      "reviewedBy": null
+    },
+    "status.unresolved": {
+      "text": "किसी ने जवाब नहीं दिया",
+      "reviewedBy": null
+    },
+    "status.pending": {
+      "text": "रिमाइंडर भेजा गया",
+      "reviewedBy": null
+    },
+    "status.skipped": {
+      "text": "रुका हुआ",
+      "reviewedBy": null
+    },
+    "status.critical": {
+      "text": "ज़रूरी दवा",
+      "reviewedBy": null
+    },
+    "alert.missed": {
+      "text": "दवा लेने की पुष्टि अभी तक नहीं हुई है। रिमाइंडर फ़ोन तक पहुँच गया था।",
+      "reviewedBy": null
+    },
+    "alert.offline": {
+      "text": "दवा लेने की पुष्टि अभी तक नहीं हुई है। फ़ोन ऑफ़लाइन लग रहा है।",
+      "reviewedBy": null
+    },
+    "alert.claimButton": {
+      "text": "ज़िम्मेदारी लें",
+      "reviewedBy": null
+    },
+    "alert.claimedByYou": {
+      "text": "यह ज़िम्मेदारी आपकी है। बाकी सभी को बता दिया गया है।",
+      "reviewedBy": null
+    },
+    "alert.claimedByOther": {
+      "text": "अभी यही संभाल रहे हैं।",
+      "reviewedBy": null
+    },
+    "alert.notYourTurn": {
+      "text": "परिवार के क्रम में आपसे पहले वाले व्यक्ति से पहले पूछा गया है।",
+      "reviewedBy": null
+    },
+    "alert.parentTookIt": {
+      "text": "अब दवा लेने की पुष्टि हो गई है।",
+      "reviewedBy": null
+    },
+    "alert.why": {
+      "text": "मुझे यह क्यों दिख रहा है?",
+      "reviewedBy": null
+    },
+    "alert.lostRace": {
+      "text": "किसी और ने पहले ही ज़िम्मेदारी ले ली है।",
+      "reviewedBy": null
+    },
+    "timeline.title": {
+      "text": "क्या हुआ",
+      "reviewedBy": null
+    },
+    "timeline.reminder_sent": {
+      "text": "माता-पिता के फ़ोन पर रिमाइंडर भेजा गया।",
+      "reviewedBy": null
+    },
+    "timeline.nudge_sent": {
+      "text": "दूसरा रिमाइंडर भेजा गया।",
+      "reviewedBy": null
+    },
+    "timeline.reached_phone": {
+      "text": "रिमाइंडर फ़ोन तक पहुँच गया।",
+      "reviewedBy": null
+    },
+    "timeline.no_confirmation": {
+      "text": "पुष्टि के लिए किसी ने नहीं दबाया।",
+      "reviewedBy": null
+    },
+    "timeline.reminder_reached_phone": {
+      "text": "रिमाइंडर फ़ोन तक पहुँच गया था, इसलिए यह छूटी हुई खुराक है।",
+      "reviewedBy": null
+    },
+    "timeline.phone_seemed_offline": {
+      "text": "रिमाइंडर फ़ोन तक नहीं पहुँचा, इसलिए फ़ोन ऑफ़लाइन हो सकता है।",
+      "reviewedBy": null
+    },
+    "timeline.member_alerted": {
+      "text": "परिवार के तय क्रम में परिवार के सदस्य को सूचना दी गई।",
+      "reviewedBy": null
+    },
+    "timeline.family_alerted": {
+      "text": "समय पर किसी ने जवाब नहीं दिया, इसलिए सभी को सूचना दी गई।",
+      "reviewedBy": null
+    },
+    "timeline.claimed": {
+      "text": "ज़िम्मेदारी ली गई: यह व्यक्ति संभाल रहे हैं।",
+      "reviewedBy": null
+    },
+    "timeline.taken": {
+      "text": "माता-पिता ने दवा लेने की पुष्टि की।",
+      "reviewedBy": null
+    },
+    "timeline.others_stood_down": {
+      "text": "बाकी सभी को बता दिया गया कि अब कुछ करने की ज़रूरत नहीं है।",
+      "reviewedBy": null
+    },
+    "timeline.family_told_taken": {
+      "text": "परिवार को बता दिया गया कि दवा ले ली गई है।",
+      "reviewedBy": null
+    },
+    "timeline.nobody_responded": {
+      "text": "किसी ने जवाब नहीं दिया। यह खुराक अनसुलझी दर्ज की गई है।",
+      "reviewedBy": null
+    },
+    "timeline.stateTag": {
+      "text": "वर्कफ़्लो चरण",
+      "reviewedBy": null
+    },
+    "timeline.allowedBy": {
+      "text": "अनुमति देने वाली नीति",
+      "reviewedBy": null
+    },
+    "common.close": {
+      "text": "बंद करें",
+      "reviewedBy": null
+    },
+    "common.retry": {
+      "text": "फिर से कोशिश करें",
+      "reviewedBy": null
+    },
+    "common.offline": {
+      "text": "आप ऑफ़लाइन हैं। दोबारा जुड़ने पर बदलाव भेज दिए जाएँगे।",
+      "reviewedBy": null
+    },
+    "common.error": {
+      "text": "कुछ गलत हो गया। कृपया फिर से कोशिश करें।",
+      "reviewedBy": null
+    },
+    "common.loading": {
+      "text": "लोड हो रहा है",
+      "reviewedBy": null
+    },
+    "common.notification": {
+      "text": "सूचना",
+      "reviewedBy": null
+    },
+    "common.now": {
+      "text": "अभी",
+      "reviewedBy": null
+    }
+  }
+}

@@ -1,5 +1,7 @@
 import { FALLBACK_LANGUAGE, isLanguageCode, type LanguageCode } from "@dosecircle/shared";
 import en from "../../../shared/i18n/en.json" with { type: "json" };
+import hi from "../../../shared/i18n/hi.json" with { type: "json" };
+import kn from "../../../shared/i18n/kn.json" with { type: "json" };
 
 interface CatalogueFile {
   strings: Record<string, { text: string; reviewedBy: string | null }>;
@@ -8,10 +10,12 @@ interface CatalogueFile {
 /**
  * Server-side strings for push notifications. Only reviewed strings are used; anything missing or
  * unreviewed falls back to English — never to another Indian language.
- * Additional languages are registered here once their files pass scripts/check-i18n.ts.
+ * Drafts are registered too, but a string is only used once a native speaker has set reviewedBy.
  */
 const catalogues: Partial<Record<LanguageCode, CatalogueFile>> = {
   en: en as CatalogueFile,
+  kn: kn as CatalogueFile,
+  hi: hi as CatalogueFile,
 };
 
 export function message(language: string | null | undefined, key: string): string {
