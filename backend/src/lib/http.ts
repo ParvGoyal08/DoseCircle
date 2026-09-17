@@ -60,7 +60,7 @@ export async function principalFrom(event: APIGatewayProxyEventV2): Promise<Prin
   if (sub) {
     const [membership] = await membershipsForUser(sub);
     if (!membership) throw new ForbiddenError("Not a member of any family");
-    return { kind: "member", sub, mid: membership.mid, fid: membership.fid };
+    return { kind: "member", sub, mid: membership.mid, fid: membership.fid, role: membership.role };
   }
   throw new HttpError(401, "Unauthorised");
 }

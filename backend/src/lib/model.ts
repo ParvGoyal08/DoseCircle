@@ -25,6 +25,8 @@ export interface MemberItem {
   sub?: string;
   displayName: string;
   relation?: string;
+  /** The owner created the family; only they can invite people and manage paired phones. */
+  role: "owner" | "member";
   lang: LanguageCode;
   ttl?: number;
 }

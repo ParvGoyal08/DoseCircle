@@ -1,6 +1,6 @@
 import { App } from "aws-cdk-lib";
 import { Match, Template } from "aws-cdk-lib/assertions";
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
 import { beforeAll, describe, expect, it } from "vitest";
 import { DoseCircleStack } from "../lib/dosecircle-stack.js";
 
@@ -95,6 +95,19 @@ describe("DoseCircleStack", () => {
   it("gives the browser client no secret and uses the Essentials plan", () => {
     template.hasResourceProperties("AWS::Cognito::UserPoolClient", { GenerateSecret: false });
     template.hasResourceProperties("AWS::Cognito::UserPool", { UserPoolTier: "ESSENTIALS" });
+  });
+
+  it("stores one strictly validated Cedar policy per file", () => {
+    template.hasResourceProperties("AWS::VerifiedPermissions::PolicyStore", { ValidationSettings: { Mode: "STRICT" } });
+    const policies = Object.values(template.findResources("AWS::VerifiedPermissions::Policy"));
+    const files = readdirSync(new URL("../../cedar/policies/", import.meta.url)).filter((f) => f.endsWith(".cedar"));
+    expect(policies).toHaveLength(files.length);
+    expect(policies.map((p) => p.Properties.Definition.Static.Description).sort()).toEqual(files.map((f) => f.replace(".cedar", "")).sort());
+  });
+
+  it("lets API functions call Verified Permissions", () => {
+    const statements = Object.values(template.findResources("AWS::IAM::Policy")).flatMap((p) => p.Properties.PolicyDocument.Statement);
+    expect(statements.some((s: { Action: string | string[] }) => [s.Action].flat().includes("verifiedpermissions:IsAuthorized"))).toBe(true);
   });
 
   it("throttles the API per route", () => {

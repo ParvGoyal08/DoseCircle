@@ -1,0 +1,104 @@
+{
+  "DoseCircle": {
+    "entityTypes": {
+      "Family": {
+        "shape": {
+          "type": "Record",
+          "attributes": {
+            "demo": { "type": "Boolean" }
+          }
+        }
+      },
+      "Member": {
+        "shape": {
+          "type": "Record",
+          "attributes": {
+            "family": { "type": "Entity", "name": "Family" },
+            "role": { "type": "String" }
+          }
+        }
+      },
+      "Parent": {
+        "shape": {
+          "type": "Record",
+          "attributes": {
+            "family": { "type": "Entity", "name": "Family" }
+          }
+        }
+      },
+      "ParentDevice": {
+        "shape": {
+          "type": "Record",
+          "attributes": {
+            "family": { "type": "Entity", "name": "Family" },
+            "parent": { "type": "Entity", "name": "Parent" },
+            "revoked": { "type": "Boolean" }
+          }
+        }
+      },
+      "Dose": {
+        "shape": {
+          "type": "Record",
+          "attributes": {
+            "family": { "type": "Entity", "name": "Family" },
+            "parent": { "type": "Entity", "name": "Parent" },
+            "status": { "type": "String" },
+            "alertedMembers": { "type": "Set", "element": { "type": "Entity", "name": "Member" } }
+          }
+        }
+      },
+      "Prescription": {
+        "shape": {
+          "type": "Record",
+          "attributes": {
+            "family": { "type": "Entity", "name": "Family" }
+          }
+        }
+      }
+    },
+    "actions": {
+      "ViewFamily": {
+        "appliesTo": { "principalTypes": ["Member"], "resourceTypes": ["Family"], "context": { "type": "Record", "attributes": {} } }
+      },
+      "ManageFamily": {
+        "appliesTo": { "principalTypes": ["Member"], "resourceTypes": ["Family"], "context": { "type": "Record", "attributes": {} } }
+      },
+      "UploadPrescription": {
+        "appliesTo": { "principalTypes": ["Member"], "resourceTypes": ["Family"], "context": { "type": "Record", "attributes": {} } }
+      },
+      "ReviewPrescription": {
+        "appliesTo": { "principalTypes": ["Member"], "resourceTypes": ["Prescription"], "context": { "type": "Record", "attributes": {} } }
+      },
+      "ViewParent": {
+        "appliesTo": { "principalTypes": ["Member", "ParentDevice"], "resourceTypes": ["Parent"], "context": { "type": "Record", "attributes": {} } }
+      },
+      "ManageMedicines": {
+        "appliesTo": { "principalTypes": ["Member"], "resourceTypes": ["Parent"], "context": { "type": "Record", "attributes": {} } }
+      },
+      "PauseReminders": {
+        "appliesTo": { "principalTypes": ["Member"], "resourceTypes": ["Parent"], "context": { "type": "Record", "attributes": {} } }
+      },
+      "SendTestReminder": {
+        "appliesTo": { "principalTypes": ["Member"], "resourceTypes": ["Parent"], "context": { "type": "Record", "attributes": {} } }
+      },
+      "ViewReport": {
+        "appliesTo": { "principalTypes": ["Member"], "resourceTypes": ["Parent"], "context": { "type": "Record", "attributes": {} } }
+      },
+      "ManageDevices": {
+        "appliesTo": { "principalTypes": ["Member"], "resourceTypes": ["Parent"], "context": { "type": "Record", "attributes": {} } }
+      },
+      "ViewDose": {
+        "appliesTo": { "principalTypes": ["Member", "ParentDevice"], "resourceTypes": ["Dose"], "context": { "type": "Record", "attributes": {} } }
+      },
+      "ViewTimeline": {
+        "appliesTo": { "principalTypes": ["Member"], "resourceTypes": ["Dose"], "context": { "type": "Record", "attributes": {} } }
+      },
+      "MarkTaken": {
+        "appliesTo": { "principalTypes": ["ParentDevice"], "resourceTypes": ["Dose"], "context": { "type": "Record", "attributes": {} } }
+      },
+      "ClaimDose": {
+        "appliesTo": { "principalTypes": ["Member"], "resourceTypes": ["Dose"], "context": { "type": "Record", "attributes": {} } }
+      }
+    }
+  }
+}

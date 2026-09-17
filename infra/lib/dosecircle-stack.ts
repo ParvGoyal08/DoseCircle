@@ -4,6 +4,8 @@ import { HttpLambdaAuthorizer, HttpLambdaResponseType, HttpUserPoolAuthorizer } 
 import { HttpLambdaIntegration } from "aws-cdk-lib/aws-apigatewayv2-integrations";
 import { AccountRecovery, FeaturePlan, UserPool, UserPoolEmail } from "aws-cdk-lib/aws-cognito";
 import { AttributeType, BillingMode, Table } from "aws-cdk-lib/aws-dynamodb";
+import { CfnPolicy, CfnPolicyStore } from "aws-cdk-lib/aws-verifiedpermissions";
+import { readdirSync, readFileSync } from "node:fs";
 import { Effect, PolicyStatement, Role, ServicePrincipal } from "aws-cdk-lib/aws-iam";
 import type { NodejsFunction } from "aws-cdk-lib/aws-lambda-nodejs";
 import { LogGroup, RetentionDays } from "aws-cdk-lib/aws-logs";
@@ -78,8 +80,36 @@ export class DoseCircleStack extends Stack {
       preventUserExistenceErrors: true,
     });
 
+    // ── Authorization: Cedar policies in Amazon Verified Permissions ─────────
+    // The same schema and policy files are validated and scenario-tested offline (backend/test/cedar.test.ts).
+    const cedarDir = new URL("../../cedar/", import.meta.url);
+    const policyStore = new CfnPolicyStore(this, "Authorization", {
+      description: "DoseCircle family access rules",
+      validationSettings: { mode: "STRICT" },
+      schema: { cedarJson: JSON.stringify(JSON.parse(readFileSync(new URL("schema.json", cedarDir), "utf8"))) },
+    });
+    const policyNames: Record<string, string> = {};
+    for (const file of readdirSync(new URL("policies/", cedarDir)).filter((f) => f.endsWith(".cedar")).sort()) {
+      const name = file.replace(/\.cedar$/, "");
+      const statement = readFileSync(new URL(`policies/${file}`, cedarDir), "utf8");
+      const policy = new CfnPolicy(this, `Policy-${name}`, {
+        policyStoreId: policyStore.attrPolicyStoreId,
+        definition: { static: { statement, description: name } },
+      });
+      policyNames[name] = policy.attrPolicyId;
+    }
+    // Lambdas map Verified Permissions policy ids back to readable names for logs and the timeline.
+    const policyNamesById = Stack.of(this).toJsonString(Object.fromEntries(Object.entries(policyNames).map(([name, id]) => [id, name])));
+    const isAuthorized = new PolicyStatement({ actions: ["verifiedpermissions:IsAuthorized"], resources: [policyStore.attrArn] });
+
     // ── Shared function settings ────────────────────────────────────────────
-    const baseEnv = { TABLE_NAME: table.tableName, SSM_PREFIX: props.ssmPrefix, APP_ORIGIN: props.appOrigin };
+    const baseEnv = {
+      TABLE_NAME: table.tableName,
+      SSM_PREFIX: props.ssmPrefix,
+      APP_ORIGIN: props.appOrigin,
+      POLICY_STORE_ID: policyStore.attrPolicyStoreId,
+      POLICY_NAMES: policyNamesById,
+    };
     const ssmRead = new PolicyStatement({
       actions: ["ssm:GetParameter"],
       resources: [this.formatArn({ service: "ssm", resource: "parameter", resourceName: props.ssmPrefix.replace(/^\//, "") + "/*" })],
@@ -165,6 +195,7 @@ export class DoseCircleStack extends Stack {
       const fn = withSecrets(doseCircleFunction(this, id, entry, { environment: apiEnv }));
       table.grantReadWriteData(fn);
       fn.addToRolePolicy(taskResponse);
+      fn.addToRolePolicy(isAuthorized);
       api.addRoutes({ path, methods: [method], integration: new HttpLambdaIntegration(`${id}Integration`, fn), authorizer });
       return fn;
     };
@@ -188,6 +219,7 @@ export class DoseCircleStack extends Stack {
     new CfnOutput(this, "UserPoolId", { value: userPool.userPoolId });
     new CfnOutput(this, "UserPoolClientId", { value: webClient.userPoolClientId });
     new CfnOutput(this, "TableName", { value: table.tableName });
+    new CfnOutput(this, "PolicyStoreId", { value: policyStore.attrPolicyStoreId });
     new CfnOutput(this, "PrescriptionsBucket", { value: prescriptions.bucketName });
     new CfnOutput(this, "StateMachineArn", { value: stateMachine.stateMachineArn });
     new CfnOutput(this, "ScheduleGroupName", { value: scheduleGroup.name! });

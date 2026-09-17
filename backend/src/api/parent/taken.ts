@@ -5,11 +5,13 @@ import { env } from "../../lib/env.js";
 import { recordDoseEvent } from "../../lib/events.js";
 import { HttpError, json, pathParam, principalFrom, withErrors } from "../../lib/http.js";
 import type { DoseItem } from "../../lib/model.js";
-import { assertParentAccess } from "../../lib/principal.js";
 import { doseKey, getDose } from "../../lib/repository.js";
 import { completeTask } from "../../lib/task-token.js";
 import { notifyResolution } from "../../workflow/notify-resolution.js";
 import { applyPillCount } from "../../lib/pills.js";
+import { authorize } from "../../authz/avp.js";
+import { doseEntity, familyEntity, parentEntity } from "../../authz/entities.js";
+import { devicePrincipal } from "../../authz/principal-entity.js";
 
 /**
  * The parent confirms a dose. The app only sends this after its 10-second on-device Undo window,
@@ -20,7 +22,13 @@ export const handler = withErrors(async (event) => {
   const doseId = pathParam(event, "doseId");
   const dose = await getDose(doseId);
   if (!dose) throw new HttpError(404, "Dose not found");
-  assertParentAccess(principal, dose.fid, dose.pid);
+  const phone = devicePrincipal(principal, dose.pid);
+  await authorize({
+    principal: phone,
+    action: "MarkTaken",
+    resource: doseEntity(dose),
+    entities: [familyEntity(dose.fid), parentEntity({ pid: dose.pid, fid: dose.fid })],
+  });
 
   if (!canMarkTaken(dose.status)) return json(200, { status: dose.status });
 
@@ -39,7 +47,7 @@ export const handler = withErrors(async (event) => {
           ":next": next,
           ":previous": dose.status,
           ":now": now,
-          ":by": principal.kind === "device" ? principal.deviceId : principal.kind,
+          ":by": phone.uid.id,
         },
         ReturnValues: "ALL_OLD",
       }),

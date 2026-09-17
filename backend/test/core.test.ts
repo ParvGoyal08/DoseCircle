@@ -11,7 +11,6 @@ import {
   signReceipt,
   verifyReceipt,
 } from "../src/lib/crypto.js";
-import { assertFamilyAccess, assertParentAccess, ForbiddenError } from "../src/lib/principal.js";
 import { encodePushPayload, MAX_PAYLOAD_BYTES, PayloadTooLargeError } from "../src/lib/push-payload.js";
 import { buildDoctorReport } from "../src/report/build.js";
 
@@ -66,21 +65,6 @@ describe("push payload", () => {
     expect(() =>
       encodePushPayload({ t: "", b: body, l: "kn", step: "REMIND", r: "d", url: "/", kind: "parent", sig: "" }),
     ).toThrow(PayloadTooLargeError);
-  });
-});
-
-describe("principal", () => {
-  it("keeps demo sessions and real users apart", () => {
-    expect(() => assertFamilyAccess({ kind: "demo", sid: "s", fid: "demo-1", generation: 1 }, "demo-1")).not.toThrow();
-    expect(() => assertFamilyAccess({ kind: "demo", sid: "s", fid: "fam-1", generation: 1 }, "fam-1")).toThrow(ForbiddenError);
-    expect(() => assertFamilyAccess({ kind: "member", sub: "u", mid: "m", fid: "demo-1" }, "demo-1")).toThrow(ForbiddenError);
-    expect(() => assertFamilyAccess({ kind: "member", sub: "u", mid: "m", fid: "fam-1" }, "fam-2")).toThrow(ForbiddenError);
-  });
-
-  it("limits a parent device to its own parent", () => {
-    const device = { kind: "device" as const, deviceId: "d", fid: "fam-1", pid: "p1" };
-    expect(() => assertParentAccess(device, "fam-1", "p1")).not.toThrow();
-    expect(() => assertParentAccess(device, "fam-1", "p2")).toThrow(ForbiddenError);
   });
 });
 
