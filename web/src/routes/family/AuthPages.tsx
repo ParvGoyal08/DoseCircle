@@ -5,6 +5,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { Link, Navigate, useNavigate, useSearchParams } from "react-router";
 import { Field, inputClass } from "../../components/FamilyShell";
 import { defaultLanguage, LanguagePicker } from "../../components/LanguagePicker";
+import { Garland } from "../../components/illustrations/Festive";
 import { Logo } from "../../components/Logo";
 import { Button } from "../../components/ui";
 import { useT } from "../../i18n";
@@ -19,13 +20,16 @@ function preferredLanguage(): LanguageCode {
 
 function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
-    <main className="mx-auto flex min-h-dvh max-w-md flex-col px-4 py-8">
-      <Link to="/" className="flex items-center gap-2.5">
-        <Logo className="size-9" />
-        <span className="text-xl font-semibold">DoseCircle</span>
-      </Link>
-      {children}
-    </main>
+    <div className="kolam min-h-dvh bg-paper">
+      <Garland className="h-10 w-full" count={40} />
+      <main className="mx-auto flex max-w-md flex-col px-4 pb-10 pt-6">
+        <Link to="/" className="flex items-center gap-2.5">
+          <Logo className="size-10" />
+          <span className="text-2xl font-extrabold">DoseCircle</span>
+        </Link>
+        <div className="sticker mt-8 bg-surface p-5">{children}</div>
+      </main>
+    </div>
   );
 }
 
@@ -87,8 +91,8 @@ export function SignInPage() {
 
   return (
     <AuthLayout>
-      <form onSubmit={submit} className="mt-10 space-y-4">
-        <h1 lang={lang} className="text-3xl font-semibold tracking-tight">
+      <form onSubmit={submit} className="space-y-4">
+        <h1 lang={lang} className="font-display text-4xl">
           {mode === "create" ? t("auth.title.create") : mode === "confirm" ? t("auth.confirmTitle") : t("auth.title.signIn")}
         </h1>
         {mode !== "confirm" ? (
@@ -118,7 +122,7 @@ export function SignInPage() {
           </button>
         )}
       </form>
-      <p lang={lang} className="mt-auto pt-10 text-[14px] text-muted">
+      <p lang={lang} className="mt-6 border-t-2 border-dashed border-ink/20 pt-4 text-[14px] text-muted">
         {t("auth.parentHint")}
       </p>
     </AuthLayout>
@@ -249,7 +253,7 @@ export function OnboardingPage() {
 
   return (
     <AuthLayout>
-      <h1 lang={lang} className="mt-8 text-3xl font-semibold tracking-tight">
+      <h1 lang={lang} className="font-display text-4xl">
         {t("onboard.title")}
       </h1>
       {!created ? (
@@ -335,7 +339,7 @@ export function InviteAcceptPage() {
   return (
     <AuthLayout>
       <form
-        className="mt-8 space-y-5"
+        className="space-y-5"
         onSubmit={async (event) => {
           event.preventDefault();
           try {
@@ -347,7 +351,7 @@ export function InviteAcceptPage() {
           }
         }}
       >
-        <h1 lang={lang} className="text-3xl font-semibold tracking-tight">
+        <h1 lang={lang} className="font-display text-4xl">
           {t("invite.title")}
         </h1>
         <LanguagePicker value={myLang} onChange={setMyLang} />

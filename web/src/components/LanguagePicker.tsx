@@ -32,9 +32,9 @@ export function LanguagePicker({ value, onChange, large = false }: { value: Lang
             <label
               key={language.code}
               className={cx(
-                "relative flex cursor-pointer items-center justify-between gap-3 rounded-[var(--radius-card)] border-2 bg-surface px-5 transition-colors",
+                "pressable relative flex cursor-pointer items-center justify-between gap-3 rounded-[var(--radius-card)] border-2 border-ink px-5 shadow-[3px_3px_0_var(--color-ink)]",
                 large ? "min-h-20" : "min-h-16",
-                selected ? "border-ink bg-haldi-tint" : "border-line hover:border-line-strong",
+                selected ? "bg-haldi" : "bg-surface",
               )}
             >
               <input type="radio" name="language" value={language.code} checked={selected} onChange={() => onChange(language.code)} className="sr-only" />

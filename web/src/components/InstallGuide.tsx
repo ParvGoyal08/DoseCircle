@@ -46,7 +46,7 @@ export function InstallGuide({ lang: viewerLang, code }: { lang: string; code?: 
   };
 
   return (
-    <section className="rounded-[var(--radius-card)] border-2 border-haldi bg-haldi-tint/60 p-5">
+    <section className="sticker bg-marigold-tint p-5">
       <h2 lang={lang} className="text-2xl font-semibold leading-snug">
         {t("install.title")}
       </h2>
@@ -61,7 +61,7 @@ export function InstallGuide({ lang: viewerLang, code }: { lang: string; code?: 
             { icon: SquarePlus, key: "install.ios.step2" },
             { icon: Download, key: "install.ios.step3" },
           ].map(({ icon: Icon, key }, index) => (
-            <li key={key} className="flex items-start gap-3 rounded-xl bg-surface p-3">
+            <li key={key} className="sticker-sm flex items-start gap-3 bg-surface p-3">
               <span className="tabular grid size-9 shrink-0 place-items-center rounded-full bg-ink text-lg font-semibold text-paper">{index + 1}</span>
               <Icon aria-hidden className="mt-1.5 size-6 shrink-0 text-claimed" strokeWidth={2.25} />
               <span lang={lang} className="text-lg leading-snug">
