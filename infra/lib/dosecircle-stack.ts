@@ -16,6 +16,7 @@ import { DefinitionBody, LogLevel, StateMachine, StateMachineType } from "aws-cd
 import type { Construct } from "constructs";
 import { fileURLToPath } from "node:url";
 import { doseCircleFunction } from "./functions.js";
+import { DEMO_ROUTE_KEYS, FAMILY_ROUTE_KEYS, PARENT_ROUTE_KEYS } from "./routes.js";
 
 export interface DoseCircleStackProps extends StackProps {
   /** Public origin of the web app (Amplify URL), used for CORS and notification links. */
@@ -190,21 +191,65 @@ export class DoseCircleStack extends Stack {
       },
     });
 
-    const apiEnv = { ...baseEnv, STATE_MACHINE_ARN: stateMachine.stateMachineArn };
-    const route = (id: string, method: HttpMethod, path: string, entry: string, authorizer?: HttpLambdaAuthorizer | HttpUserPoolAuthorizer) => {
-      const fn = withSecrets(doseCircleFunction(this, id, entry, { environment: apiEnv }));
+    const apiEnv = {
+      ...baseEnv,
+      STATE_MACHINE_ARN: stateMachine.stateMachineArn,
+      SCHEDULE_GROUP: scheduleGroup.name!,
+      SCHEDULER_ROLE_ARN: schedulerRole.roleArn,
+      SCHEDULER_DLQ_ARN: schedulerDlq.queueArn,
+    };
+    const apiFunction = (id: string, entry: string, timeout = Duration.seconds(10)) => {
+      const fn = withSecrets(doseCircleFunction(this, id, entry, { environment: apiEnv, timeout }));
       table.grantReadWriteData(fn);
-      fn.addToRolePolicy(taskResponse);
       fn.addToRolePolicy(isAuthorized);
-      api.addRoutes({ path, methods: [method], integration: new HttpLambdaIntegration(`${id}Integration`, fn), authorizer });
       return fn;
     };
+    type Authorizer = HttpLambdaAuthorizer | HttpUserPoolAuthorizer | undefined;
+    const addRoutes = (fn: NodejsFunction, routes: Record<string, Authorizer>) => {
+      const integration = new HttpLambdaIntegration(`${fn.node.id}Integration`, fn);
+      for (const [routeKey, authorizer] of Object.entries(routes)) {
+        const [method, path] = routeKey.split(" ") as [HttpMethod, string];
+        api.addRoutes({ path, methods: [method], integration, authorizer });
+      }
+    };
 
-    route("ParentTaken", HttpMethod.POST, "/parent/doses/{doseId}/taken", "api/parent/taken.ts", deviceOrDemo);
-    route("DemoTaken", HttpMethod.POST, "/demo/doses/{doseId}/taken", "api/parent/taken.ts", deviceOrDemo);
-    route("Claim", HttpMethod.POST, "/doses/{doseId}/claim", "api/family/claim.ts", family);
-    route("DemoClaim", HttpMethod.POST, "/demo/doses/{doseId}/claim", "api/family/claim.ts", deviceOrDemo);
-    route("PushReceipt", HttpMethod.POST, "/push/receipt", "api/push/receipt.ts");
+    // Taken and claim complete the waiting workflow task, so they get their own small functions.
+    const taken = apiFunction("Taken", "api/parent/taken.ts");
+    taken.addToRolePolicy(taskResponse);
+    addRoutes(taken, { "POST /parent/doses/{doseId}/taken": deviceOrDemo, "POST /demo/doses/{doseId}/taken": deviceOrDemo });
+
+    const claim = apiFunction("Claim", "api/family/claim.ts");
+    claim.addToRolePolicy(taskResponse);
+    addRoutes(claim, { "POST /doses/{doseId}/claim": family, "POST /demo/doses/{doseId}/claim": deviceOrDemo });
+
+    // Receipts are signed with an HMAC inside the push payload, so there is no auth header.
+    addRoutes(apiFunction("PushReceipt", "api/push/receipt.ts"), { "POST /push/receipt": undefined });
+
+    // Family app: sign-in with Cognito. Keys must match FAMILY_ROUTES (checked in stack.test.ts).
+    const familyApi = apiFunction("FamilyApi", "api/family/index.ts", Duration.seconds(20));
+    stateMachine.grantStartExecution(familyApi); // "Send a test reminder"
+    stateMachine.grantExecution(familyApi, "states:GetExecutionHistory"); // "Why am I seeing this?"
+    familyApi.addToRolePolicy(
+      new PolicyStatement({
+        actions: ["scheduler:CreateSchedule", "scheduler:UpdateSchedule", "scheduler:DeleteSchedule", "scheduler:GetSchedule"],
+        resources: [this.formatArn({ service: "scheduler", resource: "schedule", resourceName: `${scheduleGroup.name}/*` })],
+      }),
+    );
+    schedulerRole.grantPassRole(familyApi.grantPrincipal);
+    addRoutes(
+      familyApi,
+      Object.fromEntries(FAMILY_ROUTE_KEYS.map((key) => [key, family])),
+    );
+
+    // Parent phone: pairing is public (the one-time code is the credential); everything else needs the device token.
+    const parentApi = apiFunction("ParentApi", "api/parent/index.ts");
+    addRoutes(parentApi, Object.fromEntries(PARENT_ROUTE_KEYS.map((key) => [key, key === "POST /parent/pair" ? undefined : deviceOrDemo])));
+
+    // Judge demo: starting a session is public and capped; the rest needs the demo token.
+    const demoApi = apiFunction("DemoApi", "api/demo/index.ts", Duration.seconds(20));
+    stateMachine.grantStartExecution(demoApi);
+    stateMachine.grantExecution(demoApi, "states:DescribeExecution", "states:StopExecution", "states:GetExecutionHistory");
+    addRoutes(demoApi, Object.fromEntries(DEMO_ROUTE_KEYS.map((key) => [key, key === "POST /demo/sessions" ? undefined : deviceOrDemo])));
 
     // Per-route throttles: CDK's HttpStage only supports stage-wide limits, so set them on the L1 stage.
     const stage = api.defaultStage!.node.defaultChild as CfnStage;
@@ -212,6 +257,11 @@ export class DoseCircleStack extends Stack {
     // routeSettings is passed to CloudFormation verbatim, so keys must use CloudFormation's casing.
     stage.routeSettings = {
       "POST /push/receipt": { ThrottlingRateLimit: 20, ThrottlingBurstLimit: 40 },
+      // Guessing an 8-character code is hopeless at this rate; invites also expire after 48 hours.
+      "POST /parent/pair": { ThrottlingRateLimit: 1, ThrottlingBurstLimit: 2 },
+      "POST /demo/sessions": { ThrottlingRateLimit: 2, ThrottlingBurstLimit: 5 },
+      "POST /demo/doses": { ThrottlingRateLimit: 5, ThrottlingBurstLimit: 10 },
+      "POST /families/{fid}/parents/{pid}/test-dose": { ThrottlingRateLimit: 1, ThrottlingBurstLimit: 2 },
     };
 
     // ── Outputs for the web app's environment ───────────────────────────────

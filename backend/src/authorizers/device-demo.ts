@@ -17,7 +17,10 @@ export async function handler(event: APIGatewayRequestAuthorizerEventV2): Promis
   const token = header.startsWith("Bearer ") ? header.slice(7).trim() : "";
   if (!token) return deny;
 
+  const demoRoute = event.routeKey.includes(" /demo/");
   if (isDeviceTokenShape(token)) {
+    // A real parent's phone never acts inside the demo, and the demo never acts outside it.
+    if (demoRoute) return deny;
     const device = await getDevice(sha256Hex(token));
     if (!device || device.revoked) return deny;
     return { isAuthorized: true, context: { kind: "device", deviceId: device.deviceId, fid: device.fid, pid: device.pid } };
@@ -25,7 +28,6 @@ export async function handler(event: APIGatewayRequestAuthorizerEventV2): Promis
 
   const claims = verifyDemoToken(await secret("demo-jwt-secret"), token);
   if (!claims) return deny;
-  // Demo principals may only call /demo routes.
-  if (!event.routeKey.includes(" /demo/")) return deny;
+  if (!demoRoute) return deny;
   return { isAuthorized: true, context: { kind: "demo", sid: claims.sid, fid: claims.fid, generation: claims.gen } };
 }
