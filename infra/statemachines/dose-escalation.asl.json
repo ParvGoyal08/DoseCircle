@@ -1,0 +1,393 @@
+{
+  "Comment": "One execution per dose: remind the parent, detect missed vs phone offline, then walk the family ladder until someone claims it or the parent confirms.",
+  "StartAt": "PrepareDose",
+  "States": {
+    "PrepareDose": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": {
+        "FunctionName": "${PrepareDoseFunctionArn}",
+        "Payload": {
+          "input.$": "$",
+          "executionId.$": "$$.Execution.Id"
+        }
+      },
+      "ResultSelector": {
+        "dose.$": "$.Payload.dose",
+        "ladders.$": "$.Payload.ladders"
+      },
+      "ResultPath": "$.prep",
+      "Retry": [
+        {
+          "ErrorEquals": ["Lambda.ServiceException", "Lambda.AWSLambdaException", "Lambda.SdkClientException", "Lambda.TooManyRequestsException"],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 3,
+          "BackoffRate": 2
+        }
+      ],
+      "Next": "IsDuplicateOrPaused"
+    },
+    "IsDuplicateOrPaused": {
+      "Type": "Choice",
+      "Choices": [
+        {
+          "Or": [
+            { "Variable": "$.prep.dose.duplicate", "BooleanEquals": true },
+            { "Variable": "$.prep.dose.paused", "BooleanEquals": true }
+          ],
+          "Next": "SkipDose"
+        }
+      ],
+      "Default": "ChooseLadder"
+    },
+    "SkipDose": {
+      "Type": "Succeed"
+    },
+    "ChooseLadder": {
+      "Type": "Choice",
+      "Comment": "Critical medicines, or a parent who missed the previous dose, escalate faster.",
+      "Choices": [
+        {
+          "Or": [
+            { "Variable": "$.prep.dose.critical", "BooleanEquals": true },
+            { "Variable": "$.prep.dose.consecutiveMisses", "NumericGreaterThanEquals": 1 }
+          ],
+          "Next": "UseFastLadder"
+        }
+      ],
+      "Default": "UseStandardLadder"
+    },
+    "UseFastLadder": {
+      "Type": "Pass",
+      "Parameters": {
+        "timings.$": "$.prep.ladders.fast",
+        "index": 0
+      },
+      "ResultPath": "$.ladder",
+      "Next": "RemindParent"
+    },
+    "UseStandardLadder": {
+      "Type": "Pass",
+      "Parameters": {
+        "timings.$": "$.prep.ladders.standard",
+        "index": 0
+      },
+      "ResultPath": "$.ladder",
+      "Next": "RemindParent"
+    },
+    "RemindParent": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke.waitForTaskToken",
+      "Parameters": {
+        "FunctionName": "${ParkFunctionArn}",
+        "Payload": {
+          "token.$": "$$.Task.Token",
+          "doseId.$": "$.prep.dose.doseId",
+          "step": "REMIND",
+          "ttlSeconds.$": "$.ladder.timings.parentWaitSeconds"
+        }
+      },
+      "TimeoutSecondsPath": "$.ladder.timings.parentWaitSeconds",
+      "ResultPath": "$.resolution",
+      "Catch": [
+        {
+          "ErrorEquals": ["States.Timeout"],
+          "ResultPath": "$.timeout",
+          "Next": "HasNudge"
+        }
+      ],
+      "Next": "ResetMissStreak"
+    },
+    "HasNudge": {
+      "Type": "Choice",
+      "Choices": [
+        { "Variable": "$.ladder.timings.nudgeWaitSeconds", "NumericGreaterThan": 0, "Next": "NudgeParent" }
+      ],
+      "Default": "GetDoseDelivery"
+    },
+    "NudgeParent": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke.waitForTaskToken",
+      "Parameters": {
+        "FunctionName": "${ParkFunctionArn}",
+        "Payload": {
+          "token.$": "$$.Task.Token",
+          "doseId.$": "$.prep.dose.doseId",
+          "step": "NUDGE",
+          "ttlSeconds.$": "$.ladder.timings.nudgeWaitSeconds"
+        }
+      },
+      "TimeoutSecondsPath": "$.ladder.timings.nudgeWaitSeconds",
+      "ResultPath": "$.resolution",
+      "Catch": [
+        {
+          "ErrorEquals": ["States.Timeout"],
+          "ResultPath": "$.timeout",
+          "Next": "GetDoseDelivery"
+        }
+      ],
+      "Next": "ResetMissStreak"
+    },
+    "ResetMissStreak": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::dynamodb:updateItem",
+      "Parameters": {
+        "TableName": "${TableName}",
+        "Key": {
+          "PK": { "S.$": "States.Format('FAM#{}', $.prep.dose.fid)" },
+          "SK": { "S.$": "States.Format('PARENT#{}', $.prep.dose.pid)" }
+        },
+        "UpdateExpression": "SET consecutiveMisses = :zero",
+        "ExpressionAttributeValues": { ":zero": { "N": "0" } }
+      },
+      "ResultPath": null,
+      "Next": "DoseTakenOnTime"
+    },
+    "DoseTakenOnTime": {
+      "Type": "Succeed"
+    },
+    "GetDoseDelivery": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::dynamodb:getItem",
+      "Parameters": {
+        "TableName": "${TableName}",
+        "Key": {
+          "PK": { "S.$": "States.Format('PARENT#{}', $.prep.dose.pid)" },
+          "SK": { "S.$": "$.prep.dose.doseSk" }
+        },
+        "ProjectionExpression": "deliveredAt",
+        "ConsistentRead": true
+      },
+      "ResultPath": "$.delivery",
+      "Next": "WasReminderDelivered"
+    },
+    "WasReminderDelivered": {
+      "Type": "Choice",
+      "Comment": "A delivery receipt means the reminder reached the phone and was not acted on. No receipt means the phone is probably offline.",
+      "Choices": [
+        { "Variable": "$.delivery.Item.deliveredAt", "IsPresent": true, "Next": "MarkLikelyMissed" }
+      ],
+      "Default": "MarkPhoneOffline"
+    },
+    "MarkLikelyMissed": {
+      "Type": "Pass",
+      "Result": "MISSED",
+      "ResultPath": "$.missClass",
+      "Next": "MarkEscalating"
+    },
+    "MarkPhoneOffline": {
+      "Type": "Pass",
+      "Result": "OFFLINE",
+      "ResultPath": "$.missClass",
+      "Next": "MarkEscalating"
+    },
+    "MarkEscalating": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::dynamodb:updateItem",
+      "Parameters": {
+        "TableName": "${TableName}",
+        "Key": {
+          "PK": { "S.$": "States.Format('PARENT#{}', $.prep.dose.pid)" },
+          "SK": { "S.$": "$.prep.dose.doseSk" }
+        },
+        "UpdateExpression": "SET #status = :escalating, missClass = :missClass, escalatedAt = :now, GSI2PK = :open, GSI2SK = :now",
+        "ConditionExpression": "#status = :pending",
+        "ExpressionAttributeNames": { "#status": "status" },
+        "ExpressionAttributeValues": {
+          ":escalating": { "S": "ESCALATING" },
+          ":pending": { "S": "PENDING" },
+          ":missClass": { "S.$": "$.missClass" },
+          ":now": { "S.$": "$$.State.EnteredTime" },
+          ":open": { "S.$": "States.Format('FAM#{}#OPEN', $.prep.dose.fid)" }
+        }
+      },
+      "ResultPath": null,
+      "Catch": [
+        {
+          "ErrorEquals": ["DynamoDB.ConditionalCheckFailedException"],
+          "ResultPath": "$.raced",
+          "Next": "DoseTakenJustInTime"
+        }
+      ],
+      "Next": "IncrementMissStreak"
+    },
+    "DoseTakenJustInTime": {
+      "Type": "Succeed"
+    },
+    "IncrementMissStreak": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::dynamodb:updateItem",
+      "Parameters": {
+        "TableName": "${TableName}",
+        "Key": {
+          "PK": { "S.$": "States.Format('FAM#{}', $.prep.dose.fid)" },
+          "SK": { "S.$": "States.Format('PARENT#{}', $.prep.dose.pid)" }
+        },
+        "UpdateExpression": "ADD consecutiveMisses :one",
+        "ExpressionAttributeValues": { ":one": { "N": "1" } }
+      },
+      "ResultPath": null,
+      "Next": "HasNextFamilyMember"
+    },
+    "HasNextFamilyMember": {
+      "Type": "Choice",
+      "Choices": [
+        { "Variable": "$.ladder.index", "NumericLessThanPath": "$.prep.dose.ladderSize", "Next": "AlertFamilyMember" }
+      ],
+      "Default": "AlertWholeFamily"
+    },
+    "AlertFamilyMember": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke.waitForTaskToken",
+      "Parameters": {
+        "FunctionName": "${ParkFunctionArn}",
+        "Payload": {
+          "token.$": "$$.Task.Token",
+          "doseId.$": "$.prep.dose.doseId",
+          "step": "ALERT",
+          "memberIndex.$": "$.ladder.index",
+          "missClass.$": "$.missClass",
+          "ttlSeconds.$": "$.ladder.timings.claimWaitSeconds"
+        }
+      },
+      "TimeoutSecondsPath": "$.ladder.timings.claimWaitSeconds",
+      "ResultPath": "$.resolution",
+      "Catch": [
+        {
+          "ErrorEquals": ["States.Timeout"],
+          "ResultPath": "$.timeout",
+          "Next": "TryNextFamilyMember"
+        }
+      ],
+      "Next": "HowWasItResolved"
+    },
+    "TryNextFamilyMember": {
+      "Type": "Pass",
+      "Parameters": {
+        "timings.$": "$.ladder.timings",
+        "index.$": "States.MathAdd($.ladder.index, 1)"
+      },
+      "ResultPath": "$.ladder",
+      "Next": "HasNextFamilyMember"
+    },
+    "AlertWholeFamily": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke.waitForTaskToken",
+      "Parameters": {
+        "FunctionName": "${ParkFunctionArn}",
+        "Payload": {
+          "token.$": "$$.Task.Token",
+          "doseId.$": "$.prep.dose.doseId",
+          "step": "BROADCAST",
+          "missClass.$": "$.missClass",
+          "ttlSeconds.$": "$.ladder.timings.finalWaitSeconds"
+        }
+      },
+      "TimeoutSecondsPath": "$.ladder.timings.finalWaitSeconds",
+      "ResultPath": "$.resolution",
+      "Catch": [
+        {
+          "ErrorEquals": ["States.Timeout"],
+          "ResultPath": "$.timeout",
+          "Next": "MarkUnresolved"
+        }
+      ],
+      "Next": "HowWasItResolved"
+    },
+    "MarkUnresolved": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::dynamodb:updateItem",
+      "Parameters": {
+        "TableName": "${TableName}",
+        "Key": {
+          "PK": { "S.$": "States.Format('PARENT#{}', $.prep.dose.pid)" },
+          "SK": { "S.$": "$.prep.dose.doseSk" }
+        },
+        "UpdateExpression": "SET #status = :unresolved REMOVE GSI2PK, GSI2SK, currentToken",
+        "ConditionExpression": "#status = :escalating",
+        "ExpressionAttributeNames": { "#status": "status" },
+        "ExpressionAttributeValues": {
+          ":unresolved": { "S": "UNRESOLVED" },
+          ":escalating": { "S": "ESCALATING" }
+        }
+      },
+      "ResultPath": null,
+      "Catch": [
+        {
+          "ErrorEquals": ["DynamoDB.ConditionalCheckFailedException"],
+          "ResultPath": "$.raced",
+          "Next": "ResolvedAtTheLastMoment"
+        }
+      ],
+      "Next": "NobodyResponded"
+    },
+    "ResolvedAtTheLastMoment": {
+      "Type": "Succeed",
+      "Comment": "A claim or Taken landed exactly as the final wait expired; that API call notified the family itself."
+    },
+    "NobodyResponded": {
+      "Type": "Succeed"
+    },
+    "HowWasItResolved": {
+      "Type": "Choice",
+      "Choices": [
+        { "Variable": "$.resolution.outcome", "StringEquals": "CLAIMED", "Next": "TellOthersToStandDown" },
+        { "Variable": "$.resolution.outcome", "StringEquals": "TAKEN", "Next": "TellFamilyParentTookIt" }
+      ],
+      "Default": "UnexpectedResolution"
+    },
+    "UnexpectedResolution": {
+      "Type": "Fail",
+      "Error": "UnexpectedResolution",
+      "Cause": "A waiting step completed with an outcome other than CLAIMED or TAKEN."
+    },
+    "TellOthersToStandDown": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": {
+        "FunctionName": "${NotifyResolutionFunctionArn}",
+        "Payload": {
+          "doseId.$": "$.prep.dose.doseId",
+          "outcome": "CLAIMED"
+        }
+      },
+      "ResultPath": null,
+      "Retry": [
+        {
+          "ErrorEquals": ["Lambda.ServiceException", "Lambda.AWSLambdaException", "Lambda.SdkClientException", "Lambda.TooManyRequestsException"],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 3,
+          "BackoffRate": 2
+        }
+      ],
+      "Next": "EscalationClaimed"
+    },
+    "EscalationClaimed": {
+      "Type": "Succeed"
+    },
+    "TellFamilyParentTookIt": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::lambda:invoke",
+      "Parameters": {
+        "FunctionName": "${NotifyResolutionFunctionArn}",
+        "Payload": {
+          "doseId.$": "$.prep.dose.doseId",
+          "outcome": "TAKEN"
+        }
+      },
+      "ResultPath": null,
+      "Retry": [
+        {
+          "ErrorEquals": ["Lambda.ServiceException", "Lambda.AWSLambdaException", "Lambda.SdkClientException", "Lambda.TooManyRequestsException"],
+          "IntervalSeconds": 2,
+          "MaxAttempts": 3,
+          "BackoffRate": 2
+        }
+      ],
+      "Next": "ParentTookItLate"
+    },
+    "ParentTookItLate": {
+      "Type": "Succeed"
+    }
+  }
+}

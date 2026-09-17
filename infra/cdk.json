@@ -1,0 +1,14 @@
+{
+  "app": "npx tsx bin/app.ts",
+  "watch": {
+    "include": ["bin/**", "lib/**", "statemachines/**", "../backend/src/**", "../shared/src/**"]
+  },
+  "context": {
+    "@aws-cdk/aws-lambda-nodejs:useLatestRuntimeVersion": true,
+    "@aws-cdk/core:checkSecretUsage": true,
+    "@aws-cdk/aws-iam:minimizePolicies": true,
+    "appOrigin": "http://localhost:5173",
+    "ssmPrefix": "/saathi",
+    "sesFromEmail": ""
+  }
+}
