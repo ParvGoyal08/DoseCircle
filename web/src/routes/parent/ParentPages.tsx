@@ -11,7 +11,7 @@ import { useT } from "../../i18n";
 import { api, ApiError, mockApiEnabled } from "../../lib/api";
 import { pairedDevice, pairPhone, updateStoredLanguage } from "../../lib/device";
 import { formatCount } from "../../lib/format";
-import { enableReminders, isStandalone, pushSupport } from "../../lib/push";
+import { enableReminders, isStandalone, keepSubscriptionFresh, pushSupport } from "../../lib/push";
 import type { DoseView, ParentToday } from "../../lib/types";
 import { useApi } from "../../lib/useApi";
 
@@ -155,6 +155,10 @@ export function ParentHomePage() {
   const device = pairedDevice() ?? (mockApiEnabled ? { token: "mock", displayName: "Shantha", lang: "kn" as const } : null);
   const [changingLanguage, setChangingLanguage] = useState(false);
   const today = useApi(device ? () => api<ParentToday>("/parent/today", { auth: "device" }) : null, [], 60_000);
+  // The phone's push subscription can be replaced by the browser; re-register it if so.
+  useEffect(() => {
+    if (device) void keepSubscriptionFresh("device");
+  }, [Boolean(device)]);
   const { t, lang } = useT(today.data?.parent.lang ?? device?.lang ?? "en");
 
   if (!device) return <Navigate to="/join" replace />;

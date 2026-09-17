@@ -127,8 +127,11 @@ async function startDose(event: APIGatewayProxyEventV2) {
     throw error;
   }
 
-  // Critical demos use the night slot (insulin), others the morning slot.
-  const slot = critical ? "2100" : "0800";
+  // Use whichever of the fictional family's two slots fits the current time in India, so the
+  // reminder's time of day matches the clock on the judge's screen. The night slot includes insulin,
+  // which is the critical medicine.
+  const istHour = Number(new Intl.DateTimeFormat("en-GB", { timeZone: "Asia/Kolkata", hour: "2-digit", hourCycle: "h23" }).format(new Date()));
+  const slot = critical || istHour >= 15 || istHour < 4 ? "2100" : "0800";
   const doseId = makeDoseId(session.pid, istDoseStamp(new Date(scheduledTime)), runs);
   const execution = await sfn.send(
     new StartExecutionCommand({

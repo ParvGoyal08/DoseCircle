@@ -1,6 +1,6 @@
 import { DEFAULT_SLOT_TIMES } from "@dosecircle/shared";
 import { describe, expect, it } from "vitest";
-import { dailyCron, desiredSlots, diffSlots, istDate, scheduleName, type PlannedMedicine } from "../src/scheduling/plan.js";
+import { type PlannedMedicine, dailyCron, desiredSlots, diffSlots, isDueAt, istDate, scheduleName } from "../src/scheduling/plan.js";
 
 const med = (overrides: Partial<PlannedMedicine> & { medId: string }): PlannedMedicine => ({
   slots: {},
@@ -77,5 +77,20 @@ describe("schedule details", () => {
   it("uses the Indian date, not UTC", () => {
     // 20:00 UTC on the 17th is already the 18th in India.
     expect(istDate(new Date("2026-09-17T20:00:00Z"))).toBe("2026-09-18");
+  });
+});
+
+describe("medicines that have finished", () => {
+  const medicine = { medId: "m1", slots: { morning: 1 }, critical: false, asNeeded: false, active: true };
+
+  it("stops being due after its last day", () => {
+    expect(isDueAt({ ...medicine, endDate: "2026-09-20" }, "morning", "2026-09-20")).toBe(true);
+    expect(isDueAt({ ...medicine, endDate: "2026-09-19" }, "morning", "2026-09-20")).toBe(false);
+  });
+
+  it("is never due when stopped, as-needed, or not in this slot", () => {
+    expect(isDueAt({ ...medicine, active: false }, "morning", "2026-09-20")).toBe(false);
+    expect(isDueAt({ ...medicine, asNeeded: true }, "morning", "2026-09-20")).toBe(false);
+    expect(isDueAt(medicine, "night", "2026-09-20")).toBe(false);
   });
 });

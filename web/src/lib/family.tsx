@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useState, type React
 import { Navigate, useLocation } from "react-router";
 import { api, mockApiEnabled } from "./api";
 import { authConfigured, isSignedIn } from "./auth";
+import { keepSubscriptionFresh } from "./push";
 import type { Me } from "./types";
 
 type FamilyState =
@@ -20,6 +21,8 @@ export function FamilyProvider({ children }: { children: ReactNode }) {
     try {
       const me = await api<Me>("/me", { auth: "family" });
       setState(me.member ? { status: "ready", me: me.member } : { status: "noFamily" });
+      // A browser may have replaced this device's push subscription since the last visit.
+      if (me.member) void keepSubscriptionFresh("family");
     } catch {
       setState({ status: "signedOut" });
     }

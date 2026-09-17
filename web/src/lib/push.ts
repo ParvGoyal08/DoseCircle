@@ -28,11 +28,49 @@ function urlBase64ToUint8Array(base64: string): Uint8Array<ArrayBuffer> {
   return bytes;
 }
 
+/** The endpoint we last registered, so a replaced subscription can be spotted on the next launch. */
+const ENDPOINT_KEY = "dosecircle.push.endpoint";
+const PATHS = { device: "/parent/push/subscription", family: "/push/subscriptions" } as const;
+
+type Who = Extract<AuthKind, "device" | "family">;
+
+async function register(subscription: PushSubscription, who: Who): Promise<void> {
+  const json = subscription.toJSON() as { endpoint: string; keys: { p256dh: string; auth: string } };
+  await api(PATHS[who], { method: "POST", auth: who, body: { subscription: { endpoint: json.endpoint, keys: json.keys } } });
+  try {
+    localStorage.setItem(ENDPOINT_KEY, json.endpoint);
+  } catch {
+    // Without storage we simply register again on the next launch.
+  }
+}
+
+/**
+ * Browsers may replace a push subscription at any time (after an update, or when Chrome rotates it),
+ * and the old endpoint then goes dead: reminders stop with nothing on screen to say so. So on every
+ * launch, once permission is granted, the current subscription is compared with the one we last
+ * registered and re-sent if it has changed.
+ */
+export async function keepSubscriptionFresh(who: Who): Promise<void> {
+  if (mockApiEnabled || pushSupport() !== "supported" || Notification.permission !== "granted" || !config.vapidPublicKey) return;
+  try {
+    const registration = await navigator.serviceWorker.getRegistration();
+    if (!registration) return;
+    const subscription =
+      (await registration.pushManager.getSubscription()) ??
+      (await registration.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlBase64ToUint8Array(config.vapidPublicKey) }));
+    const endpoint = (subscription.toJSON() as { endpoint: string }).endpoint;
+    if (localStorage.getItem(ENDPOINT_KEY) === endpoint) return;
+    await register(subscription, who);
+  } catch {
+    // Not fatal: the family can turn reminders on again from the app.
+  }
+}
+
 /**
  * Asks for notification permission (only ever from a button tap), subscribes, and registers the
  * subscription for the parent's phone or the signed-in family member.
  */
-export async function enableReminders(who: Extract<AuthKind, "device" | "family">): Promise<NotificationPermission> {
+export async function enableReminders(who: Who): Promise<NotificationPermission> {
   const permission = await Notification.requestPermission();
   if (permission !== "granted") return permission;
   // The local preview has no service worker or push keys; permission alone is enough to try the flow.
@@ -43,8 +81,6 @@ export async function enableReminders(who: Extract<AuthKind, "device" | "family"
   const subscription =
     (await registration.pushManager.getSubscription()) ??
     (await registration.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlBase64ToUint8Array(config.vapidPublicKey) }));
-  const json = subscription.toJSON() as { endpoint: string; keys: { p256dh: string; auth: string } };
-  const body = { subscription: { endpoint: json.endpoint, keys: json.keys } };
-  await api(who === "device" ? "/parent/push/subscription" : "/push/subscriptions", { method: "POST", auth: who, body });
+  await register(subscription, who);
   return permission;
 }

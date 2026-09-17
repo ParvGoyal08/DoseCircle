@@ -4,6 +4,8 @@ import { ddb, logger, ttlInDays, ttlInHours } from "../lib/aws.js";
 import { env } from "../lib/env.js";
 import type { DoseItem } from "../lib/model.js";
 import { getParent, getSlot } from "../lib/repository.js";
+import { isDueAt, istDate } from "../scheduling/plan.js";
+import { listMedicines } from "../scheduling/sync-slots.js";
 
 export interface PrepareDoseInput {
   input: {
@@ -43,7 +45,7 @@ export async function handler(event: PrepareDoseInput): Promise<PrepareDoseOutpu
   const compactTime = input.slot.includes(":") ? toCompactTime(input.slot) : input.slot;
   const ladders = { standard: timingsFor("standard", speed), fast: timingsFor("fast", speed) };
 
-  const [parent, slot] = await Promise.all([getParent(input.fid, input.pid), getSlot(input.pid, compactTime)]);
+  const [parent, slot, medicines] = await Promise.all([getParent(input.fid, input.pid), getSlot(input.pid, compactTime), listMedicines(input.pid)]);
   if (!parent || !slot) {
     logger.warn("Parent or slot missing; skipping dose", { fid: input.fid, pid: input.pid, compactTime });
     return {
@@ -53,9 +55,20 @@ export async function handler(event: PrepareDoseInput): Promise<PrepareDoseOutpu
   }
 
   const scheduledAt = input.scheduledTime ?? new Date().toISOString();
+  // A medicine can be stopped or reach its last day between schedule syncs, so the list is checked
+  // again here, at the moment the dose is created.
+  const today = istDate(new Date(scheduledAt));
+  const due = medicines.filter((m) => slot.medIds.includes(m.medId) && isDueAt(m, slot.slotName, today));
+  if (due.length === 0) {
+    logger.info("No medicines are still due in this slot; skipping dose", { pid: input.pid, compactTime, slot: slot.slotName });
+    return {
+      dose: { doseId: "", doseSk: "", fid: input.fid, pid: input.pid, critical: false, consecutiveMisses: 0, ladderSize: 0, duplicate: true, paused: false },
+      ladders,
+    };
+  }
   const doseStamp = istDoseStamp(new Date(scheduledAt));
   const doseId = makeDoseId(input.pid, doseStamp, input.mode === "live" ? undefined : input.demoRun ?? 0);
-  const critical = slot.critical || input.critical === true;
+  const critical = due.some((m) => m.critical) || input.critical === true;
 
   const item: DoseItem = {
     PK: `PARENT#${input.pid}`,
@@ -64,7 +77,7 @@ export async function handler(event: PrepareDoseInput): Promise<PrepareDoseOutpu
     fid: input.fid,
     pid: input.pid,
     slotName: slot.slotName,
-    medIds: slot.medIds,
+    medIds: due.map((m) => m.medId),
     status: parent.paused ? "SKIPPED" : "PENDING",
     critical,
     scheduledAt,

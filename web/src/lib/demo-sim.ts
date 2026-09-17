@@ -21,6 +21,9 @@ function push(lang: LanguageCode, key: string): { text: string; lang: string } {
 }
 
 const SPEED = 60;
+
+/** The hour in India, so a demo dose matches the time of day on screen. */
+const istHour = () => Number(new Intl.DateTimeFormat("en-GB", { timeZone: "Asia/Kolkata", hour: "2-digit", hourCycle: "h23" }).format(new Date()));
 const MEDICINES: Record<string, MedicineLine> = {
   glycomet: { medId: "med-glycomet", nameAsPrinted: "Glycomet GP 1", strength: null, count: 1, food: "after", critical: false },
   telma: { medId: "med-telma", nameAsPrinted: "Telma 40", strength: "40 mg", count: 1, food: null, critical: false },
@@ -209,7 +212,7 @@ export function createSimulatedDemoClient(): DemoClient {
       inbox = {};
       dose = {
         doseId: `p-demo_${Date.now()}_${runs}`,
-        slotName: critical ? "night" : "morning",
+        slotName: critical || istHour() >= 15 || istHour() < 4 ? "night" : "morning",
         scheduledAt: now(),
         critical,
         status: "PENDING",
@@ -217,7 +220,7 @@ export function createSimulatedDemoClient(): DemoClient {
         claimedBy: null,
         deliveredAt: null,
         alerted: [],
-        medicines: critical ? [MEDICINES.glycomet!, MEDICINES.lantus!] : [MEDICINES.glycomet!, MEDICINES.telma!],
+        medicines: critical || istHour() >= 15 || istHour() < 4 ? [MEDICINES.glycomet!, MEDICINES.lantus!] : [MEDICINES.glycomet!, MEDICINES.telma!],
       };
       running = true;
       void run(generation);

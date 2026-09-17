@@ -12,6 +12,7 @@ import { HttpError, json, parseBody, pathParam, principalFrom } from "../../lib/
 import { newId } from "../../lib/ids.js";
 import type { DeviceItem, DoseItem, InviteItem, MedicineItem, ParentItem } from "../../lib/model.js";
 import { PushSubscriptionSchema } from "../../lib/push-endpoints.js";
+import { takeFromBudget } from "../../lib/rate-limit.js";
 import { get, getDose, getParent, listDoses } from "../../lib/repository.js";
 import { router } from "../../lib/router.js";
 import { LanguageSchema } from "../../lib/schemas.js";
@@ -20,17 +21,30 @@ import { listMedicines, listSlots } from "../../scheduling/sync-slots.js";
 
 const PairSchema = z.object({ code: z.string().min(6).max(20) });
 
+/** Wrong codes allowed per caller per hour before pairing is refused. */
+const MAX_PAIR_FAILURES_PER_HOUR = 8;
+
 /**
  * POST /parent/pair (public) — the parent's phone exchanges a one-time code for a long-lived device
  * token. Elderly parents never create a password. Only hashes of the code and token are stored.
  */
 async function pair(event: APIGatewayProxyEventV2) {
   const { code } = parseBody(event, PairSchema);
+  // A wrong code can't be tied to any one invite, so guessing is limited per caller: a handful of
+  // failures an hour, on top of the route's own throttle and the code's 48-hour life.
+  const caller = sha256Hex(`${event.requestContext.http.sourceIp}|${new Date().toISOString().slice(0, 13)}`).slice(0, 16);
+  const failureBudget = `pair-fail#${caller}`;
+  const tooManyFailures = new HttpError(429, "Too many tries. Please wait a while, then ask your family for a new code.");
+
   const inviteKey = keys.invite(sha256Hex(normaliseInviteCode(code)));
   const invite = await get<InviteItem>(inviteKey, true);
-  if (!invite || invite.kind !== "parent" || !invite.pid || invite.consumedAt) throw new HttpError(404, "This code is not valid any more. Ask your family for a new one.");
+  const wrongCode = async () => {
+    if (!(await takeFromBudget(failureBudget, MAX_PAIR_FAILURES_PER_HOUR, 3600))) throw tooManyFailures;
+    return new HttpError(404, "This code is not valid any more. Ask your family for a new one.");
+  };
+  if (!invite || invite.kind !== "parent" || !invite.pid || invite.consumedAt) throw await wrongCode();
   const parent = await getParent(invite.fid, invite.pid);
-  if (!parent) throw new HttpError(404, "This code is not valid any more. Ask your family for a new one.");
+  if (!parent) throw await wrongCode();
 
   const token = newDeviceToken();
   const deviceId = newId("dev");

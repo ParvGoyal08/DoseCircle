@@ -19,6 +19,11 @@ export interface DesiredSlot {
   critical: boolean;
 }
 
+/** Whether a medicine should still be reminded about at this time of day. */
+export function isDueAt(medicine: PlannedMedicine, slotName: SlotName, todayIst: string): boolean {
+  return medicine.active && !medicine.asNeeded && (!medicine.endDate || medicine.endDate >= todayIst) && (medicine.slots[slotName] ?? 0) > 0;
+}
+
 /** One reminder per time of day, grouping every medicine due then. Critical if any of them is. */
 export function desiredSlots(
   medicines: readonly PlannedMedicine[],
@@ -27,9 +32,7 @@ export function desiredSlots(
 ): DesiredSlot[] {
   const slots: DesiredSlot[] = [];
   for (const slotName of SLOT_NAMES) {
-    const due = medicines.filter(
-      (m) => m.active && !m.asNeeded && (!m.endDate || m.endDate >= todayIst) && (m.slots[slotName] ?? 0) > 0,
-    );
+    const due = medicines.filter((m) => isDueAt(m, slotName, todayIst));
     if (due.length === 0) continue;
     slots.push({
       compactTime: toCompactTime(slotTimes[slotName]),

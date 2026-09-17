@@ -19,6 +19,18 @@ registerRoute(
   new CacheFirst({ cacheName: "voice-clips", plugins: [new ExpirationPlugin({ maxEntries: 60 })] }),
 );
 
+// A replaced subscription is re-registered by the app on its next launch (lib/push.ts): the
+// service worker has no credentials of its own to call the API with.
+self.addEventListener("pushsubscriptionchange", (event) => {
+  (event as ExtendableEvent).waitUntil(
+    self.registration.showNotification("DoseCircle", {
+      body: "Please open DoseCircle once so reminders keep working.",
+      icon: "/icons/icon-192.png",
+      tag: "subscription-change",
+    }),
+  );
+});
+
 self.addEventListener("message", (event) => {
   if (event.data === "SKIP_WAITING") void self.skipWaiting();
 });
