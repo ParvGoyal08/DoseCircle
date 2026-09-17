@@ -1,12 +1,13 @@
 {
   "name": "dosecircle",
-  "private": true,
   "version": "0.1.0",
+  "private": true,
+  "type": "module",
   "description": "Family medicine escalation: when a parent misses a dose, the right family member knows.",
   "license": "MIT",
   "packageManager": "pnpm@11.25.0",
   "engines": {
-    "node": ">=20.18.1"
+    "node": ">=24"
   },
   "scripts": {
     "typecheck": "pnpm -r typecheck",
@@ -14,7 +15,10 @@
     "build": "pnpm -r build",
     "synth": "pnpm --filter @dosecircle/infra synth",
     "secrets:init": "pnpm --filter @dosecircle/backend secrets:init",
-    "cdk:deploy": "pnpm --filter @dosecircle/infra exec cdk deploy"
+    "cdk:deploy": "pnpm --filter @dosecircle/infra exec cdk deploy",
+    "i18n:check": "node scripts/check-i18n.ts",
+    "i18n:export": "node scripts/review-sheet.ts export",
+    "i18n:import": "node scripts/review-sheet.ts import"
   },
   "devDependencies": {
     "esbuild": "^0.28.2"
