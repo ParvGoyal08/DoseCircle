@@ -35,6 +35,30 @@ type Catalogue = { strings: Record<string, { text: string; reviewedBy: string | 
 const load = (catalogue: "web" | "shared", lang: string): Catalogue =>
   JSON.parse(readFileSync(new URL(catalogue === "web" ? `web/src/i18n/${lang}.json` : `shared/i18n/${lang}.json`, repo), "utf8")) as Catalogue;
 
+const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+/**
+ * A new AWS account has a very low SynthesizeSpeech rate, low enough that even this handful of
+ * phrases gets throttled when sent back to back. Since this runs once at build time, it paces
+ * itself and backs off rather than asking for a quota increase.
+ */
+async function synthesize(languageCode: PollyLanguage, text: string): Promise<Uint8Array> {
+  for (let attempt = 0; ; attempt++) {
+    try {
+      const result = await polly.send(
+        new SynthesizeSpeechCommand({ Engine: "neural", VoiceId: "Kajal", LanguageCode: languageCode, OutputFormat: "mp3", SampleRate: "24000", Text: text }),
+      );
+      return await result.AudioStream!.transformToByteArray();
+    } catch (error) {
+      const name = (error as { name?: string }).name;
+      if (attempt >= 5 || (name !== "ThrottlingException" && name !== "TooManyRequestsException")) throw error;
+      const backoff = 2000 * 2 ** attempt;
+      console.log(`  throttled, waiting ${backoff / 1000}s`);
+      await wait(backoff);
+    }
+  }
+}
+
 for (const { lang, languageCode } of VOICES) {
   for (const phrase of VOICE_PHRASES) {
     const { catalogue, key } = PHRASE_KEYS[phrase];
@@ -43,13 +67,11 @@ for (const { lang, languageCode } of VOICES) {
       console.log(`skip ${lang}/${phrase}: "${key}" is not reviewed yet`);
       continue;
     }
-    const result = await polly.send(
-      new SynthesizeSpeechCommand({ Engine: "neural", VoiceId: "Kajal", LanguageCode: languageCode, OutputFormat: "mp3", SampleRate: "24000", Text: entry.text }),
-    );
-    const bytes = await result.AudioStream!.transformToByteArray();
+    const bytes = await synthesize(languageCode, entry.text);
     const out = new URL(`web/public${voicePhrasePath(lang, phrase)}`, repo);
     mkdirSync(dirname(out.pathname), { recursive: true });
     writeFileSync(out, bytes);
     console.log(`wrote ${lang}/${phrase}.mp3 (${bytes.length} bytes)`);
+    await wait(1500);
   }
 }
