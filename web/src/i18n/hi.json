@@ -383,6 +383,17 @@
     "people.dangerConfirmLabel": {"text": "पुष्टि के लिए परिवार का नाम लिखें", "reviewedBy": null},
     "people.dangerButton": {"text": "सब कुछ मिटाएँ", "reviewedBy": null},
     "action.checks": {"text": "रोज़ की जाँच", "reviewedBy": null},
-    "action.people": {"text": "परिवार के सदस्य", "reviewedBy": null}
+    "action.people": {"text": "परिवार के सदस्य", "reviewedBy": null},
+    "parent.today.allDone": {"text": "आज का सब कुछ हो गया है।", "reviewedBy": null},
+    "parent.today.nothingYet": {"text": "अभी लेने के लिए कुछ नहीं है।", "reviewedBy": null},
+    "parent.today.noneToday": {"text": "आज लेने के लिए कुछ नहीं है।", "reviewedBy": null},
+    "parent.today.familyAdds": {"text": "आपकी दवाएँ आपका परिवार जोड़ता है। वे अपने आप यहाँ दिखने लगेंगी।", "reviewedBy": null},
+    "parent.today.weWillTell": {"text": "समय होने पर यह फ़ोन बजेगा। आपको याद रखने की ज़रूरत नहीं है, और ऐप खोलने की भी नहीं।", "reviewedBy": null},
+    "parent.today.whatHappens": {"text": "दवा के समय क्या होता है", "reviewedBy": null},
+    "parent.today.step1": {"text": "यह फ़ोन बजता है और दिखाता है कि क्या लेना है।", "reviewedBy": null},
+    "parent.today.step2": {"text": "आप बड़ा हरा बटन दबाते हैं।", "reviewedBy": null},
+    "parent.today.step3": {"text": "अगर आप नहीं दबाते, तो आपके परिवार को एक-एक करके बताया जाता है।", "reviewedBy": null},
+    "parent.today.reminderTimes": {"text": "आपके रिमाइंडर का समय", "reviewedBy": null},
+    "parent.today.nextAt": {"text": "अगला रिमाइंडर", "reviewedBy": null}
   }
 }

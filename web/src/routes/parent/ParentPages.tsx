@@ -1,5 +1,5 @@
 import type { LanguageCode } from "@dosecircle/shared";
-import { Bell, BellOff, ChevronRight, Globe, Loader2 } from "lucide-react";
+import { Bell, BellOff, CheckCheck, ChevronRight, Globe, Loader2 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link, Navigate, useNavigate, useParams } from "react-router";
 import { InstallGuide } from "../../components/InstallGuide";
@@ -150,6 +150,52 @@ export function JoinPage() {
   );
 }
 
+/**
+ * What the parent sees when there is nothing on the list. The old screen said "No medicines are due
+ * today" and stopped there, which leaves an elderly person with no idea whether the app is working,
+ * who puts medicines on it, or what will happen next — and nothing on this screen is theirs to fix.
+ * So it answers those three questions instead, and says the reassuring thing plainly: you do not
+ * have to remember.
+ */
+function NothingToday({ hasSchedule, lang: parentLang }: { hasSchedule: boolean; lang: LanguageCode }) {
+  const { t, lang } = useT(parentLang);
+  const steps = [t("parent.today.step1"), t("parent.today.step2"), t("parent.today.step3")];
+
+  return (
+    <div className="space-y-5">
+      <div className="sticker bg-surface p-6 text-center">
+        <span aria-hidden className="mx-auto mb-4 grid size-20 place-items-center rounded-full bg-taken-tint text-taken">
+          <CheckCheck className="size-11" strokeWidth={2.25} />
+        </span>
+        <p lang={lang} className="text-[26px] font-semibold leading-tight text-ink">
+          {hasSchedule ? t("parent.today.noneToday") : t("parent.today.nothingYet")}
+        </p>
+        <p lang={lang} className="mt-3 text-xl leading-relaxed text-muted">
+          {hasSchedule ? t("parent.today.weWillTell") : t("parent.today.familyAdds")}
+        </p>
+      </div>
+
+      <section className="sticker bg-surface p-6" aria-labelledby="what-happens">
+        <h2 id="what-happens" lang={lang} className="text-xl font-semibold text-ink">
+          {t("parent.today.whatHappens")}
+        </h2>
+        <ol className="mt-4 space-y-4">
+          {steps.map((step, index) => (
+            <li key={step} className="flex items-start gap-4">
+              <span aria-hidden className="tabular grid size-10 shrink-0 place-items-center rounded-full bg-haldi text-xl font-semibold text-[#14133a]">
+                {index + 1}
+              </span>
+              <span lang={lang} className="pt-1 text-lg leading-snug text-ink">
+                {step}
+              </span>
+            </li>
+          ))}
+        </ol>
+      </section>
+    </div>
+  );
+}
+
 /** /parent — the calm "today" screen. */
 export function ParentHomePage() {
   const device = pairedDevice() ?? (mockApiEnabled ? { token: "mock", displayName: "Shantha", lang: "kn" as const } : null);
@@ -200,9 +246,7 @@ export function ParentHomePage() {
           <Loader2 aria-label={t("common.loading")} className="size-8 animate-spin text-muted" />
         </div>
       ) : today.data && today.data.slots.length === 0 ? (
-        <p lang={lang} className="text-xl text-muted">
-          {t("parent.today.none")}
-        </p>
+        <NothingToday hasSchedule={today.data.hasSchedule} lang={today.data.parent.lang} />
       ) : (
         <ul className="space-y-3">
           {today.data?.slots.map((slot) => {

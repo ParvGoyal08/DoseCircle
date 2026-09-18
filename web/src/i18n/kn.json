@@ -383,6 +383,17 @@
     "people.dangerConfirmLabel": {"text": "ದೃಢೀಕರಿಸಲು ಕುಟುಂಬದ ಹೆಸರನ್ನು ಬರೆಯಿರಿ", "reviewedBy": null},
     "people.dangerButton": {"text": "ಎಲ್ಲವನ್ನೂ ಅಳಿಸಿ", "reviewedBy": null},
     "action.checks": {"text": "ದಿನನಿತ್ಯದ ಅಳತೆಗಳು", "reviewedBy": null},
-    "action.people": {"text": "ಕುಟುಂಬದ ಸದಸ್ಯರು", "reviewedBy": null}
+    "action.people": {"text": "ಕುಟುಂಬದ ಸದಸ್ಯರು", "reviewedBy": null},
+    "parent.today.allDone": {"text": "ಇಂದಿನ ಎಲ್ಲವೂ ಮುಗಿದಿದೆ.", "reviewedBy": null},
+    "parent.today.nothingYet": {"text": "ಇನ್ನೂ ತೆಗೆದುಕೊಳ್ಳಲು ಏನೂ ಇಲ್ಲ.", "reviewedBy": null},
+    "parent.today.noneToday": {"text": "ಇಂದು ತೆಗೆದುಕೊಳ್ಳಲು ಏನೂ ಇಲ್ಲ.", "reviewedBy": null},
+    "parent.today.familyAdds": {"text": "ನಿಮ್ಮ ಔಷಧಿಗಳನ್ನು ನಿಮ್ಮ ಕುಟುಂಬ ಸೇರಿಸುತ್ತದೆ. ಅವು ತಾವಾಗಿಯೇ ಇಲ್ಲಿ ಕಾಣಿಸುತ್ತವೆ.", "reviewedBy": null},
+    "parent.today.weWillTell": {"text": "ಸಮಯವಾದಾಗ ಈ ಫೋನ್ ಸದ್ದು ಮಾಡುತ್ತದೆ. ನೀವು ನೆನಪಿಟ್ಟುಕೊಳ್ಳಬೇಕಾಗಿಲ್ಲ, ಆ್ಯಪ್ ತೆರೆಯಬೇಕಾಗಿಲ್ಲ.", "reviewedBy": null},
+    "parent.today.whatHappens": {"text": "ಔಷಧಿಯ ಸಮಯದಲ್ಲಿ ಏನಾಗುತ್ತದೆ", "reviewedBy": null},
+    "parent.today.step1": {"text": "ಈ ಫೋನ್ ಸದ್ದು ಮಾಡಿ ಏನು ತೆಗೆದುಕೊಳ್ಳಬೇಕೆಂದು ತೋರಿಸುತ್ತದೆ.", "reviewedBy": null},
+    "parent.today.step2": {"text": "ನೀವು ದೊಡ್ಡ ಹಸಿರು ಗುಂಡಿಯನ್ನು ಒತ್ತುತ್ತೀರಿ.", "reviewedBy": null},
+    "parent.today.step3": {"text": "ನೀವು ಒತ್ತದಿದ್ದರೆ, ನಿಮ್ಮ ಕುಟುಂಬಕ್ಕೆ ಒಬ್ಬೊಬ್ಬರಂತೆ ತಿಳಿಸಲಾಗುತ್ತದೆ.", "reviewedBy": null},
+    "parent.today.reminderTimes": {"text": "ನಿಮ್ಮ ಜ್ಞಾಪನೆಯ ಸಮಯಗಳು", "reviewedBy": null},
+    "parent.today.nextAt": {"text": "ಮುಂದಿನ ಜ್ಞಾಪನೆ", "reviewedBy": null}
   }
 }

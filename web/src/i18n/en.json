@@ -383,6 +383,17 @@
     "people.dangerConfirmLabel": {"text": "Type the family's name to confirm", "reviewedBy": "source"},
     "people.dangerButton": {"text": "Delete everything", "reviewedBy": "source"},
     "action.checks": {"text": "Daily checks", "reviewedBy": "source"},
-    "action.people": {"text": "Family members", "reviewedBy": "source"}
+    "action.people": {"text": "Family members", "reviewedBy": "source"},
+    "parent.today.allDone": {"text": "Everything is done for today.", "reviewedBy": "source"},
+    "parent.today.nothingYet": {"text": "There is nothing to take yet.", "reviewedBy": "source"},
+    "parent.today.noneToday": {"text": "There is nothing to take today.", "reviewedBy": "source"},
+    "parent.today.familyAdds": {"text": "Your family adds your medicines. They will appear here on their own.", "reviewedBy": "source"},
+    "parent.today.weWillTell": {"text": "This phone will ring when it is time. You do not have to remember, and you do not have to open the app.", "reviewedBy": "source"},
+    "parent.today.whatHappens": {"text": "What happens at medicine time", "reviewedBy": "source"},
+    "parent.today.step1": {"text": "This phone rings and shows what to take.", "reviewedBy": "source"},
+    "parent.today.step2": {"text": "You press the big green button.", "reviewedBy": "source"},
+    "parent.today.step3": {"text": "If you do not, your family is told, one person at a time.", "reviewedBy": "source"},
+    "parent.today.reminderTimes": {"text": "Your reminder times", "reviewedBy": "source"},
+    "parent.today.nextAt": {"text": "Next reminder", "reviewedBy": "source"}
   }
 }

@@ -126,6 +126,9 @@ async function today(event: APIGatewayProxyEventV2) {
 
   return json(200, {
     parent: { displayName: parent.displayName, lang: parent.lang, paused: parent.paused },
+    // "Nothing today" and "your family has not added anything yet" need different words on the
+    // parent's screen: the first is normal, the second means the family still has work to do.
+    hasSchedule: medicines.some((m) => m.active) || checks.some((c) => c.active),
     slots: slots
       .sort((a, b) => a.compactTime.localeCompare(b.compactTime))
       .map((slot) => {

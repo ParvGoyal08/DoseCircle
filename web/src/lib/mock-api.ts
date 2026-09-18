@@ -592,6 +592,7 @@ async function handle(pathWithQuery: string, method: string, body: Body): Promis
     const view = doseView();
     return {
       parent: { displayName: s.parent.displayName, lang: s.parent.lang, paused: s.parent.paused },
+      hasSchedule: s.medicines.some((m) => m.active) || s.checks.some((c) => c.active),
       slots: slotsInUse().map((slot) => ({
         slotName: slot,
         time: s.parent.slotTimes[slot],

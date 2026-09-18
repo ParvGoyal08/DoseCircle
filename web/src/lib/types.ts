@@ -38,6 +38,8 @@ export interface DoseView {
 
 export interface ParentToday {
   parent: { displayName: string; lang: LanguageCode; paused: boolean };
+  /** Whether the family has set up any medicine or daily check at all. */
+  hasSchedule: boolean;
   slots: {
     slotName: SlotName;
     time: string;
