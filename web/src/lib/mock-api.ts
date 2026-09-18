@@ -41,7 +41,7 @@ interface Store {
   hasFamily: boolean;
   me: { fid: string; mid: string; displayName: string; relation: string | null; role: "owner" | "member"; lang: LanguageCode };
   members: Dashboard["members"];
-  parent: Omit<ParentCard, "today" | "week" | "refills" | "slots" | "myLadderPosition">;
+  parents: Omit<ParentCard, "today" | "week" | "refills" | "slots" | "myLadderPosition">[];
   medicines: MedicineView[];
   checks: CheckView[];
   readings: { checkId: string; type: CheckView["type"]; values: Record<string, number>; at: string; doseId: string | null }[];
@@ -92,7 +92,7 @@ function initialStore(): Store {
       { mid: "m-son", displayName: "Arjun", relation: "Son", role: "owner", lang: "en" },
       { mid: "m-daughter", displayName: "Meera", relation: "Daughter", role: "member", lang: "hi" },
     ],
-    parent: {
+    parents: [{
       pid: "p-demo",
       displayName: "Shantha",
       lang: "kn",
@@ -103,7 +103,7 @@ function initialStore(): Store {
         { mid: "m-son", displayName: "Arjun" },
         { mid: "m-daughter", displayName: "Meera" },
       ],
-    },
+    }],
     medicines: [
       { medId: "med-glycomet", nameAsPrinted: "Glycomet GP 1", strength: null, slots: { morning: 1, night: 1 }, food: "after", critical: false, asNeeded: false, pillsLeft: 6, refillThresholdDays: 5, needsRecount: false, endDate: null, active: true },
       { medId: "med-telma", nameAsPrinted: "Telma 40", strength: "40 mg", slots: { morning: 1 }, food: null, critical: false, asNeeded: false, pillsLeft: 24, refillThresholdDays: 5, needsRecount: false, endDate: null, active: true },
@@ -160,6 +160,8 @@ export function mockSignOut() {
   persist();
 }
 
+/** The dependent every existing screen acts on; the first is the default, as on the dashboard. */
+const theParent = () => db().parents[0]!;
 const nameOf = (mid: string) => db().members.find((m) => m.mid === mid)?.displayName ?? "";
 
 function medicineLine(m: MedicineView, slot: SlotName): MedicineLine {
@@ -239,10 +241,10 @@ function doseView(): DoseView {
     slotName: s.dose.slotName,
     scheduledAt: s.dose.scheduledAt,
     critical: s.medicines.some((m) => m.active && m.critical && (m.slots[s.dose.slotName] ?? 0) > 0),
-    parent: { displayName: s.parent.displayName, lang: s.parent.lang },
+    parent: { displayName: theParent().displayName, lang: theParent().lang },
     medicines: s.medicines.filter((m) => m.active && (m.slots[s.dose.slotName] ?? 0) > 0).map((m) => medicineLine(m, s.dose.slotName)),
     checks: checksDueAt(s.dose.slotName).map(checkLine),
-    voice: { src: `/audio/${s.parent.lang}/remind_${s.dose.slotName}.mp3`, thanks: `/audio/${s.parent.lang}/taken_thanks.mp3` },
+    voice: { src: `/audio/${theParent().lang}/remind_${s.dose.slotName}.mp3`, thanks: `/audio/${theParent().lang}/taken_thanks.mp3` },
   };
 }
 
@@ -252,8 +254,8 @@ function openAlerts(): OpenAlert[] {
   return [
     {
       doseId: s.dose.doseId,
-      pid: s.parent.pid,
-      parentName: s.parent.displayName,
+      pid: theParent().pid,
+      parentName: theParent().displayName,
       slotName: s.dose.slotName,
       scheduledAt: s.dose.scheduledAt,
       status: s.dose.status,
@@ -272,25 +274,39 @@ async function dashboard(): Promise<Dashboard> {
   const week = demoInsights(7);
   const today = istDate(now());
   return {
-    family: { fid: s.me.fid, name: `${s.parent.displayName}'s family` },
+    family: { fid: s.me.fid, name: `${theParent().displayName}'s family` },
     me: { mid: s.me.mid, role: s.me.role },
     members: s.members,
-    parents: [
-      {
-        ...s.parent,
-        myLadderPosition: s.parent.ladder.findIndex((m) => m.mid === s.me.mid) + 1 || null,
-        slots: slotsInUse().map((slot) => ({ slotName: slot, compactTime: s.parent.slotTimes[slot].replace(":", ""), critical: s.medicines.some((m) => m.active && m.critical && (m.slots[slot] ?? 0) > 0), medicineCount: s.medicines.filter((m) => m.active && (m.slots[slot] ?? 0) > 0).length })),
-        today: [{ doseId: s.dose.doseId, slotName: s.dose.slotName, scheduledAt: s.dose.scheduledAt, status: s.dose.status, missClass: s.dose.missClass, critical: doseView().critical, claimedByName: s.dose.claimedBy ? nameOf(s.dose.claimedBy) : null }],
-        week: [...week.calendar.days.map((d) => ({ date: d.date, outcomes: Object.values(d.cells) })), { date: today, outcomes: [] }].slice(-7),
-        refills: s.medicines
-          .filter((m) => m.active && !m.asNeeded && m.pillsLeft !== null)
-          .map((m) => {
-            const perDay = Object.values(m.slots).reduce<number>((a, b) => a + (b ?? 0), 0);
-            const daysLeft = perDay ? Math.floor((m.pillsLeft ?? 0) / perDay) : null;
-            return { medId: m.medId, nameAsPrinted: m.nameAsPrinted, daysLeft, level: daysLeft === null ? "ok" : daysLeft <= 2 ? "critical" : daysLeft <= m.refillThresholdDays ? "low" : "ok" } as const;
-          }),
-      },
-    ],
+    // Only the first dependent carries the seeded history; anyone added later starts empty, which is
+    // exactly what a newly added person looks like.
+    parents: s.parents.map((p, index) => ({
+      ...p,
+      myLadderPosition: p.ladder.findIndex((m) => m.mid === s.me.mid) + 1 || null,
+      slots:
+        index > 0
+          ? []
+          : slotsInUse().map((slot) => ({
+              slotName: slot,
+              compactTime: p.slotTimes[slot].replace(":", ""),
+              critical: s.medicines.some((m) => m.active && m.critical && (m.slots[slot] ?? 0) > 0),
+              medicineCount: s.medicines.filter((m) => m.active && (m.slots[slot] ?? 0) > 0).length,
+            })),
+      today:
+        index > 0
+          ? []
+          : [{ doseId: s.dose.doseId, slotName: s.dose.slotName, scheduledAt: s.dose.scheduledAt, status: s.dose.status, missClass: s.dose.missClass, critical: doseView().critical, claimedByName: s.dose.claimedBy ? nameOf(s.dose.claimedBy) : null }],
+      week: index > 0 ? [] : [...week.calendar.days.map((d) => ({ date: d.date, outcomes: Object.values(d.cells) })), { date: today, outcomes: [] }].slice(-7),
+      refills:
+        index > 0
+          ? []
+          : s.medicines
+              .filter((m) => m.active && !m.asNeeded && m.pillsLeft !== null)
+              .map((m) => {
+                const perDay = Object.values(m.slots).reduce<number>((a, b) => a + (b ?? 0), 0);
+                const daysLeft = perDay ? Math.floor((m.pillsLeft ?? 0) / perDay) : null;
+                return { medId: m.medId, nameAsPrinted: m.nameAsPrinted, daysLeft, level: daysLeft === null ? "ok" : daysLeft <= 2 ? "critical" : daysLeft <= m.refillThresholdDays ? "low" : "ok" } as const;
+              }),
+    })),
     openAlerts: openAlerts(),
   };
 }
@@ -300,7 +316,7 @@ function timeline(): Timeline {
   const items = [...s.timeline].sort((a, b) => a.at.localeCompare(b.at));
   return {
     doseId: s.dose.doseId,
-    parentName: s.parent.displayName,
+    parentName: theParent().displayName,
     slotName: s.dose.slotName,
     scheduledAt: s.dose.scheduledAt,
     status: s.dose.status,
@@ -315,7 +331,7 @@ function report(): Report {
   const to = istDate(now());
   const from = istDate(now() - 6 * 86_400_000);
   return {
-    parent: { displayName: s.parent.displayName },
+    parent: { displayName: theParent().displayName },
     from,
     to,
     generatedAt: new Date().toISOString(),
@@ -407,8 +423,8 @@ async function handle(pathWithQuery: string, method: string, body: Body): Promis
     s.hasFamily = true;
     s.me = { ...s.me, displayName: me.displayName, relation: me.relation ?? null, lang: me.lang };
     s.members = [{ mid: s.me.mid, displayName: me.displayName, relation: me.relation ?? null, role: "owner", lang: me.lang }, ...s.members.filter((m) => m.mid !== s.me.mid)];
-    s.parent = { ...s.parent, displayName: parent.displayName, lang: parent.lang };
-    return { fid: s.me.fid, mid: s.me.mid, pid: s.parent.pid };
+    s.parents[0] = { ...theParent(), displayName: parent.displayName, lang: parent.lang };
+    return { fid: s.me.fid, mid: s.me.mid, pid: theParent().pid };
   }
   if (route === "POST /invites/accept") {
     s.hasFamily = true;
@@ -422,21 +438,21 @@ async function handle(pathWithQuery: string, method: string, body: Body): Promis
   }
   if (/^PUT \/families\/[^/]+\/parents\/[^/]+\/ladder$/.test(route)) {
     const ids = body!.memberIds as string[];
-    s.parent.ladder = ids.map((mid) => ({ mid, displayName: nameOf(mid) }));
-    return { pid: s.parent.pid, ladder: ids };
+    theParent().ladder = ids.map((mid) => ({ mid, displayName: nameOf(mid) }));
+    return { pid: theParent().pid, ladder: ids };
   }
   if (/^PATCH \/families\/[^/]+\/parents\/[^/]+$/.test(route)) {
-    if (body!.slotTimes) s.parent.slotTimes = { ...s.parent.slotTimes, ...(body!.slotTimes as Record<SlotName, string>) };
-    if (typeof body!.paused === "boolean") s.parent.paused = body!.paused;
-    if (typeof body!.displayName === "string") s.parent.displayName = body!.displayName;
-    return { pid: s.parent.pid, updated: Object.keys(body!) };
+    if (body!.slotTimes) theParent().slotTimes = { ...theParent().slotTimes, ...(body!.slotTimes as Record<SlotName, string>) };
+    if (typeof body!.paused === "boolean") theParent().paused = body!.paused;
+    if (typeof body!.displayName === "string") theParent().displayName = body!.displayName;
+    return { pid: theParent().pid, updated: Object.keys(body!) };
   }
   if (/^POST \/families\/[^/]+\/parents\/[^/]+\/test-dose$/.test(route)) {
     if (s.testDosesToday >= 3) throw new ApiError(429, { message: "You can send three test reminders a day." });
     s.testDosesToday++;
     return { executionArn: "mock", slotName: "morning" };
   }
-  if (/^GET \/families\/[^/]+\/parents\/[^/]+\/devices$/.test(route)) return { devices: s.devices, lastReceiptAt: s.parent.lastReceiptAt };
+  if (/^GET \/families\/[^/]+\/parents\/[^/]+\/devices$/.test(route)) return { devices: s.devices, lastReceiptAt: theParent().lastReceiptAt };
   if (/^DELETE \/families\/[^/]+\/parents\/[^/]+\/devices\/[^/]+$/.test(route)) {
     const deviceId = path!.split("/").pop()!;
     s.devices = s.devices.filter((d) => d.deviceId !== deviceId);
@@ -511,7 +527,7 @@ async function handle(pathWithQuery: string, method: string, body: Body): Promis
       members: s.members.map((m) => ({
         ...m,
         joined: true,
-        ladderPositions: s.parent.ladder.some((l) => l.mid === m.mid) ? [{ pid: s.parent.pid, position: s.parent.ladder.findIndex((l) => l.mid === m.mid) + 1 }] : [],
+        ladderPositions: theParent().ladder.some((l) => l.mid === m.mid) ? [{ pid: theParent().pid, position: theParent().ladder.findIndex((l) => l.mid === m.mid) + 1 }] : [],
       })) satisfies FamilyMember[],
     };
   }
@@ -530,24 +546,38 @@ async function handle(pathWithQuery: string, method: string, body: Body): Promis
     const mid = path!.split("/").pop()!;
     if (mid === s.me.mid) throw new ApiError(400, { message: "Use leave instead of removing yourself" });
     if (!s.members.some((m) => m.mid === mid)) throw new ApiError(404, { message: "That person is not in this family" });
-    if (s.parent.ladder.length === 1 && s.parent.ladder[0]!.mid === mid) {
+    if (theParent().ladder.length === 1 && theParent().ladder[0]!.mid === mid) {
       throw new ApiError(409, { message: "Add someone else to the alert order first, so there is still somebody to tell" });
     }
     s.members = s.members.filter((m) => m.mid !== mid);
-    s.parent.ladder = s.parent.ladder.filter((l) => l.mid !== mid);
+    theParent().ladder = theParent().ladder.filter((l) => l.mid !== mid);
     s.dose.alerted = s.dose.alerted.filter((a) => a !== mid);
     return { mid, removed: true };
+  }
+  if (/^POST \/families\/[^/]+\/parents$/.test(route)) {
+    const parent = {
+      pid: id("p"),
+      displayName: String(body!.displayName),
+      lang: body!.lang as LanguageCode,
+      paused: false,
+      slotTimes: { morning: "08:00", afternoon: "13:00", evening: "18:00", night: "21:00" },
+      lastReceiptAt: null,
+      // A new dependent inherits the existing alert order, as on the server.
+      ladder: [...theParent().ladder],
+    };
+    s.parents.push(parent);
+    return { pid: parent.pid, displayName: parent.displayName, lang: parent.lang };
   }
   if (/^POST \/families\/[^/]+\/leave$/.test(route)) {
     if (s.members.length === 1) throw new ApiError(409, { message: "The last person in a family cannot leave. Delete the family instead." });
     if (s.me.role === "owner" && s.members.filter((m) => m.role === "owner").length === 1) throw new ApiError(409, { message: "Make someone else an owner first" });
     s.members = s.members.filter((m) => m.mid !== s.me.mid);
-    s.parent.ladder = s.parent.ladder.filter((l) => l.mid !== s.me.mid);
+    theParent().ladder = theParent().ladder.filter((l) => l.mid !== s.me.mid);
     s.hasFamily = false;
     return { left: true };
   }
   if (/^DELETE \/families\/[^/]+$/.test(route)) {
-    if (String(body?.confirmName ?? "").trim() !== `${s.parent.displayName}'s family`) throw new ApiError(400, { message: "The name does not match" });
+    if (String(body?.confirmName ?? "").trim() !== `${theParent().displayName}'s family`) throw new ApiError(400, { message: "The name does not match" });
     store = initialStore();
     store.hasFamily = false;
     return { deleted: true, items: 0, schedules: 0 };
@@ -562,7 +592,7 @@ async function handle(pathWithQuery: string, method: string, body: Body): Promis
     const rxId = path!.split("/").pop()!;
     const { samplePrescription } = await import("../../../backend/src/demo/sample-prescription");
     const sample = samplePrescription();
-    return { rxId, pid: s.parent.pid, status: s.prescriptions[rxId]?.confirmed ? "CONFIRMED" : "READY", guardrailInterventions: 1, imageUrl: sample.imagePath, lines: sample.lines, rows: sample.rows } satisfies Prescription;
+    return { rxId, pid: theParent().pid, status: s.prescriptions[rxId]?.confirmed ? "CONFIRMED" : "READY", guardrailInterventions: 1, imageUrl: sample.imagePath, lines: sample.lines, rows: sample.rows } satisfies Prescription;
   }
   if (/^POST \/families\/[^/]+\/prescriptions\/[^/]+\/confirm$/.test(route)) {
     const rxId = path!.split("/").slice(-2)[0]!;
@@ -586,16 +616,16 @@ async function handle(pathWithQuery: string, method: string, body: Body): Promis
   // Parent phone
   if (route === "POST /parent/pair") {
     if (String(body!.code).replace(/[^A-Za-z0-9]/g, "").length < 8) throw new ApiError(404, { message: "This code is not valid any more." });
-    return { deviceToken: "dt_mock", parent: { displayName: s.parent.displayName, lang: s.parent.lang } };
+    return { deviceToken: "dt_mock", parent: { displayName: theParent().displayName, lang: theParent().lang } };
   }
   if (route === "GET /parent/today") {
     const view = doseView();
     return {
-      parent: { displayName: s.parent.displayName, lang: s.parent.lang, paused: s.parent.paused },
+      parent: { displayName: theParent().displayName, lang: theParent().lang, paused: theParent().paused },
       hasSchedule: s.medicines.some((m) => m.active) || s.checks.some((c) => c.active),
       slots: slotsInUse().map((slot) => ({
         slotName: slot,
-        time: s.parent.slotTimes[slot],
+        time: theParent().slotTimes[slot],
         medicines: s.medicines.filter((m) => m.active && (m.slots[slot] ?? 0) > 0).map((m) => medicineLine(m, slot)),
         checks: checksDueAt(slot).map((c) => ({ ...checkLine(c), recorded: recordedToday(c.checkId) })),
         dose: slot === view.slotName ? { doseId: view.doseId, status: view.status } : null,
@@ -610,15 +640,15 @@ async function handle(pathWithQuery: string, method: string, body: Body): Promis
     const late = s.dose.status === "ESCALATING" || s.dose.status === "CLAIMED";
     if (s.dose.status === "PENDING" || late) {
       s.dose.status = late ? "TAKEN_LATE" : "TAKEN";
-      s.timeline.push({ at: new Date().toISOString(), kind: "taken", people: [s.parent.displayName], authorizedBy: ["parent-phone-confirms-own-doses"] });
+      s.timeline.push({ at: new Date().toISOString(), kind: "taken", people: [theParent().displayName], authorizedBy: ["parent-phone-confirms-own-doses"] });
       if (late) s.timeline.push({ at: new Date(now() + 1000).toISOString(), kind: "family_told_taken", stateName: "TellFamilyParentTookIt" });
       s.medicines = s.medicines.map((m) => ((m.slots[s.dose.slotName] ?? 0) > 0 && m.pillsLeft !== null ? { ...m, pillsLeft: Math.max(0, m.pillsLeft - (m.slots[s.dose.slotName] ?? 0)) } : m));
     }
     return { status: s.dose.status };
   }
   if (route === "PUT /parent/lang") {
-    s.parent.lang = body!.lang as LanguageCode;
-    return { lang: s.parent.lang };
+    theParent().lang = body!.lang as LanguageCode;
+    return { lang: theParent().lang };
   }
   if (route === "POST /parent/push/subscription") return { saved: true };
 

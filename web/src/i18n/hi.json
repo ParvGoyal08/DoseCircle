@@ -396,6 +396,11 @@
     "parent.today.reminderTimes": {"text": "आपके रिमाइंडर का समय", "reviewedBy": null},
     "parent.today.nextAt": {"text": "अगला रिमाइंडर", "reviewedBy": null},
     "people.inviteHelp": {"text": "जिस व्यक्ति को जोड़ना है उसे यह भेजें। वे एक बार साइन इन करते हैं, उसके बाद दवा छूटने पर उन्हें बताया जाता है।", "reviewedBy": null},
-    "people.shareMessage": {"text": "कृपया DoseCircle पर हमारे परिवार से जुड़ें, ताकि दवा छूटने पर आपको बताया जाए।", "reviewedBy": null}
+    "people.shareMessage": {"text": "कृपया DoseCircle पर हमारे परिवार से जुड़ें, ताकि दवा छूटने पर आपको बताया जाए।", "reviewedBy": null},
+    "people.addParent": {"text": "किसी और को जोड़ें", "reviewedBy": null},
+    "people.addParentTitle": {"text": "और किसे रिमाइंडर चाहिए?", "reviewedBy": null},
+    "people.addParentHelp": {"text": "दूसरे माता-पिता को, या परिवार के किसी और को जो रोज़ दवा लेते हैं, जोड़ें। हर व्यक्ति के अपने रिमाइंडर, अपनी भाषा और अपना डैशबोर्ड होता है।", "reviewedBy": null},
+    "people.addParentDone": {"text": "जोड़ लिया गया। अब उनका फ़ोन जोड़ें।", "reviewedBy": null},
+    "home.everyone": {"text": "जिनका आप ध्यान रखते हैं", "reviewedBy": null}
   }
 }

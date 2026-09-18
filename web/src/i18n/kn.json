@@ -396,6 +396,11 @@
     "parent.today.reminderTimes": {"text": "ನಿಮ್ಮ ಜ್ಞಾಪನೆಯ ಸಮಯಗಳು", "reviewedBy": null},
     "parent.today.nextAt": {"text": "ಮುಂದಿನ ಜ್ಞಾಪನೆ", "reviewedBy": null},
     "people.inviteHelp": {"text": "ನೀವು ಸೇರಿಸಲು ಬಯಸುವ ವ್ಯಕ್ತಿಗೆ ಇದನ್ನು ಕಳುಹಿಸಿ. ಅವರು ಒಮ್ಮೆ ಸೈನ್ ಇನ್ ಮಾಡಿದ ನಂತರ, ಔಷಧಿ ತಪ್ಪಿದಾಗ ಅವರಿಗೆ ತಿಳಿಸಲಾಗುತ್ತದೆ.", "reviewedBy": null},
-    "people.shareMessage": {"text": "ದಯವಿಟ್ಟು DoseCircle ನಲ್ಲಿ ನಮ್ಮ ಕುಟುಂಬದ ವಲಯಕ್ಕೆ ಸೇರಿ, ಔಷಧಿ ತಪ್ಪಿದರೆ ನಿಮಗೆ ತಿಳಿಸಲಾಗುತ್ತದೆ.", "reviewedBy": null}
+    "people.shareMessage": {"text": "ದಯವಿಟ್ಟು DoseCircle ನಲ್ಲಿ ನಮ್ಮ ಕುಟುಂಬದ ವಲಯಕ್ಕೆ ಸೇರಿ, ಔಷಧಿ ತಪ್ಪಿದರೆ ನಿಮಗೆ ತಿಳಿಸಲಾಗುತ್ತದೆ.", "reviewedBy": null},
+    "people.addParent": {"text": "ಇನ್ನೊಬ್ಬರನ್ನು ಸೇರಿಸಿ", "reviewedBy": null},
+    "people.addParentTitle": {"text": "ಇನ್ನು ಯಾರಿಗೆ ಜ್ಞಾಪನೆಗಳು ಬೇಕು?", "reviewedBy": null},
+    "people.addParentHelp": {"text": "ಎರಡನೆಯ ತಂದೆ-ತಾಯಿಯನ್ನು ಅಥವಾ ದಿನನಿತ್ಯ ಔಷಧಿ ತೆಗೆದುಕೊಳ್ಳುವ ಕುಟುಂಬದ ಬೇರೊಬ್ಬರನ್ನು ಸೇರಿಸಿ. ಪ್ರತಿಯೊಬ್ಬರಿಗೂ ತಮ್ಮದೇ ಜ್ಞಾಪನೆಗಳು, ತಮ್ಮದೇ ಭಾಷೆ ಮತ್ತು ತಮ್ಮದೇ ಡ್ಯಾಶ್‌ಬೋರ್ಡ್ ಇರುತ್ತದೆ.", "reviewedBy": null},
+    "people.addParentDone": {"text": "ಸೇರಿಸಲಾಗಿದೆ. ಈಗ ಅವರ ಫೋನ್ ಸಂಪರ್ಕಿಸಿ.", "reviewedBy": null},
+    "home.everyone": {"text": "ನೀವು ನೋಡಿಕೊಳ್ಳುವವರು", "reviewedBy": null}
   }
 }

@@ -1,14 +1,17 @@
-import { TransactWriteCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
+import { PutCommand, TransactWriteCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
 import { DEFAULT_SLOT_TIMES, keys, type LanguageCode } from "@dosecircle/shared";
 import type { APIGatewayProxyEventV2 } from "aws-lambda";
 import { z } from "zod";
+import { authorize } from "../../authz/avp.js";
+import { familyEntity } from "../../authz/entities.js";
+import { memberPrincipal } from "../../authz/principal-entity.js";
 import { ddb } from "../../lib/aws.js";
 import { normaliseInviteCode, sha256Hex } from "../../lib/crypto.js";
 import { env } from "../../lib/env.js";
-import { HttpError, json, parseBody, principalFrom } from "../../lib/http.js";
+import { HttpError, json, parseBody, pathParam, principalFrom } from "../../lib/http.js";
 import { newId } from "../../lib/ids.js";
 import type { FamilyItem, InviteItem, MemberItem, ParentItem } from "../../lib/model.js";
-import { get, listParents, membershipsForUser } from "../../lib/repository.js";
+import { get, listMembers, listParents, membershipsForUser } from "../../lib/repository.js";
 import { DisplayNameSchema, LanguageSchema } from "../../lib/schemas.js";
 
 function jwtSub(event: APIGatewayProxyEventV2): string {
@@ -89,6 +92,44 @@ export async function createFamily(event: APIGatewayProxyEventV2) {
     throw error;
   }
   return json(201, { fid, mid, pid });
+}
+
+const AddParentSchema = z.object({ displayName: DisplayNameSchema, lang: LanguageSchema });
+
+/** More than this in one family is a sign of misuse rather than a large family. */
+const MAX_PARENTS_PER_FAMILY = 10;
+
+/**
+ * POST /families/{fid}/parents — add another person who needs reminders.
+ *
+ * Their alert order starts as everyone already in the family, in the order the first parent uses, so
+ * a new dependent is never created with nobody to alert. The owner can reorder afterwards.
+ */
+export async function addParent(event: APIGatewayProxyEventV2) {
+  const fid = pathParam(event, "fid");
+  const body = parseBody(event, AddParentSchema);
+  const { entity } = await memberPrincipal(await principalFrom(event));
+  await authorize({ principal: entity, action: "ManageFamily", resource: familyEntity(fid), entities: [] });
+
+  const [existing, members] = await Promise.all([listParents(fid), listMembers(fid)]);
+  if (existing.length >= MAX_PARENTS_PER_FAMILY) throw new HttpError(409, `A family can have at most ${MAX_PARENTS_PER_FAMILY} people who need reminders`);
+
+  const known = new Set(members.map((m) => m.mid));
+  const ladder = (existing[0]?.ladder ?? []).filter((mid) => known.has(mid));
+  const pid = newId("p");
+  const parent: ParentItem = {
+    ...keys.parent(fid, pid),
+    fid,
+    pid,
+    displayName: body.displayName,
+    lang: body.lang as LanguageCode,
+    ladder: ladder.length > 0 ? ladder : members.map((m) => m.mid),
+    consecutiveMisses: 0,
+    paused: false,
+    slotTimes: { ...DEFAULT_SLOT_TIMES },
+  };
+  await ddb.send(new PutCommand({ TableName: env.tableName, Item: parent, ConditionExpression: "attribute_not_exists(PK)" }));
+  return json(201, { pid, displayName: parent.displayName, lang: parent.lang });
 }
 
 const AcceptInviteSchema = z.object({

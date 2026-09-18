@@ -1,5 +1,5 @@
 import type { SlotName } from "@dosecircle/shared";
-import { Activity, BellRing, ChevronRight, CirclePause, FileText, Loader2, Pill, Settings, Smartphone, UserPlus, Users } from "lucide-react";
+import { Activity, BellRing, ChevronRight, CirclePause, FileText, Loader2, Pill, Plus, Settings, Smartphone, UserPlus, Users } from "lucide-react";
 import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router";
 import { FamilyAlert } from "../../components/FamilyAlert";
@@ -17,7 +17,7 @@ import { useApi } from "../../lib/useApi";
 import { EnableMyAlerts } from "./AuthPages";
 
 export function HomePage() {
-  return <RequireFamily>{(me) => <Home fid={me.fid} lang={me.lang} mid={me.mid} />}</RequireFamily>;
+  return <RequireFamily>{(me) => <Home fid={me.fid} lang={me.lang} mid={me.mid} role={me.role} />}</RequireFamily>;
 }
 
 function claimDose(doseId: string): Promise<"claimed" | "lost"> {
@@ -30,7 +30,7 @@ function claimDose(doseId: string): Promise<"claimed" | "lost"> {
   );
 }
 
-function Home({ fid, lang: myLang, mid }: { fid: string; lang: string; mid: string }) {
+function Home({ fid, lang: myLang, mid, role }: { fid: string; lang: string; mid: string; role: "owner" | "member" }) {
   const navigate = useNavigate();
   const { t, lang } = useT(myLang);
   const dashboard = useApi(() => api<Dashboard>(`/families/${fid}`, { auth: "family" }), [fid], 30_000);
@@ -48,16 +48,41 @@ function Home({ fid, lang: myLang, mid }: { fid: string; lang: string; mid: stri
         </div>
       ) : (
         <div className="space-y-6">
-          {data.parents.length > 1 && (
+          {/* Always visible, even with one person: it is how you learn the app holds more than one,
+              and it is where you add the next. */}
+          <nav aria-label={t("home.everyone")} className="flex flex-wrap items-center gap-2">
+            <span lang={lang} className="mr-1 text-[13px] font-semibold uppercase tracking-wider text-muted">
+              {t("home.everyone")}
+            </span>
             <div role="tablist" className="flex flex-wrap gap-2">
               {data.parents.map((p) => (
-                <button key={p.pid} type="button" role="tab" aria-selected={p.pid === parent.pid} onClick={() => setSelectedPid(p.pid)} className={cx("inline-flex min-h-10 items-center gap-2 rounded-full px-3 font-semibold", p.pid === parent.pid ? "bg-indigo text-white" : "bg-surface text-ink ring-1 ring-line")}>
-                  <Avatar name={p.displayName} size={26} />
+                <button
+                  key={p.pid}
+                  type="button"
+                  role="tab"
+                  aria-selected={p.pid === parent.pid}
+                  onClick={() => setSelectedPid(p.pid)}
+                  className={cx(
+                    "pressable inline-flex min-h-11 items-center gap-2 rounded-full pl-1.5 pr-4 font-semibold",
+                    p.pid === parent.pid ? "bg-indigo text-white" : "bg-surface text-ink ring-1 ring-line hover:ring-line-strong",
+                  )}
+                >
+                  <Avatar name={p.displayName} size={28} className={p.pid === parent.pid ? "!bg-white/15 !text-white" : undefined} />
                   {p.displayName}
+                  {p.paused && <CirclePause aria-hidden className="size-4 opacity-70" />}
                 </button>
               ))}
             </div>
-          )}
+            {role === "owner" && (
+              <Link
+                to="/people#add"
+                className="pressable inline-flex min-h-11 items-center gap-1.5 rounded-full border border-dashed border-line-strong px-4 text-[14.5px] font-semibold text-muted hover:border-indigo-soft hover:text-ink"
+              >
+                <Plus aria-hidden className="size-4" strokeWidth={2.5} />
+                <span lang={lang}>{t("people.addParent")}</span>
+              </Link>
+            )}
+          </nav>
 
           <EnableMyAlerts lang={myLang} />
 

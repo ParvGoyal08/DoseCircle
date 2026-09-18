@@ -1,7 +1,9 @@
-import { ChevronRight, Crown, Loader2, LogOut, ShieldCheck, TriangleAlert, UserMinus, UserPlus } from "lucide-react";
+import type { LanguageCode } from "@dosecircle/shared";
+import { ChevronRight, Crown, Loader2, LogOut, ShieldCheck, TriangleAlert, UserMinus, UserPlus, UserRoundPlus } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router";
 import { FamilyShell, Field, inputClass } from "../../components/FamilyShell";
+import { LanguagePicker } from "../../components/LanguagePicker";
 import { ShareInvite } from "../../components/ShareInvite";
 import { Avatar, Button, Card, cx } from "../../components/ui";
 import { useT } from "../../i18n";
@@ -9,6 +11,7 @@ import { api, ApiError } from "../../lib/api";
 import { RequireFamily, useFamily } from "../../lib/family";
 import type { Dashboard, FamilyMember } from "../../lib/types";
 import { useApi } from "../../lib/useApi";
+import { PhoneInvite } from "./AuthPages";
 
 export function PeoplePage() {
   return <RequireFamily>{(me) => <People fid={me.fid} mid={me.mid} lang={me.lang} isOwner={me.role === "owner"} />}</RequireFamily>;
@@ -80,6 +83,8 @@ function People({ fid, mid, lang: myLang, isOwner }: { fid: string; mid: string;
           {error}
         </p>
       )}
+
+      {isOwner && <AddParent fid={fid} lang={myLang} onAdded={() => void family.reload()} />}
 
       <ul className="space-y-3">
         {members.map((member) => {
@@ -166,6 +171,104 @@ function People({ fid, mid, lang: myLang, isOwner }: { fid: string; mid: string;
 
       {isOwner && family.data && <DangerZone fid={fid} familyName={family.data.family.name} lang={myLang} />}
     </FamilyShell>
+  );
+}
+
+/**
+ * Adding another person who needs reminders. A family can look after two parents, or a parent and an
+ * aunt: each gets their own reminders, language, medicines and dashboard, and the new dependent
+ * inherits the existing alert order so there is never one with nobody to tell.
+ *
+ * On success it goes straight into phone pairing, because an added dependent with no phone is half a
+ * job and the code is the only fiddly part.
+ */
+function AddParent({ fid, lang: myLang, onAdded }: { fid: string; lang: string; onAdded: () => void }) {
+  const { t, lang } = useT(myLang);
+  // Opened directly from the "Add someone" chip on the dashboard.
+  const [open, setOpen] = useState(() => window.location.hash === "#add");
+  const [name, setName] = useState("");
+  const [parentLang, setParentLang] = useState<LanguageCode | null>(null);
+  const [added, setAdded] = useState<{ pid: string; displayName: string } | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  if (added)
+    return (
+      <Card className="mb-6 p-4">
+        <p lang={lang} className="text-[15px] font-semibold text-taken">
+          {t("people.addParentDone")}
+        </p>
+        <div className="mt-3">
+          <PhoneInvite fid={fid} pid={added.pid} parentName={added.displayName} lang={myLang} />
+        </div>
+      </Card>
+    );
+
+  if (!open)
+    return (
+      <Button tone="quiet" className="mb-6" onClick={() => setOpen(true)}>
+        <UserRoundPlus aria-hidden className="size-5" />
+        <span lang={lang}>{t("people.addParent")}</span>
+      </Button>
+    );
+
+  return (
+    <Card className="mb-6 p-4">
+      <form
+        className="space-y-4"
+        onSubmit={async (event) => {
+          event.preventDefault();
+          if (!parentLang) return;
+          setBusy(true);
+          setError(null);
+          try {
+            const result = await api<{ pid: string; displayName: string }>(`/families/${fid}/parents`, {
+              method: "POST",
+              auth: "family",
+              body: { displayName: name.trim(), lang: parentLang },
+            });
+            setAdded(result);
+            onAdded();
+          } catch (e) {
+            setError(e instanceof ApiError ? e.message : String(e));
+          } finally {
+            setBusy(false);
+          }
+        }}
+      >
+        <div>
+          <h2 lang={lang} className="text-xl font-semibold">
+            {t("people.addParentTitle")}
+          </h2>
+          <p lang={lang} className="mt-1 text-[15px] text-muted">
+            {t("people.addParentHelp")}
+          </p>
+        </div>
+        <Field label={t("onboard.parentName")} lang={lang}>
+          <input className={inputClass} required maxLength={40} value={name} onChange={(e) => setName(e.target.value)} />
+        </Field>
+        <div>
+          <p lang={lang} className="mb-2 text-[15px] font-semibold">
+            {t("onboard.parentLanguage")}
+          </p>
+          <LanguagePicker value={parentLang} onChange={setParentLang} />
+        </div>
+        {error && (
+          <p role="alert" className="rounded-xl bg-missed-tint px-3 py-2 font-medium text-missed">
+            {error}
+          </p>
+        )}
+        <div className="flex gap-2">
+          <Button tone="ink" type="submit" disabled={busy || !parentLang || !name.trim()}>
+            {busy && <Loader2 aria-hidden className="size-5 animate-spin" />}
+            <span lang={lang}>{t("people.addParent")}</span>
+          </Button>
+          <Button tone="quiet" onClick={() => setOpen(false)}>
+            <span lang={lang}>{t("meds.cancel")}</span>
+          </Button>
+        </div>
+      </form>
+    </Card>
   );
 }
 

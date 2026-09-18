@@ -6,7 +6,7 @@ import { createInvite, listDevices, revokeDevice, saveMemberSubscription, sendTe
 import { deleteFamily, leaveFamily, listFamilyMembers, removeMember, updateMember } from "./members.js";
 import { confirmPrescription, createPrescription, getPrescription } from "./prescriptions.js";
 import { addMedicine, listParentMedicines, refillMedicine, stopMedicine, updateMedicine } from "./medicines.js";
-import { acceptInvite, createFamily, getMe, setMyLanguage } from "./setup.js";
+import { acceptInvite, addParent, createFamily, getMe, setMyLanguage } from "./setup.js";
 
 /** Family API (Cognito sign-in). Route keys must match the HTTP API routes in the stack. */
 export const FAMILY_ROUTES = {
@@ -21,6 +21,7 @@ export const FAMILY_ROUTES = {
   "PATCH /families/{fid}/members/{mid}": updateMember,
   "DELETE /families/{fid}/members/{mid}": removeMember,
   "POST /families/{fid}/leave": leaveFamily,
+  "POST /families/{fid}/parents": addParent,
   "PUT /families/{fid}/parents/{pid}/ladder": setLadder,
   "PATCH /families/{fid}/parents/{pid}": updateParent,
   "POST /families/{fid}/parents/{pid}/test-dose": sendTestDose,

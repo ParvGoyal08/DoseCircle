@@ -396,6 +396,11 @@
     "parent.today.reminderTimes": {"text": "Your reminder times", "reviewedBy": "source"},
     "parent.today.nextAt": {"text": "Next reminder", "reviewedBy": "source"},
     "people.inviteHelp": {"text": "Send this to the person you want to add. They sign in once, and after that they are told when a dose is missed.", "reviewedBy": "source"},
-    "people.shareMessage": {"text": "Please join our family circle on DoseCircle, so you are told if a dose is missed.", "reviewedBy": "source"}
+    "people.shareMessage": {"text": "Please join our family circle on DoseCircle, so you are told if a dose is missed.", "reviewedBy": "source"},
+    "people.addParent": {"text": "Add someone", "reviewedBy": "source"},
+    "people.addParentTitle": {"text": "Who else needs reminders?", "reviewedBy": "source"},
+    "people.addParentHelp": {"text": "Add a second parent, or anyone else in the family who takes daily medicines. Each person gets their own reminders, their own language and their own dashboard.", "reviewedBy": "source"},
+    "people.addParentDone": {"text": "Added. Now connect their phone.", "reviewedBy": "source"},
+    "home.everyone": {"text": "Who you look after", "reviewedBy": "source"}
   }
 }
