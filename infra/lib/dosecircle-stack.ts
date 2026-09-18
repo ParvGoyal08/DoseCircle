@@ -243,6 +243,14 @@ export class DoseCircleStack extends Stack {
       }),
     );
     extractor.addToRolePolicy(new PolicyStatement({ actions: ["bedrock:ApplyGuardrail"], resources: [guardrail.attrGuardrailArn] }));
+    // Bedrock checks the account's Marketplace subscription for an Anthropic model on the calling
+    // role, not just at first use, and answers "Model access is denied ... required AWS Marketplace
+    // actions" without them. A deployed extraction failed exactly this way once the cached
+    // subscription lapsed, so it is the role's permission rather than a one-time setup step.
+    // These actions take no resource ARN.
+    extractor.addToRolePolicy(
+      new PolicyStatement({ actions: ["aws-marketplace:ViewSubscriptions", "aws-marketplace:Subscribe"], resources: ["*"] }),
+    );
     // Only the full-size upload starts extraction; nothing is ever written back under rx/, so it cannot loop.
     prescriptions.addEventNotification(EventType.OBJECT_CREATED, new LambdaDestination(extractor), { prefix: "rx/", suffix: "original.jpg" });
 

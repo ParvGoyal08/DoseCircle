@@ -90,8 +90,25 @@ function normaliseCode(raw: string): string {
   return raw.toUpperCase().replace(/[^A-Z]/g, "");
 }
 
+/**
+ * Doctors write the code with a word beside it — "OD morning", "HS at bedtime", "BD after food" —
+ * and a whole-string match turns that into "ODMORNING", which matches nothing and sends an
+ * otherwise clear line to the human as unreadable. Found on the first real prescription the
+ * deployed pipeline read.
+ *
+ * So: try the whole string first, then look for a single token that is exactly a known code. Two
+ * different codes in one string is genuinely ambiguous and stays unreadable, because guessing which
+ * one the doctor meant is exactly the kind of inference this table exists to avoid.
+ */
 export function parseFrequencyCode(raw: string): FrequencyMeaning | null {
-  return FREQUENCY_CODES[normaliseCode(raw)] ?? null;
+  const whole = FREQUENCY_CODES[normaliseCode(raw)];
+  if (whole) return whole;
+  const codes = raw
+    .split(/[^A-Za-z]+/)
+    .map((token) => normaliseCode(token))
+    .filter((token) => token in FREQUENCY_CODES);
+  const unique = [...new Set(codes)];
+  return unique.length === 1 ? (FREQUENCY_CODES[unique[0]!] ?? null) : null;
 }
 
 export function parseFoodCode(raw: string): FoodTiming | null {

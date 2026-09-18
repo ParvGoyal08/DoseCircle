@@ -97,3 +97,25 @@ describe("interpretNotation", () => {
     expect(interpretNotation({ dosePatternAsWritten: "1-0-0", foodCodeAsWritten: "with milk" }).unresolved).toEqual(["food_unknown"]);
   });
 });
+
+describe("frequency codes written with a word beside them", () => {
+  // Every one of these came off a real prescription the deployed pipeline read.
+  it("reads the code when a word sits next to it", () => {
+    expect(parseFrequencyCode("OD morning")).toEqual({ kind: "daily", slots: ["morning"] });
+    expect(parseFrequencyCode("HS at bedtime")).toEqual({ kind: "daily", slots: ["night"] });
+    expect(parseFrequencyCode("BD (after food)")).toEqual({ kind: "daily", slots: ["morning", "night"] });
+    expect(parseFrequencyCode("1 tab TDS")).toEqual({ kind: "daily", slots: ["morning", "afternoon", "night"] });
+  });
+
+  it("still reads a bare code, spaced or not", () => {
+    expect(parseFrequencyCode("OD")).toEqual({ kind: "daily", slots: ["morning"] });
+    expect(parseFrequencyCode(" b d ")).toEqual({ kind: "daily", slots: ["morning", "night"] });
+    expect(parseFrequencyCode("SOS")).toEqual({ kind: "as_needed" });
+  });
+
+  it("refuses to guess between two codes, or when there is none", () => {
+    expect(parseFrequencyCode("OD or BD")).toBeNull();
+    expect(parseFrequencyCode("as directed")).toBeNull();
+    expect(parseFrequencyCode("")).toBeNull();
+  });
+});
