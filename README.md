@@ -120,9 +120,14 @@ flowchart LR
 | **CloudWatch + Budgets** | A dose-funnel dashboard, 7 alarms, and a monthly budget. |
 | **Amplify Hosting** | The web app, with a strict content-security policy and `sw.js` never cached. |
 
-Everything runs in **ap-south-1 (Mumbai)**. The one exception is Claude: from Mumbai it is only reachable
-through the global cross-Region profile, so a prescription photo may be processed outside India. The app
-says so before the upload, and the demo only uses a fictional prescription.
+Everything runs in **ap-south-1 (Mumbai)** except the one Claude call. From Mumbai, Claude is only
+reachable through the global cross-Region profile, so a prescription photo may be processed outside India
+— the app says so before the upload, and the demo only uses a fictional prescription. Beyond that, this
+AWS account cannot complete the Anthropic Marketplace subscription at all (Bedrock answers every request
+with `INVALID_PAYMENT_INSTRUMENT`), so Claude is invoked from **us-east-1 with credentials for a second
+account**, held as SSM SecureStrings and used for nothing else. Remove those two parameters and the call
+falls back to the function's own role. The **Bedrock Guardrail stays in Mumbai** either way, so the
+model's English notes are screened in-Region. See [docs/security.md](docs/security.md).
 
 **Cost: about ₹2.5 (US$0.03) per parent per month**, and roughly US$0.03 per prescription read. See
 [docs/cost.md](docs/cost.md).

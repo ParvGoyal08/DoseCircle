@@ -4,7 +4,7 @@ import { DetectDocumentTextCommand, TextractClient } from "@aws-sdk/client-textr
 import { UpdateCommand } from "@aws-sdk/lib-dynamodb";
 import { keys } from "@dosecircle/shared";
 import type { S3Event } from "aws-lambda";
-import { ddb, logger, metrics } from "../lib/aws.js";
+import { ddb, logger, metrics, optionalSecret } from "../lib/aws.js";
 import { env, requireEnv } from "../lib/env.js";
 import { notifyPrescription } from "../lib/notify-prescription.js";
 import { runExtraction } from "./pipeline.js";
@@ -16,7 +16,37 @@ import { runExtraction } from "./pipeline.js";
  */
 const s3 = new S3Client({ maxAttempts: 4, requestHandler: { connectionTimeout: 1_000, requestTimeout: 10_000 } });
 const textract = new TextractClient({ maxAttempts: 3, requestHandler: { connectionTimeout: 1_000, requestTimeout: 20_000 } });
-const bedrock = new BedrockRuntimeClient({ maxAttempts: 2, requestHandler: { connectionTimeout: 2_000, requestTimeout: 60_000 } });
+/**
+ * Claude runs on whichever account can actually reach it.
+ *
+ * This account cannot complete the Anthropic Marketplace subscription — Bedrock answers every
+ * Converse with INVALID_PAYMENT_INSTRUMENT — so the model is invoked with credentials held in SSM
+ * for an account that can. They are read once per container, used for nothing but Converse, and
+ * never logged. If the parameters are absent the function falls back to its own role, so removing
+ * them is all it takes to bring the call home once this account's billing is sorted.
+ *
+ * A cross-account IAM role would be the right answer and needs no long-lived keys; it is not used
+ * here only because the other account cannot create one.
+ *
+ * The guardrail is separate and stays on this account's own role in Mumbai: Classic tier does not
+ * leave the Region, so the model's English notes are screened locally either way.
+ */
+const guardrails = new BedrockRuntimeClient({ maxAttempts: 2, requestHandler: { connectionTimeout: 2_000, requestTimeout: 20_000 } });
+
+let bedrockClient: Promise<BedrockRuntimeClient> | null = null;
+function bedrock(): Promise<BedrockRuntimeClient> {
+  bedrockClient ??= (async () => {
+    const [accessKeyId, secretAccessKey] = await Promise.all([optionalSecret("bedrock/access-key-id"), optionalSecret("bedrock/secret-access-key")]);
+    if (accessKeyId && secretAccessKey) logger.info("Invoking Claude with the Bedrock account's own credentials");
+    return new BedrockRuntimeClient({
+      region: process.env.BEDROCK_REGION || undefined,
+      credentials: accessKeyId && secretAccessKey ? { accessKeyId, secretAccessKey } : undefined,
+      maxAttempts: 2,
+      requestHandler: { connectionTimeout: 2_000, requestTimeout: 60_000 },
+    });
+  })();
+  return bedrockClient;
+}
 
 const KEY = /^rx\/([a-z0-9-]+)\/(rx-[a-f0-9]+)\/original\.jpg$/;
 
@@ -76,9 +106,9 @@ export async function handler(event: S3Event): Promise<void> {
       const result = await runExtraction(modelId, {
         detectText: async () => (await textract.send(new DetectDocumentTextCommand({ Document: { S3Object: { Bucket: bucket, Name: key } } }))).Blocks ?? [],
         modelImage: () => readObject(bucket, key.replace(/original\.jpg$/, "model.jpg")),
-        converse: (input) => bedrock.send(new ConverseCommand(input)),
+        converse: async (input) => (await bedrock()).send(new ConverseCommand(input)),
         applyGuardrail: ({ content }) =>
-          bedrock.send(
+          guardrails.send(
             new ApplyGuardrailCommand({
               guardrailIdentifier: requireEnv("GUARDRAIL_ID"),
               guardrailVersion: requireEnv("GUARDRAIL_VERSION"),

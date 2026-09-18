@@ -48,6 +48,16 @@ export async function secret(name: string): Promise<string> {
   return value;
 }
 
+/** Like `secret`, but returns null when the parameter has not been created. */
+export async function optionalSecret(name: string): Promise<string | null> {
+  try {
+    return await secret(name);
+  } catch (error) {
+    if ((error as { name?: string }).name === "ParameterNotFound") return null;
+    throw error;
+  }
+}
+
 /** Epoch seconds `days` from now, for DynamoDB TTL. */
 export function ttlInDays(days: number, now = Date.now()): number {
   return Math.floor(now / 1000) + days * 24 * 60 * 60;

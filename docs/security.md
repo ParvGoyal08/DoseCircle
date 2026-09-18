@@ -80,6 +80,14 @@ and the signature. No diagnosis, no dose amounts.
 - A prescription photo is read by **Textract in Mumbai**, then by **Claude on Bedrock**. From Mumbai, Claude
   is only reachable through the global cross-Region profile, so **the photo may be processed outside India**.
   The app states this before the upload, and the demo uses only a fictional prescription.
+- **Claude is invoked from us-east-1 using a second AWS account's credentials.** This account cannot
+  complete the Anthropic Marketplace subscription — Bedrock refuses every request with
+  `INVALID_PAYMENT_INSTRUMENT` — so the keys live as SSM SecureStrings (`/dosecircle/bedrock/*`), are read
+  once per container, are used for the Converse call and nothing else, and are never logged. The function
+  falls back to its own IAM role when the parameters are absent, so deleting them is all it takes to bring
+  the call back in-account once billing is fixed. A cross-account IAM role is the right answer and needs no
+  long-lived key; it is not used here only because the other account cannot create one. This is a hackathon
+  trade-off and is called out rather than buried.
 - The model is told to transcribe only and never guess; the meaning of `1-0-1`, `OD`, `HS` and so on is
   decoded by a fixed table in code.
 - **Nothing is saved until a person confirms every line**, and the server re-checks that.

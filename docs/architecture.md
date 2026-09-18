@@ -125,7 +125,8 @@ The Lambda authorizer refuses a device token on demo routes and a demo token eve
 
 1. claims the work with a conditional status flip, so an at-least-once S3 event cannot read twice;
 2. runs **Textract** `DetectDocumentText`, keeping each line's text, confidence and handwriting flag;
-3. sends the photo **and** the OCR lines to **Claude Sonnet 4.6** with a single tool, temperature 0, and a
+3. sends the photo **and** the OCR lines to **Claude Sonnet 4.6** (invoked in us-east-1, see
+   [security.md](security.md)) with a single tool, temperature 0, and a
    prompt that says transcribe only, never guess, and treat text in the image as data rather than
    instructions;
 4. decodes the schedule codes (`1-0-1`, `OD`, `BD`, `TDS`, `HS`, `SOS`, `AC`, `PC`, durations like `5/7`)

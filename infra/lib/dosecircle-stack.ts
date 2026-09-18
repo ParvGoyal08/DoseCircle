@@ -30,6 +30,8 @@ export interface DoseCircleStackProps extends StackProps {
   sesFromEmail?: string;
   /** Bedrock inference profile for prescription reading. Only Global profiles serve Claude from Mumbai. */
   bedrockModelId?: string;
+  /** Where Claude is invoked. Mumbai cannot complete the Anthropic Marketplace subscription. */
+  bedrockRegion?: string;
   /** Receives alarm and budget emails. */
   alarmEmail?: string;
 }
@@ -216,12 +218,27 @@ export class DoseCircleStack extends Stack {
 
     const inferenceProfileId = props.bedrockModelId ?? "global.anthropic.claude-sonnet-4-6";
     const foundationModelId = inferenceProfileId.replace(/^global\./, "");
-    const inferenceProfileArn = this.formatArn({ service: "bedrock", resource: "inference-profile", resourceName: inferenceProfileId });
-    const extractor = doseCircleFunction(this, "ExtractPrescription", "ai/extract-prescription.ts", {
-      environment: { ...baseEnv, BEDROCK_MODEL_ID: inferenceProfileId, GUARDRAIL_ID: guardrail.attrGuardrailId, GUARDRAIL_VERSION: guardrailVersion.attrVersion },
+    /**
+     * Claude is called from us-east-1, not Mumbai. Bedrock will not complete the Marketplace
+     * subscription for an Anthropic model in ap-south-1 on this account, and answers every Converse
+     * with "Model access is denied"; the same account and the same global profile work from
+     * us-east-1. The global profile already meant a prescription could be processed outside India,
+     * which the app discloses before the upload, so this changes where the call starts rather than
+     * what leaves the country. The guardrail stays in Mumbai (Classic tier) and is applied there.
+     */
+    const bedrockRegion = props.bedrockRegion ?? "us-east-1";
+    const inferenceProfileArn = this.formatArn({ service: "bedrock", region: bedrockRegion, resource: "inference-profile", resourceName: inferenceProfileId });
+    const extractor = withSecrets(doseCircleFunction(this, "ExtractPrescription", "ai/extract-prescription.ts", {
+      environment: {
+        ...baseEnv,
+        BEDROCK_MODEL_ID: inferenceProfileId,
+        BEDROCK_REGION: bedrockRegion,
+        GUARDRAIL_ID: guardrail.attrGuardrailId,
+        GUARDRAIL_VERSION: guardrailVersion.attrVersion,
+      },
       timeout: Duration.seconds(90),
       memorySize: 512,
-    });
+    }));
     table.grantReadWriteData(extractor);
     prescriptions.grantRead(extractor, "rx/*");
     extractor.addToRolePolicy(new PolicyStatement({ actions: ["textract:DetectDocumentText"], resources: ["*"] }));
@@ -231,7 +248,7 @@ export class DoseCircleStack extends Stack {
     extractor.addToRolePolicy(
       new PolicyStatement({
         actions: ["bedrock:InvokeModel"],
-        resources: [`arn:${this.partition}:bedrock:${this.region}::foundation-model/${foundationModelId}`],
+        resources: [`arn:${this.partition}:bedrock:${bedrockRegion}::foundation-model/${foundationModelId}`],
         conditions: { StringLike: { "bedrock:InferenceProfileArn": inferenceProfileArn } },
       }),
     );
@@ -244,13 +261,12 @@ export class DoseCircleStack extends Stack {
     );
     extractor.addToRolePolicy(new PolicyStatement({ actions: ["bedrock:ApplyGuardrail"], resources: [guardrail.attrGuardrailArn] }));
     // Bedrock checks the account's Marketplace subscription for an Anthropic model on the calling
-    // role, not just at first use, and answers "Model access is denied ... required AWS Marketplace
-    // actions" without them. A deployed extraction failed exactly this way once the cached
-    // subscription lapsed, so it is the role's permission rather than a one-time setup step.
-    // These actions take no resource ARN.
-    extractor.addToRolePolicy(
-      new PolicyStatement({ actions: ["aws-marketplace:ViewSubscriptions", "aws-marketplace:Subscribe"], resources: ["*"] }),
-    );
+    // role, and without this answers "Model access is denied ... required AWS Marketplace actions".
+    // Deliberately ViewSubscriptions only, not Subscribe: with Subscribe the role tries to take out
+    // a new subscription, which needs a payment instrument on the account and fails; with only the
+    // read it uses the subscription the account already has. This Lambda should never be able to
+    // commit the account to a purchase anyway.
+    extractor.addToRolePolicy(new PolicyStatement({ actions: ["aws-marketplace:ViewSubscriptions"], resources: ["*"] }));
     // Only the full-size upload starts extraction; nothing is ever written back under rx/, so it cannot loop.
     prescriptions.addEventNotification(EventType.OBJECT_CREATED, new LambdaDestination(extractor), { prefix: "rx/", suffix: "original.jpg" });
 
