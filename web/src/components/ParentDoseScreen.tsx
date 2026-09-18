@@ -69,6 +69,11 @@ export interface ParentDoseScreenProps {
   autoPlay?: boolean;
   /** Inside the demo's phone frame the layout is slightly tighter. */
   framed?: boolean;
+  /**
+   * Render the parent's language even if it is not native-reviewed yet. Only the landing page's
+   * labelled illustration sets this; a real reminder always falls back to English.
+   */
+  showDraftLanguage?: boolean;
 }
 
 /**
@@ -76,8 +81,8 @@ export interface ParentDoseScreenProps {
  * Undo happens on the phone for 10 seconds before anything is sent, because a completed workflow step
  * cannot be taken back on the server.
  */
-export function ParentDoseScreen({ dose, onTaken, autoPlay = false, framed = false }: ParentDoseScreenProps) {
-  const { t, lang } = useT(dose.parent.lang);
+export function ParentDoseScreen({ dose, onTaken, autoPlay = false, framed = false, showDraftLanguage = false }: ParentDoseScreenProps) {
+  const { t, lang } = useT(dose.parent.lang, showDraftLanguage);
   const reduceMotion = useReducedMotion();
   const [phase, setPhase] = useState<Phase>(() => initialPhase(dose.status));
   const [secondsLeft, setSecondsLeft] = useState(UNDO_SECONDS);

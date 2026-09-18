@@ -24,14 +24,19 @@ export interface FamilyAlertProps {
   now?: number;
   /** The demo shows the drawn character; real families show an initial badge. */
   parentAvatar?: ReactNode;
+  /**
+   * Render the viewer's language even if it is not native-reviewed yet. Only the landing page's
+   * labelled illustration sets this; a real alert always falls back to English.
+   */
+  showDraftLanguage?: boolean;
 }
 
 /**
  * The family member's alert: who, which dose, whether the phone was reachable, where the family order
  * has reached, and one button to take responsibility. Once someone claims, everyone sees who.
  */
-export function FamilyAlert({ alert, viewerLang, viewerMid, ladder, alertedCount, onClaim, onWhy, now = Date.now(), parentAvatar }: FamilyAlertProps) {
-  const { t, lang } = useT(viewerLang);
+export function FamilyAlert({ alert, viewerLang, viewerMid, ladder, alertedCount, onClaim, onWhy, now = Date.now(), parentAvatar, showDraftLanguage = false }: FamilyAlertProps) {
+  const { t, lang } = useT(viewerLang, showDraftLanguage);
   const reduceMotion = useReducedMotion();
   const [claiming, setClaiming] = useState(false);
   const [lost, setLost] = useState(false);

@@ -32,25 +32,35 @@ export function pickerLanguages(): PickerLanguage[] {
     .filter((l) => !l.draft || config.showDraftLanguages);
 }
 
-/** The language actually used for text: unreviewed languages fall back to English, never to another Indian language. */
-export function displayLanguage(code: LanguageCode | string | null | undefined): LanguageCode {
+/**
+ * The language actually used for text: unreviewed languages fall back to English, never to another
+ * Indian language.
+ *
+ * `allowDrafts` is for the one place that must show a draft on purpose — the landing page's
+ * side-by-side illustration of three people reading three scripts, which is labelled as drafts.
+ * Nothing a parent or family member acts on ever passes it, so the review gate still holds where it
+ * matters.
+ */
+export function displayLanguage(code: LanguageCode | string | null | undefined, allowDrafts = false): LanguageCode {
   const match = LANGUAGES.find((l) => l.code === code);
   if (!match) return FALLBACK_LANGUAGE;
-  return isFullyReviewed(match.code) || config.showDraftLanguages ? match.code : FALLBACK_LANGUAGE;
+  if (isFullyReviewed(match.code)) return match.code;
+  // A draft can only be shown for a language we actually have strings for: several languages are
+  // planned and listed but have no catalogue yet, and asking for one must not set `lang="ta"` on
+  // elements that will then render English.
+  return (config.showDraftLanguages || allowDrafts) && catalogues[match.code] ? match.code : FALLBACK_LANGUAGE;
 }
 
+/**
+ * Every string is loaded, reviewed or not. What ships is decided by `displayLanguage`, which picks
+ * the language, rather than by leaving holes in the catalogue: a half-filled catalogue made a
+ * deliberately-requested draft silently render in English.
+ */
 function resources() {
   return Object.fromEntries(
     Object.entries(catalogues).map(([code, catalogue]) => [
       code,
-      {
-        translation: Object.fromEntries(
-          Object.entries(catalogue!.strings)
-            // Unreviewed strings are left out unless drafts are allowed, so i18next falls back to English.
-            .filter(([, entry]) => entry.reviewedBy || config.showDraftLanguages)
-            .map(([key, entry]) => [key, entry.text]),
-        ),
-      },
+      { translation: Object.fromEntries(Object.entries(catalogue!.strings).map(([key, entry]) => [key, entry.text])) },
     ]),
   );
 }
@@ -70,8 +80,8 @@ export { i18next };
  * Text for one person in their own language. The demo shows three people at once, so screens take
  * the language explicitly instead of relying on one global setting.
  */
-export function useT(lang: LanguageCode | string | null | undefined): { t: TFunction; lang: LanguageCode } {
-  const resolved = displayLanguage(lang);
+export function useT(lang: LanguageCode | string | null | undefined, allowDrafts = false): { t: TFunction; lang: LanguageCode } {
+  const resolved = displayLanguage(lang, allowDrafts);
   useTranslation(); // re-render when resources change
   return { t: i18next.getFixedT(resolved), lang: resolved };
 }
