@@ -1,16 +1,17 @@
 import type { SlotName } from "@dosecircle/shared";
-import { Activity, BellRing, ChartLine, CirclePause, Loader2, Pill, PillBottle, Plus, TriangleAlert, Users } from "lucide-react";
+import { Activity, BellRing, Camera, ChartLine, CirclePause, Loader2, Pill, PillBottle, Plus, Smartphone, TriangleAlert, Users } from "lucide-react";
 import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router";
 import { FamilyAlert } from "../../components/FamilyAlert";
 import { FamilyShell } from "../../components/FamilyShell";
 import { Timeline } from "../../components/Timeline";
+import { OutcomeLegend, WeekStrip } from "../../components/WeekStrip";
 import { Avatar, Card, cx, SLOT_ICONS, StatusPill } from "../../components/ui";
 import { useT } from "../../i18n";
 import { api, ApiError } from "../../lib/api";
 import { RequireFamily } from "../../lib/family";
-import { formatNumber, formatTime } from "../../lib/format";
-import type { Dashboard, ParentCard, Timeline as TimelineData } from "../../lib/types";
+import { formatAgo, formatNumber, formatTime } from "../../lib/format";
+import type { Dashboard, ParentCard, RefillChip, Timeline as TimelineData } from "../../lib/types";
 import { useApi } from "../../lib/useApi";
 import { EnableMyAlerts } from "./AuthPages";
 
@@ -44,60 +45,18 @@ function Home({ fid, lang: myLang, mid, role }: { fid: string; lang: string; mid
         </div>
       ) : (
         <div className="space-y-6">
-          <StatusBanner parents={data.parents} openAlerts={data.openAlerts.length} myLang={myLang} />
-
-          {/* Always visible, even with one person: it is how you learn the app holds more than one,
-              and it is where you add the next. */}
-          <nav aria-label={t("home.everyone")} className="flex flex-wrap items-center gap-2">
-            <span lang={lang} className="mr-1 text-[13px] font-semibold uppercase tracking-wider text-muted">
-              {t("home.everyone")}
-            </span>
-            <div role="tablist" className="flex flex-wrap gap-2">
-              {data.parents.map((p) => (
-                <button
-                  key={p.pid}
-                  type="button"
-                  role="tab"
-                  aria-selected={p.pid === parent.pid}
-                  onClick={() => setSelectedPid(p.pid)}
-                  className={cx(
-                    "pressable inline-flex min-h-11 items-center gap-2 rounded-full pl-1.5 pr-4 font-semibold",
-                    p.pid === parent.pid ? "bg-indigo text-white" : "bg-surface text-ink ring-1 ring-line hover:ring-line-strong",
-                  )}
-                >
-                  <Avatar name={p.displayName} size={28} className={p.pid === parent.pid ? "!bg-white/15 !text-white" : undefined} />
-                  {p.displayName}
-                  {p.paused && <CirclePause aria-hidden className="size-4 opacity-70" />}
-                </button>
-              ))}
-            </div>
-            {role === "owner" && (
-              <Link
-                to="/people#add"
-                className="pressable inline-flex min-h-11 items-center gap-1.5 rounded-full border border-dashed border-line-strong px-4 text-[14.5px] font-semibold text-muted hover:border-indigo-soft hover:text-ink"
-              >
-                <Plus aria-hidden className="size-4" strokeWidth={2.5} />
-                <span lang={lang}>{t("people.addParent")}</span>
-              </Link>
-            )}
-          </nav>
+          <StatusWidget parents={data.parents} openAlerts={data.openAlerts.length} selected={parent} onSelect={setSelectedPid} canAdd={role === "owner"} myLang={myLang} />
 
           <EnableMyAlerts lang={myLang} />
 
-          <div className="grid gap-5 lg:grid-cols-12">
-            <section aria-labelledby="alerts-heading" className="lg:col-span-7">
-              <h2 id="alerts-heading" lang={lang} className="mb-3 text-lg font-semibold">
-                {t("home.openAlerts")}
-              </h2>
-              {data.openAlerts.length === 0 ? (
-                <p lang={lang} className="sticker flex items-center gap-3 bg-surface px-5 py-4 text-[16px] font-medium text-taken">
-                  <span className="grid size-9 place-items-center rounded-full bg-taken-tint">
-                    <BellRing aria-hidden className="size-4.5" />
-                  </span>
-                  {t("home.allCalm")}
-                </p>
-              ) : (
-                <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid items-start gap-5 lg:grid-cols-12">
+            <div className="space-y-5 lg:col-span-7">
+              {/* Alerts head the main column rather than spanning the page. There is no heading
+                  standing over an empty column when nothing is wrong: the widget has already said
+                  "all calm", and saying it twice made the screen look like it was waiting for
+                  something to happen. */}
+              {data.openAlerts.length > 0 && (
+                <section aria-label={t("home.openAlerts")} className="grid gap-4">
                   {data.openAlerts.map((alert) => {
                     const alertParent = data.parents.find((p) => p.pid === alert.pid);
                     return (
@@ -117,14 +76,19 @@ function Home({ fid, lang: myLang, mid, role }: { fid: string; lang: string; mid
                       />
                     );
                   })}
-                </div>
+                </section>
               )}
-            </section>
-            <div className="lg:col-span-5">
-              <h2 lang={lang} className="mb-3 text-lg font-semibold">
-                {t("dash.today")}
-              </h2>
-              <TodayCard parent={parent} fid={fid} myLang={myLang} />
+              <div>
+                <h2 lang={lang} className="mb-3 text-lg font-semibold">
+                  {t("dash.today")}
+                </h2>
+                <TodayCard parent={parent} fid={fid} myLang={myLang} />
+              </div>
+            </div>
+            <div className="space-y-5 lg:col-span-5">
+              {/* Seven empty boxes tell a family that has not added a medicine yet nothing at all. */}
+              {parent.slots.length > 0 && <WeekCard parent={parent} myLang={myLang} />}
+              <StandingCard parent={parent} myLang={myLang} />
             </div>
           </div>
         </div>
@@ -134,14 +98,33 @@ function Home({ fid, lang: myLang, mid, role }: { fid: string; lang: string; mid
 }
 
 /**
- * The one thing the home screen owes a family: is anything wrong right now.
+ * The one thing the home screen owes a family, answered before anything else: is something wrong
+ * right now, and if not, what does today look like.
  *
- * It counts across everybody, not the person the switcher happens to have selected, because
- * "should I be worried" is not a per-person question. The headline never has a number spliced into
- * it — Kannada and Hindi attach case endings to nouns, so the sentence stays whole and the counts
- * live in their own elements beside it.
+ * It is one band rather than a heading over a card, because a heading needs its own answer
+ * underneath and there frequently is none — on a calm day the old layout was two sentences floating
+ * in an empty column. The counts run across everybody, not the person the switcher happens to have
+ * selected, since "should I be worried" is not a per-person question; the switcher lives up here
+ * too, so choosing a person is next to the state of that person rather than adrift below it.
+ *
+ * The headline never has a number spliced into it — Kannada and Hindi attach case endings to nouns —
+ * so the sentence stays whole and the counts sit in their own elements beside it.
  */
-function StatusBanner({ parents, openAlerts, myLang }: { parents: ParentCard[]; openAlerts: number; myLang: string }) {
+function StatusWidget({
+  parents,
+  openAlerts,
+  selected,
+  onSelect,
+  canAdd,
+  myLang,
+}: {
+  parents: ParentCard[];
+  openAlerts: number;
+  selected: ParentCard;
+  onSelect: (pid: string) => void;
+  canAdd: boolean;
+  myLang: string;
+}) {
   const { t, lang } = useT(myLang);
   const active = parents.filter((p) => !p.paused);
   const doses = active.flatMap((p) => p.today);
@@ -152,46 +135,171 @@ function StatusBanner({ parents, openAlerts, myLang }: { parents: ParentCard[]; 
   // — the headline and the alert beside it are about that dose, and counting it here as well would
   // say the same thing twice.
   const due = active.reduce((n, p) => n + p.slots.filter((s) => (p.today.find((d) => d.slotName === s.slotName)?.status ?? "PENDING") === "PENDING").length, 0);
-  const refills = parents.reduce((n, p) => n + p.refills.length, 0);
+  // "ok" chips are in the list so a medicine's stock can be shown anywhere; a medicine with three
+  // weeks left is not running low, and counting it here made the number say something untrue.
+  const refills = parents.reduce((n, p) => n + p.refills.filter(isLow).length, 0);
   const allPaused = parents.length > 0 && parents.every((p) => p.paused);
   const noMedicines = parents.every((p) => p.slots.length === 0);
 
   const state = openAlerts > 0 ? "alert" : allPaused ? "paused" : noMedicines ? "empty" : missed > 0 ? "missed" : "calm";
-  const { Icon, headline, tint, ink } = {
-    alert: { Icon: TriangleAlert, headline: t("home.statusNeedsYou"), tint: "bg-missed-tint", ink: "text-missed" },
-    missed: { Icon: TriangleAlert, headline: t("home.statusMissed"), tint: "bg-due-tint", ink: "text-due" },
-    paused: { Icon: CirclePause, headline: t("home.paused"), tint: "bg-offline-tint", ink: "text-offline" },
-    empty: { Icon: Pill, headline: t("home.noMedicines"), tint: "bg-sunken", ink: "text-muted" },
-    calm: { Icon: BellRing, headline: t("home.allCalm"), tint: "bg-taken-tint", ink: "text-taken" },
+  const { Icon, headline, dot } = {
+    alert: { Icon: TriangleAlert, headline: t("home.statusNeedsYou"), dot: "bg-[#ff8a80] text-[#4a0d07]" },
+    missed: { Icon: TriangleAlert, headline: t("home.statusMissed"), dot: "bg-haldi text-[#14133a]" },
+    paused: { Icon: CirclePause, headline: t("home.paused"), dot: "bg-white/20 text-white" },
+    empty: { Icon: Pill, headline: t("home.noMedicines"), dot: "bg-white/20 text-white" },
+    calm: { Icon: BellRing, headline: t("home.allCalm"), dot: "bg-[#4ade9a] text-[#03301f]" },
   }[state];
 
   return (
-    <section aria-labelledby="status-headline" className="sticker overflow-hidden bg-surface">
-      <p className="flex items-center gap-3.5 px-5 py-4">
-        <span aria-hidden className={cx("grid size-11 shrink-0 place-items-center rounded-full", tint, ink)}>
-          <Icon className="size-5.5" strokeWidth={2.25} />
-        </span>
-        <span id="status-headline" lang={lang} className={cx("text-[18px] font-semibold leading-snug", ink)}>
-          {headline}
-        </span>
-      </p>
-      {state !== "empty" && (
-        <dl className="grid grid-cols-2 divide-x divide-y divide-line border-t border-line sm:grid-cols-4 sm:divide-y-0">
-          {[
-            { label: t("home.statTaken"), value: taken },
-            { label: t("home.statDue"), value: due },
-            { label: t("home.statMissed"), value: missed, warn: missed > 0 },
-            { label: t("home.refills"), value: refills, warn: refills > 0 },
-          ].map(({ label, value, warn }) => (
-            <div key={label} className="px-5 py-3">
-              <dt lang={lang} className="text-[13.5px] text-muted">
-                {label}
-              </dt>
-              <dd className={cx("tabular text-[26px] font-semibold leading-tight", warn ? "text-missed" : "text-ink")}>{formatNumber(value, lang)}</dd>
+    <section aria-labelledby="status-headline" className="hero-surface relative overflow-hidden rounded-[24px]">
+      <div aria-hidden className="hero-grid absolute inset-0" />
+      <div className="relative p-5 md:p-7">
+        <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-4">
+          <div className="flex min-w-0 items-center gap-3.5">
+            <span aria-hidden className={cx("grid size-12 shrink-0 place-items-center rounded-full", dot)}>
+              <Icon className="size-6" strokeWidth={2.4} />
+            </span>
+            <div className="min-w-0">
+              <h1 id="status-headline" lang={lang} className="text-balance text-[22px] font-semibold leading-tight tracking-tight text-white md:text-[27px]">
+                {headline}
+              </h1>
+              {/* Two items, not four: as four flex children this wrapped into ragged columns on a
+                  phone. The time keeps its own element so the sentence is never spliced. */}
+              <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[13.5px] text-hero-muted">
+                <span className="inline-flex items-center gap-1.5 font-semibold text-white">
+                  <Smartphone aria-hidden className="size-4 shrink-0" />
+                  {selected.displayName}
+                </span>
+                {selected.lastReceiptAt ? (
+                  <span lang={lang}>
+                    {t("home.lastReachable")} <span className="tabular font-semibold text-white">{formatAgo(selected.lastReceiptAt, lang)}</span>
+                  </span>
+                ) : (
+                  <span lang={lang}>{t("home.neverReachable")}</span>
+                )}
+              </p>
             </div>
-          ))}
-        </dl>
+          </div>
+
+          <nav aria-label={t("home.everyone")} className="flex flex-wrap items-center gap-2">
+            <div role="tablist" className="flex flex-wrap gap-2">
+              {parents.map((p) => (
+                <button
+                  key={p.pid}
+                  type="button"
+                  role="tab"
+                  aria-selected={p.pid === selected.pid}
+                  onClick={() => onSelect(p.pid)}
+                  className={cx(
+                    "pressable inline-flex min-h-10 items-center gap-2 rounded-full pl-1.5 pr-3.5 text-[14.5px] font-semibold transition-colors",
+                    p.pid === selected.pid ? "bg-white text-[#14133a]" : "bg-white/10 text-white ring-1 ring-white/20 hover:bg-white/15",
+                  )}
+                >
+                  <Avatar name={p.displayName} size={26} className={p.pid === selected.pid ? undefined : "!bg-white/15 !text-white"} />
+                  {p.displayName}
+                  {p.paused && <CirclePause aria-hidden className="size-4 opacity-70" />}
+                </button>
+              ))}
+            </div>
+            {canAdd && (
+              <Link to="/people#add" className="pressable inline-flex min-h-10 items-center gap-1.5 rounded-full border border-dashed border-white/30 px-3.5 text-[14px] font-semibold text-hero-muted hover:border-white/60 hover:text-white">
+                <Plus aria-hidden className="size-4" strokeWidth={2.5} />
+                <span lang={lang}>{t("people.addParent")}</span>
+              </Link>
+            )}
+          </nav>
+        </div>
+
+        {state !== "empty" && (
+          <dl className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+            {[
+              { label: t("home.statTaken"), value: taken, accent: false },
+              { label: t("home.statDue"), value: due, accent: false },
+              { label: t("home.statMissed"), value: missed, accent: missed > 0 },
+              { label: t("home.refills"), value: refills, accent: refills > 0 },
+            ].map(({ label, value, accent }) => (
+              <div key={label} className={cx("rounded-2xl px-4 py-3 ring-1", accent ? "bg-haldi/15 ring-haldi/40" : "bg-white/8 ring-white/12")}>
+                <dt lang={lang} className={cx("text-[13px] font-medium", accent ? "text-haldi" : "text-hero-muted")}>
+                  {label}
+                </dt>
+                <dd className={cx("tabular mt-0.5 text-[30px] font-semibold leading-none tracking-tight", accent ? "text-haldi" : "text-white")}>{formatNumber(value, lang)}</dd>
+              </div>
+            ))}
+          </dl>
+        )}
+      </div>
+    </section>
+  );
+}
+
+/** A refill chip only counts as a warning once it has actually dropped below its own threshold. */
+const isLow = (refill: RefillChip) => refill.level !== "ok";
+
+/** The last seven days at a glance — the cheapest honest answer to "is this getting better". */
+function WeekCard({ parent, myLang }: { parent: ParentCard; myLang: string }) {
+  const { t, lang } = useT(myLang);
+  return (
+    <section className="sticker bg-surface p-4">
+      <h2 lang={lang} className="mb-3 text-[15px] font-semibold">
+        {t("home.week")}
+      </h2>
+      <WeekStrip week={parent.week} t={t} lang={lang} />
+      <div className="mt-3">
+        <OutcomeLegend t={t} lang={lang} />
+      </div>
+    </section>
+  );
+}
+
+/**
+ * Two questions a family member asks about themselves rather than about the parent: are any tablets
+ * about to run out, and when something goes wrong, is it me who gets called.
+ */
+function StandingCard({ parent, myLang }: { parent: ParentCard; myLang: string }) {
+  const { t, lang } = useT(myLang);
+  const low = parent.refills.filter(isLow);
+  return (
+    <section className="sticker divide-y divide-line bg-surface">
+      {low.length > 0 && (
+        <div className="p-4">
+          <h2 lang={lang} className="mb-2.5 text-[15px] font-semibold">
+            {t("home.refills")}
+          </h2>
+          <ul className="flex flex-wrap gap-2">
+            {low.map((refill) => (
+              <li
+                key={refill.medId}
+                className={cx("inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-[14px] font-semibold", refill.level === "critical" ? "bg-missed-tint text-missed" : "bg-due-tint text-due")}
+              >
+                <PillBottle aria-hidden className="size-4" strokeWidth={2.25} />
+                <span lang="en" className="medicine-name">
+                  {refill.nameAsPrinted}
+                </span>
+                {refill.daysLeft !== null && <span className="tabular font-normal opacity-80">{formatNumber(refill.daysLeft, lang, { style: "unit", unit: "day", unitDisplay: "long" })}</span>}
+              </li>
+            ))}
+          </ul>
+        </div>
       )}
+      <div className="flex items-center gap-3 p-4">
+        <span aria-hidden className="grid size-9 shrink-0 place-items-center rounded-full bg-sunken text-muted">
+          <Users className="size-4.5" strokeWidth={2.25} />
+        </span>
+        <p className="min-w-0 text-[14.5px]">
+          {parent.myLadderPosition === null ? (
+            <span lang={lang} className="text-muted">
+              {t("home.notInOrder")}
+            </span>
+          ) : (
+            <>
+              <span lang={lang} className="block text-muted">
+                {t("home.yourPosition")}
+              </span>
+              <span className="tabular text-[17px] font-semibold text-ink">{formatNumber(parent.myLadderPosition, lang)}</span>
+            </>
+          )}
+        </p>
+      </div>
     </section>
   );
 }
@@ -220,9 +328,18 @@ function TodayCard({ parent, fid, myLang }: { parent: ParentCard; fid: string; m
         </p>
       )}
       {parent.slots.length === 0 ? (
-        <p lang={lang} className="p-5 text-[15px] text-muted">
-          {t("home.noMedicines")}
-        </p>
+        /* A new family lands here, and the widget above has already said there are no medicines.
+           Repeating the sentence taught them nothing, so this is the two ways to fix it instead. */
+        <div className="flex flex-wrap gap-2.5 p-5">
+          <Link to={`${base}/prescription`} className="pressable inline-flex min-h-12 items-center gap-2.5 rounded-xl bg-indigo px-4 text-[15.5px] font-semibold text-white shadow-[0_8px_20px_-12px_rgb(37_35_110/0.9)]">
+            <Camera aria-hidden className="size-5" strokeWidth={2.25} />
+            <span lang={lang}>{t("meds.scan")}</span>
+          </Link>
+          <Link to={`${base}/medicines`} className="pressable inline-flex min-h-12 items-center gap-2.5 rounded-xl bg-surface px-4 text-[15.5px] font-semibold text-ink ring-1 ring-line-strong hover:ring-indigo-soft">
+            <Plus aria-hidden className="size-5" strokeWidth={2.5} />
+            <span lang={lang}>{t("meds.add")}</span>
+          </Link>
+        </div>
       ) : (
         <ul className="divide-y divide-line">
           {[...parent.slots]
