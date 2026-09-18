@@ -424,6 +424,17 @@
     "home.statTaken": {"text": "Taken today", "reviewedBy": "source"},
     "home.statDue": {"text": "Still to come", "reviewedBy": "source"},
     "home.statMissed": {"text": "Missed today", "reviewedBy": "source"},
-    "action.insights": {"text": "How it is going", "reviewedBy": "source"}
+    "action.insights": {"text": "How it is going", "reviewedBy": "source"},
+    "meds.whenHelp": {"text": "The reminder goes to their phone at these times.", "reviewedBy": "source"},
+    "meds.changeTimes": {"text": "Change the times", "reviewedBy": "source"},
+    "meds.pillsHint": {"text": "Used to warn the family before the tablets run out. Leave it blank if you would rather not count.", "reviewedBy": "source"},
+    "meds.endDateHint": {"text": "Reminders stop after this day. Leave it blank if the medicine continues.", "reviewedBy": "source"},
+    "meds.escalationTitle": {"text": "If the reminder is not confirmed", "reviewedBy": "source"},
+    "meds.escalationFast": {"text": "This medicine is marked important, so the family is told sooner.", "reviewedBy": "source"},
+    "meds.step.nudge": {"text": "A second reminder goes to their phone.", "reviewedBy": "source"},
+    "meds.step.first": {"text": "The first person in the family order is alerted.", "reviewedBy": "source"},
+    "meds.step.next": {"text": "Then the next person, one at a time.", "reviewedBy": "source"},
+    "meds.step.everyone": {"text": "Everyone in the family is alerted.", "reviewedBy": "source"},
+    "meds.asNeededHelp": {"text": "No reminders are sent for this medicine, and it does not appear in the daily list.", "reviewedBy": "source"}
   }
 }

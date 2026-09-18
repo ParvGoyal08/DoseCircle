@@ -424,6 +424,17 @@
     "home.statTaken": {"text": "ಇಂದು ತೆಗೆದುಕೊಂಡವು", "reviewedBy": null},
     "home.statDue": {"text": "ಇನ್ನೂ ಬಾಕಿ", "reviewedBy": null},
     "home.statMissed": {"text": "ಇಂದು ತಪ್ಪಿದವು", "reviewedBy": null},
-    "action.insights": {"text": "ಇಲ್ಲಿಯವರೆಗೆ ಹೇಗಿದೆ", "reviewedBy": null}
+    "action.insights": {"text": "ಇಲ್ಲಿಯವರೆಗೆ ಹೇಗಿದೆ", "reviewedBy": null},
+    "meds.whenHelp": {"text": "ಈ ಸಮಯಗಳಲ್ಲಿ ಅವರ ಫೋನ್‌ಗೆ ನೆನಪಿಸಲಾಗುತ್ತದೆ.", "reviewedBy": null},
+    "meds.changeTimes": {"text": "ಸಮಯ ಬದಲಾಯಿಸಿ", "reviewedBy": null},
+    "meds.pillsHint": {"text": "ಮಾತ್ರೆಗಳು ಮುಗಿಯುವ ಮೊದಲು ಕುಟುಂಬಕ್ಕೆ ತಿಳಿಸಲು ಬಳಸಲಾಗುತ್ತದೆ. ಎಣಿಸಲು ಇಷ್ಟವಿಲ್ಲದಿದ್ದರೆ ಖಾಲಿ ಬಿಡಿ.", "reviewedBy": null},
+    "meds.endDateHint": {"text": "ಈ ದಿನದ ನಂತರ ನೆನಪಿಸುವುದು ನಿಲ್ಲುತ್ತದೆ. ಔಷಧಿ ಮುಂದುವರಿಯಬೇಕಿದ್ದರೆ ಖಾಲಿ ಬಿಡಿ.", "reviewedBy": null},
+    "meds.escalationTitle": {"text": "ನೆನಪಿಸಿದ ನಂತರವೂ ದೃಢಪಡಿಸದಿದ್ದರೆ", "reviewedBy": null},
+    "meds.escalationFast": {"text": "ಈ ಔಷಧಿಯನ್ನು ಮುಖ್ಯ ಎಂದು ಗುರುತಿಸಲಾಗಿದೆ, ಹಾಗಾಗಿ ಕುಟುಂಬಕ್ಕೆ ಬೇಗ ತಿಳಿಸಲಾಗುತ್ತದೆ.", "reviewedBy": null},
+    "meds.step.nudge": {"text": "ಅವರ ಫೋನ್‌ಗೆ ಎರಡನೆಯ ಬಾರಿ ನೆನಪಿಸಲಾಗುತ್ತದೆ.", "reviewedBy": null},
+    "meds.step.first": {"text": "ಕುಟುಂಬದ ಕ್ರಮದಲ್ಲಿ ಮೊದಲ ವ್ಯಕ್ತಿಗೆ ಸೂಚನೆ ಹೋಗುತ್ತದೆ.", "reviewedBy": null},
+    "meds.step.next": {"text": "ನಂತರ ಮುಂದಿನ ವ್ಯಕ್ತಿಗೆ, ಒಬ್ಬೊಬ್ಬರಾಗಿ.", "reviewedBy": null},
+    "meds.step.everyone": {"text": "ಕುಟುಂಬದ ಎಲ್ಲರಿಗೂ ಸೂಚನೆ ಹೋಗುತ್ತದೆ.", "reviewedBy": null},
+    "meds.asNeededHelp": {"text": "ಈ ಔಷಧಿಗೆ ಯಾವ ನೆನಪಿಸುವಿಕೆಯೂ ಹೋಗುವುದಿಲ್ಲ, ಮತ್ತು ಇದು ದಿನದ ಪಟ್ಟಿಯಲ್ಲಿ ಕಾಣಿಸುವುದಿಲ್ಲ.", "reviewedBy": null}
   }
 }

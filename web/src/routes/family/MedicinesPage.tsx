@@ -1,5 +1,5 @@
-import { dailyUse, daysLeft as daysOfTabletsLeft, SLOT_NAMES, type SlotName } from "@dosecircle/shared";
-import { Camera, HeartPulse, Loader2, Minus, PackagePlus, Pill, Plus, Utensils } from "lucide-react";
+import { dailyUse, daysLeft as daysOfTabletsLeft, FAST_LADDER, SLOT_NAMES, STANDARD_LADDER, type SlotName } from "@dosecircle/shared";
+import { BellRing, Camera, HeartPulse, Loader2, Minus, PackagePlus, Pill, Plus, Utensils } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { Link, useParams } from "react-router";
 import { Field, FamilyShell, inputClass } from "../../components/FamilyShell";
@@ -8,7 +8,7 @@ import { useT } from "../../i18n";
 import { api, ApiError } from "../../lib/api";
 import { RequireFamily } from "../../lib/family";
 import { formatCount, formatNumber } from "../../lib/format";
-import type { MedicineInput, MedicineView } from "../../lib/types";
+import type { Dashboard, MedicineInput, MedicineView } from "../../lib/types";
 import { useApi } from "../../lib/useApi";
 
 export function MedicinesPage() {
@@ -21,7 +21,20 @@ const COUNTS = [0.5, 1, 1.5, 2];
 export const EMPTY_MEDICINE: MedicineInput = { nameAsPrinted: "", strength: null, slots: {}, food: null, critical: false, asNeeded: false, pillsLeft: null, refillThresholdDays: 5, endDate: null };
 
 /** The same fields for manual entry and for correcting a prescription row. */
-export function MedicineFields({ value, onChange, lang: viewerLang }: { value: MedicineInput; onChange: (next: MedicineInput) => void; lang: string }) {
+export function MedicineFields({
+  value,
+  onChange,
+  lang: viewerLang,
+  slotTimes,
+  settingsHref,
+}: {
+  value: MedicineInput;
+  onChange: (next: MedicineInput) => void;
+  lang: string;
+  /** The parent's own clock times. Without them the chips can only name the part of the day. */
+  slotTimes?: Record<SlotName, string>;
+  settingsHref?: string;
+}) {
   const { t, lang } = useT(viewerLang);
   const setSlot = (slot: SlotName, count: number | undefined) => {
     const slots = { ...value.slots };
@@ -43,16 +56,29 @@ export function MedicineFields({ value, onChange, lang: viewerLang }: { value: M
         <legend lang={lang} className="text-[15px] font-semibold">
           {t("meds.when")}
         </legend>
-        <div className="mt-1.5 grid grid-cols-2 gap-2">
+        {/* "Morning" on its own never said when the phone would actually ring, and the clock times
+            live two screens away on the parent's settings page. They are on the chip now, with the
+            way to change them next to them. */}
+        <p className="mt-0.5 flex flex-wrap items-center gap-x-2 text-[14px] text-muted">
+          <span lang={lang}>{t("meds.whenHelp")}</span>
+          {settingsHref && (
+            <Link to={settingsHref} className="font-semibold text-indigo-soft underline underline-offset-2 hover:text-ink dark:text-ink">
+              <span lang={lang}>{t("meds.changeTimes")}</span>
+            </Link>
+          )}
+        </p>
+        <div className="mt-2 grid grid-cols-2 gap-2">
           {SLOT_NAMES.map((slot) => {
             const Icon = SLOT_ICONS[slot];
             const count = value.slots[slot];
             const on = count !== undefined;
+            const time = slotTimes?.[slot];
             return (
               <div key={slot} className={cx("rounded-xl border-2 p-2", on ? "border-ink bg-haldi-tint/60" : "border-line bg-surface")}>
                 <button type="button" onClick={() => setSlot(slot, on ? undefined : 1)} aria-pressed={on} className="flex min-h-10 w-full items-center gap-2 text-left font-semibold">
-                  <Icon aria-hidden className="size-5" strokeWidth={2.25} />
+                  <Icon aria-hidden className="size-5 shrink-0" strokeWidth={2.25} />
                   <span lang={lang}>{t(`slot.${slot}`)}</span>
+                  {time && <span className="tabular ml-auto text-[14px] font-semibold text-muted">{time}</span>}
                 </button>
                 {on && (
                   <div className="mt-1 flex items-center justify-between gap-1">
@@ -84,8 +110,8 @@ export function MedicineFields({ value, onChange, lang: viewerLang }: { value: M
         </div>
       </fieldset>
 
-      <label className="flex min-h-12 items-center gap-3 rounded-xl border border-line bg-surface px-3">
-        <input type="checkbox" className="size-5 accent-[var(--color-critical)]" checked={value.critical} onChange={(e) => onChange({ ...value, critical: e.target.checked })} />
+      <label className={cx("flex min-h-12 items-center gap-3 rounded-xl border border-line bg-surface px-3", value.asNeeded && "opacity-50")}>
+        <input type="checkbox" className="size-5 accent-[var(--color-critical)]" disabled={value.asNeeded} checked={value.critical && !value.asNeeded} onChange={(e) => onChange({ ...value, critical: e.target.checked })} />
         <HeartPulse aria-hidden className="size-5 text-critical" />
         <span lang={lang} className="font-medium">
           {t("meds.critical")}
@@ -98,15 +124,72 @@ export function MedicineFields({ value, onChange, lang: viewerLang }: { value: M
         </span>
       </label>
 
-      <div className="grid grid-cols-2 gap-3">
-        <Field label={t("meds.pills")} lang={lang}>
+      <EscalationExplainer critical={value.critical} asNeeded={value.asNeeded} lang={viewerLang} />
+
+      <div className="grid gap-3 sm:grid-cols-2">
+        <Field label={t("meds.pills")} hint={t("meds.pillsHint")} lang={lang}>
           <input className={cx(inputClass, "tabular")} type="number" inputMode="numeric" min={0} max={10000} value={value.pillsLeft ?? ""} onChange={(e) => onChange({ ...value, pillsLeft: e.target.value === "" ? null : Math.max(0, Math.round(Number(e.target.value))) })} />
         </Field>
-        <Field label={t("meds.endDate")} lang={lang}>
+        <Field label={t("meds.endDate")} hint={t("meds.endDateHint")} lang={lang}>
           <input className={inputClass} type="date" value={value.endDate ?? ""} onChange={(e) => onChange({ ...value, endDate: e.target.value || null })} />
         </Field>
       </div>
     </div>
+  );
+}
+
+/**
+ * What actually happens after a reminder, in minutes, for this medicine.
+ *
+ * Without it the form asks for a time of day and an "important medicine" tick and never says what
+ * either one does; a family setting up their mother's insulin could not tell whether anyone would
+ * be told, or when. The timings come from the same table the state machine runs on, so this cannot
+ * drift away from the behaviour it describes. Each duration sits in its own element — Kannada and
+ * Hindi inflect nouns after a number, so a translated sentence is never cut open to hold one.
+ */
+function EscalationExplainer({ critical, asNeeded, lang: viewerLang }: { critical: boolean; asNeeded: boolean; lang: string }) {
+  const { t, lang } = useT(viewerLang);
+  if (asNeeded) {
+    return (
+      <p lang={lang} className="rounded-xl bg-sunken px-4 py-3 text-[14.5px] text-muted">
+        {t("meds.asNeededHelp")}
+      </p>
+    );
+  }
+
+  const timings = critical ? FAST_LADDER : STANDARD_LADDER;
+  const minutes = (seconds: number) => formatNumber(Math.round(seconds / 60), lang, { style: "unit", unit: "minute", unitDisplay: "long" });
+  const steps = [
+    timings.nudgeWaitSeconds > 0 ? { after: minutes(timings.parentWaitSeconds), text: t("meds.step.nudge") } : null,
+    { after: minutes(timings.parentWaitSeconds + timings.nudgeWaitSeconds), text: t("meds.step.first") },
+    { after: minutes(timings.claimWaitSeconds), text: t("meds.step.next") },
+    { after: minutes(timings.finalWaitSeconds), text: t("meds.step.everyone") },
+  ].filter((step) => step !== null);
+
+  return (
+    <section className={cx("rounded-xl border px-4 py-3", critical ? "border-critical/30 bg-critical/5" : "border-line bg-sunken")}>
+      <h3 lang={lang} className="flex items-center gap-2 text-[14.5px] font-semibold">
+        <BellRing aria-hidden className="size-4.5 shrink-0" strokeWidth={2.25} />
+        {t("meds.escalationTitle")}
+      </h3>
+      <ol className="mt-2 space-y-1.5">
+        {steps.map((step) => (
+          <li key={step.text} className="flex gap-3 text-[14.5px]">
+            {/* Wide enough for "20 minutes" on one line, and nowrap so a longer translated unit
+                pushes the sentence across instead of folding the number away from it. */}
+            <span className="tabular min-w-[92px] shrink-0 whitespace-nowrap font-semibold text-ink">{step.after}</span>
+            <span lang={lang} className="text-muted">
+              {step.text}
+            </span>
+          </li>
+        ))}
+      </ol>
+      {critical && (
+        <p lang={lang} className="mt-2.5 text-[13.5px] font-medium text-critical">
+          {t("meds.escalationFast")}
+        </p>
+      )}
+    </section>
   );
 }
 
@@ -118,6 +201,10 @@ function Medicines({ fid, pid, lang: myLang }: { fid: string; pid: string; lang:
   const { t, lang } = useT(myLang);
   const base = `/families/${fid}/parents/${pid}/medicines`;
   const list = useApi(() => api<{ medicines: MedicineView[] }>(base, { auth: "family" }), [base]);
+  // Only for the clock times on the "when" chips: the form cannot say when a reminder fires
+  // without them, and they belong to the parent rather than to any one medicine.
+  const dashboard = useApi(() => api<Dashboard>(`/families/${fid}`, { auth: "family" }), [fid]);
+  const slotTimes = dashboard.data?.parents.find((p) => p.pid === pid)?.slotTimes;
   const [adding, setAdding] = useState(false);
   const [draft, setDraft] = useState<MedicineInput>(EMPTY_MEDICINE);
   const [busy, setBusy] = useState(false);
@@ -161,7 +248,7 @@ function Medicines({ fid, pid, lang: myLang }: { fid: string; pid: string; lang:
       {adding && (
         <Card className="mb-6 p-4">
           <form onSubmit={save} className="space-y-4">
-            <MedicineFields value={draft} onChange={setDraft} lang={myLang} />
+            <MedicineFields value={draft} onChange={setDraft} lang={myLang} slotTimes={slotTimes} settingsHref={`/parents/${pid}/settings`} />
             {error && (
               <p role="alert" className="rounded-xl bg-missed-tint px-3 py-2 font-medium text-missed">
                 {error}

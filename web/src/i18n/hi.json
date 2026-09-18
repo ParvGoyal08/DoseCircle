@@ -424,6 +424,17 @@
     "home.statTaken": {"text": "आज ली गईं", "reviewedBy": null},
     "home.statDue": {"text": "अभी बाकी", "reviewedBy": null},
     "home.statMissed": {"text": "आज छूटीं", "reviewedBy": null},
-    "action.insights": {"text": "अब तक कैसा चल रहा है", "reviewedBy": null}
+    "action.insights": {"text": "अब तक कैसा चल रहा है", "reviewedBy": null},
+    "meds.whenHelp": {"text": "इन समयों पर उनके फ़ोन पर याद दिलाया जाता है।", "reviewedBy": null},
+    "meds.changeTimes": {"text": "समय बदलें", "reviewedBy": null},
+    "meds.pillsHint": {"text": "गोलियाँ ख़त्म होने से पहले परिवार को चेतावनी देने के लिए। गिनना न चाहें तो खाली छोड़ दें।", "reviewedBy": null},
+    "meds.endDateHint": {"text": "इस दिन के बाद याद दिलाना बंद हो जाएगा। दवा जारी रहनी है तो खाली छोड़ दें।", "reviewedBy": null},
+    "meds.escalationTitle": {"text": "अगर याद दिलाने पर पुष्टि नहीं होती", "reviewedBy": null},
+    "meds.escalationFast": {"text": "यह दवा ज़रूरी बताई गई है, इसलिए परिवार को जल्दी बताया जाता है।", "reviewedBy": null},
+    "meds.step.nudge": {"text": "उनके फ़ोन पर दूसरी बार याद दिलाया जाता है।", "reviewedBy": null},
+    "meds.step.first": {"text": "परिवार के क्रम में पहले व्यक्ति को सूचना जाती है।", "reviewedBy": null},
+    "meds.step.next": {"text": "फिर अगले व्यक्ति को, एक-एक करके।", "reviewedBy": null},
+    "meds.step.everyone": {"text": "परिवार के सभी लोगों को सूचना जाती है।", "reviewedBy": null},
+    "meds.asNeededHelp": {"text": "इस दवा के लिए कोई याद दिलाना नहीं भेजा जाता, और यह दिन की सूची में नहीं आती।", "reviewedBy": null}
   }
 }

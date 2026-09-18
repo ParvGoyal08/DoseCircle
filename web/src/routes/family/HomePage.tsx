@@ -320,6 +320,7 @@ function TodayCard({ parent, fid, myLang }: { parent: ParentCard; fid: string; m
   };
 
   const base = `/parents/${parent.pid}`;
+  const empty = parent.slots.length === 0;
   return (
     <section className="sticker overflow-hidden bg-surface">
       {parent.paused && (
@@ -327,16 +328,18 @@ function TodayCard({ parent, fid, myLang }: { parent: ParentCard; fid: string; m
           <CirclePause aria-hidden className="size-5" /> {t("home.paused")}
         </p>
       )}
-      {parent.slots.length === 0 ? (
+      {empty ? (
         /* A new family lands here, and the widget above has already said there are no medicines.
-           Repeating the sentence taught them nothing, so this is the two ways to fix it instead. */
-        <div className="flex flex-wrap gap-2.5 p-5">
-          <Link to={`${base}/prescription`} className="pressable inline-flex min-h-12 items-center gap-2.5 rounded-xl bg-indigo px-4 text-[15.5px] font-semibold text-white shadow-[0_8px_20px_-12px_rgb(37_35_110/0.9)]">
-            <Camera aria-hidden className="size-5" strokeWidth={2.25} />
+           Repeating the sentence taught them nothing, so this is the one way to fix it instead —
+           and it stands in for the "Medicines" tile below, which in this state opens a page whose
+           only content is this same button. */
+        <div className="p-5">
+          <Link to={`${base}/prescription`} className="pressable inline-flex min-h-14 w-full items-center justify-center gap-2.5 rounded-xl bg-indigo px-4 text-[16.5px] font-semibold text-white shadow-[0_8px_20px_-12px_rgb(37_35_110/0.9)]">
+            <Camera aria-hidden className="size-5.5" strokeWidth={2.25} />
             <span lang={lang}>{t("meds.scan")}</span>
           </Link>
-          <Link to={`${base}/medicines`} className="pressable inline-flex min-h-12 items-center gap-2.5 rounded-xl bg-surface px-4 text-[15.5px] font-semibold text-ink ring-1 ring-line-strong hover:ring-indigo-soft">
-            <Plus aria-hidden className="size-5" strokeWidth={2.5} />
+          <Link to={`${base}/medicines`} className="mt-2 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl text-[15px] font-semibold text-muted hover:text-ink">
+            <Plus aria-hidden className="size-4.5" strokeWidth={2.5} />
             <span lang={lang}>{t("meds.add")}</span>
           </Link>
         </div>
@@ -379,10 +382,7 @@ function TodayCard({ parent, fid, myLang }: { parent: ParentCard; fid: string; m
           report moved to their own page — neither belongs in the list you reach for when you are
           checking whether Amma took her tablet. */}
       <nav className="grid grid-cols-2 gap-2 border-t border-line bg-paper/60 p-3">
-        {[
-          { to: `${base}/medicines`, icon: Pill, label: t("action.medicines") },
-          { to: `${base}/checks`, icon: Activity, label: t("action.checks") },
-        ].map(({ to, icon: Icon, label }) => (
+        {[...(empty ? [] : [{ to: `${base}/medicines`, icon: Pill, label: t("action.medicines") }]), { to: `${base}/checks`, icon: Activity, label: t("action.checks") }].map(({ to, icon: Icon, label }) => (
           <Link key={to} to={to} className="pressable inline-flex min-h-14 items-center gap-2.5 rounded-xl bg-indigo px-4 text-[16.5px] font-semibold text-white shadow-[0_8px_20px_-12px_rgb(37_35_110/0.9)]">
             <Icon aria-hidden className="size-5.5" strokeWidth={2.25} />
             <span lang={lang}>{label}</span>
