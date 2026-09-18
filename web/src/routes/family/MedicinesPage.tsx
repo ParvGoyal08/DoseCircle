@@ -26,14 +26,15 @@ export function MedicineFields({
   onChange,
   lang: viewerLang,
   slotTimes,
-  settingsHref,
+  editTimes,
 }: {
   value: MedicineInput;
   onChange: (next: MedicineInput) => void;
   lang: string;
   /** The parent's own clock times. Without them the chips can only name the part of the day. */
   slotTimes?: Record<SlotName, string>;
-  settingsHref?: string;
+  /** Supplied where the times can be changed in place; omitted, they are shown but not editable. */
+  editTimes?: { onChange: (slot: SlotName, time: string) => void; onCommit: (slot: SlotName) => void; saved: boolean };
 }) {
   const { t, lang } = useT(viewerLang);
   const setSlot = (slot: SlotName, count: number | undefined) => {
@@ -57,15 +58,12 @@ export function MedicineFields({
           {t("meds.when")}
         </legend>
         {/* "Morning" on its own never said when the phone would actually ring, and the clock times
-            live two screens away on the parent's settings page. They are on the chip now, with the
-            way to change them next to them. */}
-        <p className="mt-0.5 flex flex-wrap items-center gap-x-2 text-[14px] text-muted">
-          <span lang={lang}>{t("meds.whenHelp")}</span>
-          {settingsHref && (
-            <Link to={settingsHref} className="font-semibold text-indigo-soft underline underline-offset-2 hover:text-ink dark:text-ink">
-              <span lang={lang}>{t("meds.changeTimes")}</span>
-            </Link>
-          )}
+            used to live two screens away under the parent's settings. They are on the chip now and
+            editable there, so the person deciding the schedule sets the time while deciding it.
+            The warning is not decoration: one time is shared by every medicine in that slot, so a
+            family moving breakfast an hour later must know it moves all of them. */}
+        <p lang={lang} className="mt-0.5 text-[14px] text-muted">
+          {t(editTimes ? "meds.whenHelpEditable" : "meds.whenHelp")}
         </p>
         <div className="mt-2 grid grid-cols-2 gap-2">
           {SLOT_NAMES.map((slot) => {
@@ -74,12 +72,26 @@ export function MedicineFields({
             const on = count !== undefined;
             const time = slotTimes?.[slot];
             return (
-              <div key={slot} className={cx("rounded-xl border-2 p-2", on ? "border-ink bg-haldi-tint/60" : "border-line bg-surface")}>
+              <div key={slot} role="group" aria-label={t(`slot.${slot}`)} className={cx("rounded-xl border-2 p-2", on ? "border-ink bg-haldi-tint/60" : "border-line bg-surface")}>
                 <button type="button" onClick={() => setSlot(slot, on ? undefined : 1)} aria-pressed={on} className="flex min-h-10 w-full items-center gap-2 text-left font-semibold">
                   <Icon aria-hidden className="size-5 shrink-0" strokeWidth={2.25} />
                   <span lang={lang}>{t(`slot.${slot}`)}</span>
-                  {time && <span className="tabular ml-auto text-[14px] font-semibold text-muted">{time}</span>}
+                  {time !== undefined && !editTimes && <span className="tabular ml-auto text-[14px] font-semibold text-muted">{time}</span>}
                 </button>
+                {/* Its own row, full width. Beside the label it had to share half a card with
+                    "Afternoon" (longer still in Kannada), and a 12-hour browser renders "07:30 AM"
+                    plus a clock icon — squeezed, the AM/PM was cut off, which on a reminder time is
+                    the one part that must never be ambiguous. */}
+                {time !== undefined && editTimes && (
+                  <input
+                    type="time"
+                    aria-label={t("meds.reminderTime")}
+                    value={time}
+                    onChange={(e) => editTimes.onChange(slot, e.target.value)}
+                    onBlur={() => editTimes.onCommit(slot)}
+                    className="tabular mt-1 block min-h-10 w-full rounded-lg border border-line-strong bg-surface px-2.5 text-[15px] font-semibold text-ink focus:bg-haldi-tint/40 focus:outline-none"
+                  />
+                )}
                 {on && (
                   <div className="mt-1 flex items-center justify-between gap-1">
                     <button type="button" aria-label="−" className="grid size-10 place-items-center rounded-lg bg-surface" onClick={() => setSlot(slot, COUNTS[Math.max(0, COUNTS.indexOf(count) - 1)])}>
@@ -95,6 +107,11 @@ export function MedicineFields({
             );
           })}
         </div>
+        {editTimes?.saved && (
+          <p lang={lang} role="status" className="mt-2 text-[14px] font-medium text-taken">
+            {t("meds.timesSaved")}
+          </p>
+        )}
       </fieldset>
 
       <fieldset>
@@ -204,7 +221,30 @@ function Medicines({ fid, pid, lang: myLang }: { fid: string; pid: string; lang:
   // Only for the clock times on the "when" chips: the form cannot say when a reminder fires
   // without them, and they belong to the parent rather than to any one medicine.
   const dashboard = useApi(() => api<Dashboard>(`/families/${fid}`, { auth: "family" }), [fid]);
-  const slotTimes = dashboard.data?.parents.find((p) => p.pid === pid)?.slotTimes;
+  const saved = dashboard.data?.parents.find((p) => p.pid === pid)?.slotTimes;
+  // Typing into a time box has to show what was typed straight away, but it must not send a PATCH
+  // per keystroke: every save re-syncs this parent's EventBridge schedules. Edits are held here and
+  // committed on blur, and only when the value actually moved.
+  const [draftTimes, setDraftTimes] = useState<Partial<Record<SlotName, string>>>({});
+  const [timesSaved, setTimesSaved] = useState(false);
+  const slotTimes = saved ? { ...saved, ...draftTimes } : undefined;
+
+  const commitTime = async (slot: SlotName) => {
+    const next = draftTimes[slot];
+    if (!next || !saved || next === saved[slot]) return;
+    try {
+      await api(`/families/${fid}/parents/${pid}`, { method: "PATCH", auth: "family", body: { slotTimes: { [slot]: next } } });
+      setTimesSaved(true);
+      setTimeout(() => setTimesSaved(false), 4000);
+      await dashboard.reload();
+    } finally {
+      setDraftTimes((prev) => {
+        const rest = { ...prev };
+        delete rest[slot];
+        return rest;
+      });
+    }
+  };
   const [adding, setAdding] = useState(false);
   const [draft, setDraft] = useState<MedicineInput>(EMPTY_MEDICINE);
   const [busy, setBusy] = useState(false);
@@ -248,7 +288,13 @@ function Medicines({ fid, pid, lang: myLang }: { fid: string; pid: string; lang:
       {adding && (
         <Card className="mb-6 p-4">
           <form onSubmit={save} className="space-y-4">
-            <MedicineFields value={draft} onChange={setDraft} lang={myLang} slotTimes={slotTimes} settingsHref={`/parents/${pid}/settings`} />
+            <MedicineFields
+              value={draft}
+              onChange={setDraft}
+              lang={myLang}
+              slotTimes={slotTimes}
+              editTimes={{ onChange: (slot, time) => setDraftTimes((prev) => ({ ...prev, [slot]: time })), onCommit: commitTime, saved: timesSaved }}
+            />
             {error && (
               <p role="alert" className="rounded-xl bg-missed-tint px-3 py-2 font-medium text-missed">
                 {error}
