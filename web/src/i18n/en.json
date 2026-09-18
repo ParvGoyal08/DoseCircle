@@ -363,7 +363,7 @@
     "checks.middle": {"text": "Middle", "reviewedBy": "source"},
     "checks.readings": {"text": "Readings", "reviewedBy": "source"},
     "checks.enter": {"text": "Enter a reading", "reviewedBy": "source"},
-    "people.title": {"text": "Family members", "reviewedBy": "source"},
+    "people.title": {"text": "Your family", "reviewedBy": "source"},
     "people.intro": {"text": "An owner can invite people, remove them, and change who is alerted first.", "reviewedBy": "source"},
     "people.you": {"text": "You", "reviewedBy": "source"},
     "people.owner": {"text": "Owner", "reviewedBy": "source"},
@@ -383,7 +383,7 @@
     "people.dangerConfirmLabel": {"text": "Type the family's name to confirm", "reviewedBy": "source"},
     "people.dangerButton": {"text": "Delete everything", "reviewedBy": "source"},
     "action.checks": {"text": "Daily checks", "reviewedBy": "source"},
-    "action.people": {"text": "Family members", "reviewedBy": "source"},
+    "action.people": {"text": "Your family", "reviewedBy": "source"},
     "parent.today.allDone": {"text": "Everything is done for today.", "reviewedBy": "source"},
     "parent.today.nothingYet": {"text": "There is nothing to take yet.", "reviewedBy": "source"},
     "parent.today.noneToday": {"text": "There is nothing to take today.", "reviewedBy": "source"},
@@ -412,6 +412,12 @@
     "parent.setup.rxConsent": {"text": "The photo is read by a computer and may be processed outside India. Your family checks every line before anything is saved.", "reviewedBy": "source"},
     "parent.setup.skip": {"text": "Skip this", "reviewedBy": "source"},
     "parent.setup.finish": {"text": "Finish", "reviewedBy": "source"},
-    "parent.setup.step": {"text": "Step", "reviewedBy": "source"}
+    "parent.setup.step": {"text": "Step", "reviewedBy": "source"},
+    "people.dependentsTitle": {"text": "Who needs reminders", "reviewedBy": "source"},
+    "people.dependentsHelp": {"text": "Each person here gets their own reminders, in their own language, with their own medicines and dashboard.", "reviewedBy": "source"},
+    "people.caregiversTitle": {"text": "Who is alerted", "reviewedBy": "source"},
+    "people.phoneConnected": {"text": "Phone connected", "reviewedBy": "source"},
+    "people.phoneMissing": {"text": "Phone not connected yet", "reviewedBy": "source"},
+    "people.openDashboard": {"text": "Open their dashboard", "reviewedBy": "source"}
   }
 }

@@ -363,7 +363,7 @@
     "checks.middle": {"text": "बीच का", "reviewedBy": null},
     "checks.readings": {"text": "जाँच के अंक", "reviewedBy": null},
     "checks.enter": {"text": "जाँच के अंक लिखें", "reviewedBy": null},
-    "people.title": {"text": "परिवार के सदस्य", "reviewedBy": null},
+    "people.title": {"text": "आपका परिवार", "reviewedBy": null},
     "people.intro": {"text": "मालिक लोगों को जोड़ सकते हैं, हटा सकते हैं और तय कर सकते हैं कि पहले किसे बताया जाए।", "reviewedBy": null},
     "people.you": {"text": "आप", "reviewedBy": null},
     "people.owner": {"text": "मालिक", "reviewedBy": null},
@@ -383,7 +383,7 @@
     "people.dangerConfirmLabel": {"text": "पुष्टि के लिए परिवार का नाम लिखें", "reviewedBy": null},
     "people.dangerButton": {"text": "सब कुछ मिटाएँ", "reviewedBy": null},
     "action.checks": {"text": "रोज़ की जाँच", "reviewedBy": null},
-    "action.people": {"text": "परिवार के सदस्य", "reviewedBy": null},
+    "action.people": {"text": "आपका परिवार", "reviewedBy": null},
     "parent.today.allDone": {"text": "आज का सब कुछ हो गया है।", "reviewedBy": null},
     "parent.today.nothingYet": {"text": "अभी लेने के लिए कुछ नहीं है।", "reviewedBy": null},
     "parent.today.noneToday": {"text": "आज लेने के लिए कुछ नहीं है।", "reviewedBy": null},
@@ -412,6 +412,12 @@
     "parent.setup.rxConsent": {"text": "फ़ोटो को कंप्यूटर पढ़ता है और वह भारत के बाहर संसाधित हो सकती है। कुछ भी सहेजने से पहले आपका परिवार हर पंक्ति जाँचता है।", "reviewedBy": null},
     "parent.setup.skip": {"text": "इसे छोड़ें", "reviewedBy": null},
     "parent.setup.finish": {"text": "पूरा करें", "reviewedBy": null},
-    "parent.setup.step": {"text": "चरण", "reviewedBy": null}
+    "parent.setup.step": {"text": "चरण", "reviewedBy": null},
+    "people.dependentsTitle": {"text": "किसे रिमाइंडर चाहिए", "reviewedBy": null},
+    "people.dependentsHelp": {"text": "यहाँ हर व्यक्ति को अपनी भाषा में अपने रिमाइंडर, अपनी दवाएँ और अपना डैशबोर्ड मिलता है।", "reviewedBy": null},
+    "people.caregiversTitle": {"text": "किसे सूचना जाती है", "reviewedBy": null},
+    "people.phoneConnected": {"text": "फ़ोन जुड़ा है", "reviewedBy": null},
+    "people.phoneMissing": {"text": "फ़ोन अभी नहीं जुड़ा", "reviewedBy": null},
+    "people.openDashboard": {"text": "उनका डैशबोर्ड खोलें", "reviewedBy": null}
   }
 }

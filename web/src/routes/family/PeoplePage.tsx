@@ -1,7 +1,7 @@
 import type { LanguageCode } from "@dosecircle/shared";
 import { ChevronRight, Crown, Loader2, LogOut, ShieldCheck, TriangleAlert, UserMinus, UserPlus, UserRoundPlus } from "lucide-react";
 import { useState } from "react";
-import { useNavigate } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { FamilyShell, Field, inputClass } from "../../components/FamilyShell";
 import { LanguagePicker } from "../../components/LanguagePicker";
 import { ShareInvite } from "../../components/ShareInvite";
@@ -27,6 +27,8 @@ function People({ fid, mid, lang: myLang, isOwner }: { fid: string; mid: string;
   const [error, setError] = useState<string | null>(null);
 
   const members = list.data?.members ?? [];
+  const parents = family.data?.parents ?? [];
+  const nameOfParent = (pid: string) => parents.find((p) => p.pid === pid)?.displayName ?? "";
   const owners = members.filter((m) => m.role === "owner").length;
 
   const act = async (run: () => Promise<unknown>) => {
@@ -53,10 +55,69 @@ function People({ fid, mid, lang: myLang, isOwner }: { fid: string; mid: string;
       lang={myLang}
       back="/home"
       title={t("people.title")}
-      actions={
-        isOwner && (
+    >
+      {error && (
+        <p role="alert" className="mb-4 rounded-xl bg-missed-tint px-3 py-2 font-medium text-missed">
+          {error}
+        </p>
+      )}
+
+      {/* Two different kinds of person, and the app used to offer "Invite family" and "Add someone"
+          side by side as if they were the same thing. They are not: one gets reminders, the other
+          gets alerted when a reminder is ignored. */}
+      <section aria-labelledby="dependents" className="mb-10">
+        <h2 id="dependents" lang={lang} className="text-xl font-semibold">
+          {t("people.dependentsTitle")}
+        </h2>
+        <p lang={lang} className="mt-1 text-[15px] text-muted">
+          {t("people.dependentsHelp")}
+        </p>
+        <ul className="mt-4 space-y-3">
+          {parents.map((p) => (
+            <li key={p.pid}>
+              <Card className="flex flex-wrap items-center gap-3 p-4">
+                <Avatar name={p.displayName} size={44} />
+                <div className="min-w-0 flex-1">
+                  <p className="text-xl font-semibold">{p.displayName}</p>
+                  <p className="mt-1 flex flex-wrap items-center gap-1.5 text-[14px]">
+                    <span
+                      lang={lang}
+                      className={cx("rounded-full px-2.5 py-1 font-medium", p.lastReceiptAt ? "bg-taken-tint text-taken" : "bg-due-tint text-due")}
+                    >
+                      {p.lastReceiptAt ? t("people.phoneConnected") : t("people.phoneMissing")}
+                    </span>
+                    {p.paused && (
+                      <span lang={lang} className="rounded-full bg-offline-tint px-2.5 py-1 font-medium text-offline">
+                        {t("home.paused")}
+                      </span>
+                    )}
+                  </p>
+                </div>
+                <Link
+                  to={`/parents/${p.pid}/medicines`}
+                  className="pressable inline-flex min-h-11 items-center gap-2 rounded-[var(--radius-button)] px-4 text-[14.5px] font-semibold ring-1 ring-line-strong hover:ring-indigo-soft"
+                >
+                  <span lang={lang}>{t("action.medicines")}</span>
+                </Link>
+              </Card>
+            </li>
+          ))}
+        </ul>
+        {isOwner && <AddParent fid={fid} lang={myLang} onAdded={() => void family.reload()} />}
+      </section>
+
+      <section aria-labelledby="caregivers">
+        <h2 id="caregivers" lang={lang} className="text-xl font-semibold">
+          {t("people.caregiversTitle")}
+        </h2>
+        <p lang={lang} className="mt-1 text-[15px] text-muted">
+          {t("people.intro")}
+        </p>
+
+        {isOwner && !invite && (
           <Button
-            tone="ink"
+            tone="quiet"
+            className="mt-4"
             onClick={async () => {
               const result = await api<{ link: string; code: string }>(`/families/${fid}/invites`, { method: "POST", auth: "family", body: { kind: "member" } });
               setInvite(result);
@@ -65,28 +126,15 @@ function People({ fid, mid, lang: myLang, isOwner }: { fid: string; mid: string;
             <UserPlus aria-hidden className="size-5" />
             <span lang={lang}>{t("action.inviteFamily")}</span>
           </Button>
-        )
-      }
-    >
-      <p lang={lang} className="mb-6 text-lg text-muted">
-        {t("people.intro")}
-      </p>
+        )}
 
-      {invite && (
-        <Card className="mb-6 p-4">
-          <ShareInvite link={invite.link} code={invite.code} message={t("people.shareMessage")} help={t("people.inviteHelp")} lang={myLang} />
-        </Card>
-      )}
+        {invite && (
+          <Card className="mt-4 p-4">
+            <ShareInvite link={invite.link} code={invite.code} message={t("people.shareMessage")} help={t("people.inviteHelp")} lang={myLang} />
+          </Card>
+        )}
 
-      {error && (
-        <p role="alert" className="mb-4 rounded-xl bg-missed-tint px-3 py-2 font-medium text-missed">
-          {error}
-        </p>
-      )}
-
-      {isOwner && <AddParent fid={fid} lang={myLang} onAdded={() => void family.reload()} />}
-
-      <ul className="space-y-3">
+      <ul className="mt-4 space-y-3">
         {members.map((member) => {
           const isMe = member.mid === mid;
           const lastOwner = member.role === "owner" && owners === 1;
@@ -114,9 +162,14 @@ function People({ fid, mid, lang: myLang, isOwner }: { fid: string; mid: string;
                       </span>
                       {member.relation && <span className="rounded-full bg-paper px-2.5 py-1 text-muted">{member.relation}</span>}
                       {member.ladderPositions.length > 0 ? (
-                        <span lang={lang} className="inline-flex items-center gap-1.5 rounded-full bg-paper px-2.5 py-1 text-muted">
+                        <span lang={lang} className="inline-flex flex-wrap items-center gap-1.5 rounded-full bg-paper px-2.5 py-1 text-muted">
                           {t("people.inAlertOrder")}
-                          <span className="tabular font-semibold text-ink">{member.ladderPositions.map((p) => p.position).join(", ")}</span>
+                          {member.ladderPositions.map((position) => (
+                            <span key={position.pid} className="inline-flex items-center gap-1">
+                              {parents.length > 1 && <span className="text-ink">{nameOfParent(position.pid)}</span>}
+                              <span className="tabular font-semibold text-ink">{position.position}</span>
+                            </span>
+                          ))}
                         </span>
                       ) : (
                         <span lang={lang} className="rounded-full bg-offline-tint px-2.5 py-1 font-medium text-offline">
@@ -164,7 +217,9 @@ function People({ fid, mid, lang: myLang, isOwner }: { fid: string; mid: string;
         })}
       </ul>
 
-      <Button tone="quiet" className="mt-6" onClick={leave}>
+      </section>
+
+      <Button tone="quiet" className="mt-8" onClick={leave}>
         <LogOut aria-hidden className="size-5" />
         <span lang={lang}>{t("people.leave")}</span>
       </Button>

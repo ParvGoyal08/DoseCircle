@@ -204,16 +204,32 @@ function TodayCard({ parent, fid, myLang }: { parent: ParentCard; fid: string; m
             })}
         </ul>
       )}
-      <nav className="grid grid-cols-2 gap-2 border-t border-line bg-paper/60 p-3">
+      {/* What a family actually opens this card for is the medicines and the readings. Everything else
+          is occasional, so it sits below at half the weight instead of competing as an equal. */}
+      <nav className="border-t border-line bg-paper/60 p-3">
+        <div className="grid grid-cols-2 gap-2">
+          {[
+            { to: `${base}/medicines`, icon: Pill, label: t("action.medicines") },
+            { to: `${base}/checks`, icon: Activity, label: t("action.checks") },
+          ].map(({ to, icon: Icon, label }) => (
+            <Link
+              key={to}
+              to={to}
+              className="pressable inline-flex min-h-14 items-center gap-2.5 rounded-xl bg-indigo px-4 text-[15.5px] font-semibold text-white shadow-[0_8px_20px_-12px_rgb(37_35_110/0.9)]"
+            >
+              <Icon aria-hidden className="size-5" strokeWidth={2.25} />
+              <span lang={lang}>{label}</span>
+            </Link>
+          ))}
+        </div>
+        <div className="mt-2 grid grid-cols-2 gap-2">
         {[
-          { to: `${base}/medicines`, icon: Pill, label: t("action.medicines") },
-          { to: `${base}/checks`, icon: Activity, label: t("action.checks") },
           { to: `${base}/report`, icon: FileText, label: t("action.report") },
           { to: `${base}/settings`, icon: Settings, label: t("action.settings") },
           { to: "/people", icon: Users, label: t("action.people") },
         ].map(({ to, icon: Icon, label }) => (
-          <Link key={to} to={to} className="pressable inline-flex min-h-11 items-center gap-2 rounded-xl bg-surface px-3 text-[14.5px] font-semibold ring-1 ring-line hover:ring-line-strong">
-            <Icon aria-hidden className="size-4.5 text-indigo-soft dark:text-ink" strokeWidth={2.25} />
+          <Link key={to} to={to} className="pressable inline-flex min-h-11 items-center gap-2 rounded-xl bg-surface px-3 text-[14px] font-medium text-muted ring-1 ring-line hover:text-ink hover:ring-line-strong">
+            <Icon aria-hidden className="size-4.5" strokeWidth={2.25} />
             <span lang={lang}>{label}</span>
           </Link>
         ))}
@@ -226,6 +242,7 @@ function TodayCard({ parent, fid, myLang }: { parent: ParentCard; fid: string; m
             {testState === "sent" ? t("action.testSent") : t("action.testLimit")}
           </p>
         )}
+        </div>
       </nav>
     </section>
   );

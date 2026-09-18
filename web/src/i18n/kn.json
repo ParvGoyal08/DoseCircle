@@ -363,7 +363,7 @@
     "checks.middle": {"text": "ಮಧ್ಯದ", "reviewedBy": null},
     "checks.readings": {"text": "ಅಳತೆಗಳು", "reviewedBy": null},
     "checks.enter": {"text": "ಅಳತೆ ಬರೆಯಿರಿ", "reviewedBy": null},
-    "people.title": {"text": "ಕುಟುಂಬದ ಸದಸ್ಯರು", "reviewedBy": null},
+    "people.title": {"text": "ನಿಮ್ಮ ಕುಟುಂಬ", "reviewedBy": null},
     "people.intro": {"text": "ಮಾಲೀಕರು ಜನರನ್ನು ಆಹ್ವಾನಿಸಬಹುದು, ತೆಗೆಯಬಹುದು ಮತ್ತು ಮೊದಲು ಯಾರಿಗೆ ಸೂಚನೆ ಹೋಗಬೇಕೆಂದು ಬದಲಿಸಬಹುದು.", "reviewedBy": null},
     "people.you": {"text": "ನೀವು", "reviewedBy": null},
     "people.owner": {"text": "ಮಾಲೀಕ", "reviewedBy": null},
@@ -383,7 +383,7 @@
     "people.dangerConfirmLabel": {"text": "ದೃಢೀಕರಿಸಲು ಕುಟುಂಬದ ಹೆಸರನ್ನು ಬರೆಯಿರಿ", "reviewedBy": null},
     "people.dangerButton": {"text": "ಎಲ್ಲವನ್ನೂ ಅಳಿಸಿ", "reviewedBy": null},
     "action.checks": {"text": "ದಿನನಿತ್ಯದ ಅಳತೆಗಳು", "reviewedBy": null},
-    "action.people": {"text": "ಕುಟುಂಬದ ಸದಸ್ಯರು", "reviewedBy": null},
+    "action.people": {"text": "ನಿಮ್ಮ ಕುಟುಂಬ", "reviewedBy": null},
     "parent.today.allDone": {"text": "ಇಂದಿನ ಎಲ್ಲವೂ ಮುಗಿದಿದೆ.", "reviewedBy": null},
     "parent.today.nothingYet": {"text": "ಇನ್ನೂ ತೆಗೆದುಕೊಳ್ಳಲು ಏನೂ ಇಲ್ಲ.", "reviewedBy": null},
     "parent.today.noneToday": {"text": "ಇಂದು ತೆಗೆದುಕೊಳ್ಳಲು ಏನೂ ಇಲ್ಲ.", "reviewedBy": null},
@@ -412,6 +412,12 @@
     "parent.setup.rxConsent": {"text": "ಫೋಟೋವನ್ನು ಕಂಪ್ಯೂಟರ್ ಓದುತ್ತದೆ ಮತ್ತು ಅದು ಭಾರತದ ಹೊರಗೆ ಸಂಸ್ಕರಣೆಯಾಗಬಹುದು. ಏನನ್ನಾದರೂ ಉಳಿಸುವ ಮೊದಲು ನಿಮ್ಮ ಕುಟುಂಬ ಪ್ರತಿ ಸಾಲನ್ನೂ ಪರಿಶೀಲಿಸುತ್ತದೆ.", "reviewedBy": null},
     "parent.setup.skip": {"text": "ಇದನ್ನು ಬಿಟ್ಟುಬಿಡಿ", "reviewedBy": null},
     "parent.setup.finish": {"text": "ಮುಗಿಸಿ", "reviewedBy": null},
-    "parent.setup.step": {"text": "ಹಂತ", "reviewedBy": null}
+    "parent.setup.step": {"text": "ಹಂತ", "reviewedBy": null},
+    "people.dependentsTitle": {"text": "ಯಾರಿಗೆ ಜ್ಞಾಪನೆಗಳು ಬೇಕು", "reviewedBy": null},
+    "people.dependentsHelp": {"text": "ಇಲ್ಲಿರುವ ಪ್ರತಿಯೊಬ್ಬರಿಗೂ ತಮ್ಮದೇ ಭಾಷೆಯಲ್ಲಿ ತಮ್ಮದೇ ಜ್ಞಾಪನೆಗಳು, ತಮ್ಮದೇ ಔಷಧಿಗಳು ಮತ್ತು ತಮ್ಮದೇ ಡ್ಯಾಶ್‌ಬೋರ್ಡ್ ಸಿಗುತ್ತದೆ.", "reviewedBy": null},
+    "people.caregiversTitle": {"text": "ಯಾರಿಗೆ ಸೂಚನೆ ಹೋಗುತ್ತದೆ", "reviewedBy": null},
+    "people.phoneConnected": {"text": "ಫೋನ್ ಸಂಪರ್ಕಗೊಂಡಿದೆ", "reviewedBy": null},
+    "people.phoneMissing": {"text": "ಫೋನ್ ಇನ್ನೂ ಸಂಪರ್ಕಗೊಂಡಿಲ್ಲ", "reviewedBy": null},
+    "people.openDashboard": {"text": "ಅವರ ಡ್ಯಾಶ್‌ಬೋರ್ಡ್ ತೆರೆಯಿರಿ", "reviewedBy": null}
   }
 }
