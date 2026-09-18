@@ -45,6 +45,40 @@ Three lines a day: what was new, what broke, how we fixed it. This becomes the "
 - **A development-only mock must be excluded deliberately.** Guarding it with a constant wasn't enough; the
   bundler still emitted the chunk until the dynamic import itself was wrapped in `import.meta.env.DEV`.
 
+**What the first real deployment taught us**
+
+Four bugs that only existed on AWS. Every one of them had passed 173 local tests and a full
+click-through of the local preview.
+
+- **An API Gateway stage does not wait for its own routes.** The very first deploy failed with
+  "Unable to find Route by key POST /families/{fid}/parents/{pid}/test-dose": CloudFormation
+  validates each per-route throttle against the routes that exist, and it creates the stage and the
+  54 routes in parallel. CDK adds no dependency because its own L2 stage has no per-route settings.
+  The fix is one loop adding all 54 routes as dependencies, and there is now a test asserting it.
+- **A rolled-back first create cannot be updated.** `ROLLBACK_COMPLETE` on an initial create has to
+  be deleted before you can try again — worth knowing when the clock is running.
+- **`Intl.DateTimeFormat` built per call is a memory leak on Lambda.** Roughly one dashboard request
+  in five returned 500 after exactly the 20-second timeout, with no log line at all. Memory told the
+  story: a warm container climbed 303 → 465 → 627 → 786 → 941 → 1022 MB over a handful of requests
+  and then stalled on the one that hit the limit. The formatters were being constructed inside date
+  helpers that run for every dose on several passes; each one holds native ICU memory, and because
+  V8's own heap stays small it never feels the pressure that would trigger a collection. Hoisting
+  them to module scope fixed it: memory is now flat at 169 MB and the request went from 2.5–6
+  seconds to **0.25 seconds**. Raising the memory limit first looked like a fix and was not — it
+  just moved the wall, which is exactly how a leak disguises itself as a capacity problem.
+- **Metrics recorded and never published.** Every authorization adds a metric, but only some
+  handlers flushed, so the Cedar allow/deny counts never reached the dashboard from read-only
+  routes. Flushing once per invocation in the router fixed both that and a slowly growing buffer.
+
+Two things that were working correctly and looked like bugs, which is its own lesson: a Kannada
+screen failing an English string assertion, and the demo's own abuse cap locking us out after ten
+sessions from one address. The second one did prompt a real change — ten per address would have
+locked out the eleventh judge behind a venue's shared connection, so it is forty now.
+
+Also worth recording: a brand-new AWS account has a much lower Polly rate limit than a mature one.
+Generating eight short phrases back to back was throttled after about three, so the build-time
+script now paces itself and backs off.
+
 **Adding daily checks and family management**
 - **A Choice state was the whole feature.** Generalising "reminder about medicines" to "reminder about
   medicines and readings" needed one new branch, `ShouldAlertFamily`, so a forgotten weigh-in is recorded

@@ -61,8 +61,11 @@ export interface ReadingsInput {
 
 const DAY_MS = 86_400_000;
 
+// Built once: a formatter per call holds native ICU memory that V8 will not collect in time.
+const IST_DATE = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kolkata", year: "numeric", month: "2-digit", day: "2-digit" });
+
 function istDateOf(iso: string): string {
-  return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kolkata", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(iso));
+  return IST_DATE.format(new Date(iso));
 }
 
 const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];

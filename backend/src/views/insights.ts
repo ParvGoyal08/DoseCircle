@@ -77,17 +77,27 @@ export interface Insights {
 const DAY_MS = 86_400_000;
 const TZ = "Asia/Kolkata";
 
+/**
+ * Built once, not per call. `Intl.DateTimeFormat` holds native ICU memory that V8 has no reason to
+ * collect promptly, and these run for every dose on several passes. Constructing them inside the
+ * helpers leaked well over a hundred megabytes per request on Lambda: a warm container climbed to
+ * its memory limit over a handful of dashboard loads and then stalled until the timeout.
+ */
+const IST_DATE = new Intl.DateTimeFormat("en-CA", { timeZone: TZ, year: "numeric", month: "2-digit", day: "2-digit" });
+const IST_HHMM = new Intl.DateTimeFormat("en-GB", { timeZone: TZ, hour: "2-digit", minute: "2-digit", hourCycle: "h23" });
+const IST_WEEKDAY = new Intl.DateTimeFormat("en-US", { timeZone: TZ, weekday: "short" });
+const WEEKDAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
 export function istDateOf(iso: string | number | Date): string {
-  return new Intl.DateTimeFormat("en-CA", { timeZone: TZ, year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(iso));
+  return IST_DATE.format(new Date(iso));
 }
 
 function istHhmm(iso: string): string {
-  return new Intl.DateTimeFormat("en-GB", { timeZone: TZ, hour: "2-digit", minute: "2-digit", hourCycle: "h23" }).format(new Date(iso)).replace(":", "");
+  return IST_HHMM.format(new Date(iso)).replace(":", "");
 }
 
 function istWeekday(iso: string): number {
-  const name = new Intl.DateTimeFormat("en-US", { timeZone: TZ, weekday: "short" }).format(new Date(iso));
-  return ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].indexOf(name);
+  return WEEKDAY_NAMES.indexOf(IST_WEEKDAY.format(new Date(iso)));
 }
 
 function minutesBetween(from: string, to: string): number {

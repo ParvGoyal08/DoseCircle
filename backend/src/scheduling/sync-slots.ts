@@ -9,13 +9,13 @@ import {
 } from "@aws-sdk/client-scheduler";
 import { DeleteCommand, PutCommand, QueryCommand } from "@aws-sdk/lib-dynamodb";
 import { DEFAULT_SLOT_TIMES, isDemoFamily, keys, type SlotName } from "@dosecircle/shared";
-import { ddb, logger } from "../lib/aws.js";
+import { ddb, FAST_CLIENT_CONFIG, logger } from "../lib/aws.js";
 import { env, requireEnv } from "../lib/env.js";
 import type { CheckItem, MedicineItem, ParentItem, SlotItem } from "../lib/model.js";
 import { getParent } from "../lib/repository.js";
 import { dailyCron, desiredSlots, diffSlots, istDate, scheduleName, type DesiredSlot } from "./plan.js";
 
-const scheduler = new SchedulerClient({});
+const scheduler = new SchedulerClient(FAST_CLIENT_CONFIG);
 
 async function listByPrefix<T>(pk: string, prefix: string): Promise<T[]> {
   const items: T[] = [];

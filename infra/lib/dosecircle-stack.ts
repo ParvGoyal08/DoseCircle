@@ -1,5 +1,5 @@
 import { ArnFormat, CfnOutput, Duration, RemovalPolicy, Stack, type StackProps } from "aws-cdk-lib";
-import { CorsHttpMethod, CfnStage, HttpApi, HttpMethod } from "aws-cdk-lib/aws-apigatewayv2";
+import { CorsHttpMethod, CfnRoute, CfnStage, HttpApi, HttpMethod } from "aws-cdk-lib/aws-apigatewayv2";
 import { HttpLambdaAuthorizer, HttpLambdaResponseType, HttpUserPoolAuthorizer } from "aws-cdk-lib/aws-apigatewayv2-authorizers";
 import { HttpLambdaIntegration } from "aws-cdk-lib/aws-apigatewayv2-integrations";
 import { AccountRecovery, FeaturePlan, UserPool, UserPoolEmail } from "aws-cdk-lib/aws-cognito";
@@ -342,6 +342,13 @@ export class DoseCircleStack extends Stack {
       "POST /families/{fid}/parents/{pid}/test-dose": { ThrottlingRateLimit: 1, ThrottlingBurstLimit: 2 },
       "POST /families/{fid}/prescriptions": { ThrottlingRateLimit: 1, ThrottlingBurstLimit: 3 },
     };
+    // CloudFormation validates every key in routeSettings against the routes that already exist, and
+    // it creates the stage and the routes in parallel. Without this the first deploy fails with
+    // "Unable to find Route by key ...". CDK does not add the dependency itself, because its own L2
+    // stage only supports stage-wide limits.
+    for (const route of api.node.findAll().filter((child): child is CfnRoute => child instanceof CfnRoute)) {
+      stage.addDependency(route);
+    }
 
     new Observability(this, "Observability", {
       api,

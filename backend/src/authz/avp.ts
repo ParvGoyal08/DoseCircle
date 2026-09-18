@@ -4,12 +4,12 @@ import {
   type AttributeValue,
   type EntityItem,
 } from "@aws-sdk/client-verifiedpermissions";
-import { logger, metrics } from "../lib/aws.js";
+import { FAST_CLIENT_CONFIG, logger, metrics } from "../lib/aws.js";
 import { requireEnv } from "../lib/env.js";
 import { ForbiddenError } from "../lib/principal.js";
 import { actionUid, entityList, NAMESPACE, type AuthorizationRequest, type CedarValue } from "./entities.js";
 
-const client = new VerifiedPermissionsClient({});
+const client = new VerifiedPermissionsClient(FAST_CLIENT_CONFIG);
 
 /** Converts a Cedar JSON value to the Verified Permissions attribute shape. */
 export function toAttributeValue(value: CedarValue): AttributeValue {

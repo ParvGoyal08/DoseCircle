@@ -9,8 +9,8 @@ told to stand down.
 
 Built for WeMakeDevs × AWS **First Commit** (Bharat Builds Tour), 17–20 September 2026.
 
-- **Live URL:** _added after deployment_
-- **Judge demo:** `/demo` — a fictional family, three phones side by side, each in its owner's language,
+- **Live URL:** <https://main.d38ff1sjrywo9e.amplifyapp.com>
+- **Judge demo:** <https://main.d38ff1sjrywo9e.amplifyapp.com/demo> — a fictional family, three phones side by side, each in its owner's language,
   running the real AWS workflow at 60× speed.
 
 > Reminders and family alerts only. DoseCircle does not give medical advice.

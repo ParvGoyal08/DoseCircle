@@ -269,6 +269,15 @@ function DemoDashboard({ session, lastReceiptAt }: { session: DemoSession; lastR
           <InsightsHero parentName={session.parent.displayName} lastReceiptAt={lastReceiptAt} insights={insights.data} days={days} onDays={setDays} lang="en" />
           <InsightsGrid insights={insights.data} lang="en" />
         </>
+      ) : insights.error ? (
+        // Without this the skeleton pulses for ever and a judge has no idea anything went wrong.
+        <div className="sticker bg-surface p-6">
+          <p className="text-lg font-semibold text-missed">The analytics could not be loaded.</p>
+          <p className="mt-1 text-[15px] text-muted">{insights.error.message}</p>
+          <Button tone="quiet" className="mt-4" onClick={() => void insights.reload()}>
+            Try again
+          </Button>
+        </div>
       ) : (
         <div className="hero-surface h-80 animate-pulse rounded-[24px]" />
       )}

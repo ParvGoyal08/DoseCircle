@@ -19,7 +19,8 @@ import { MedicineInputSchema } from "../../lib/schemas.js";
 import { istDate } from "../../scheduling/plan.js";
 import { createMedicines } from "./medicines.js";
 
-const s3 = new S3Client({});
+// Presigning is local, but a stale socket on the HeadObject/GetObject calls must not hang.
+const s3 = new S3Client({ maxAttempts: 4, requestHandler: { connectionTimeout: 1_000, requestTimeout: 10_000 } });
 
 /** Textract accepts up to 10 MB; the app sends a 2400px JPEG. */
 export const MAX_ORIGINAL_BYTES = 5 * 1024 * 1024;

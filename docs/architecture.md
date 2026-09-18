@@ -2,7 +2,7 @@
 
 Everything runs in **ap-south-1 (Mumbai)** and is defined in one CDK stack (`infra/lib/dosecircle-stack.ts`),
 deployed as the CloudFormation stack `DoseCircle`. There are 12 Lambda functions, 54 HTTP API routes and one
-DynamoDB table (210 resources in all).
+DynamoDB table (212 resources in the deployed stack).
 
 ## The dose loop
 

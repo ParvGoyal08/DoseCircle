@@ -8,9 +8,14 @@ import { ddb, logger, metrics } from "../lib/aws.js";
 import { env, requireEnv } from "../lib/env.js";
 import { runExtraction } from "./pipeline.js";
 
-const s3 = new S3Client({});
-const textract = new TextractClient({});
-const bedrock = new BedrockRuntimeClient({});
+/**
+ * Reading a prescription is genuinely slow — Textract a second or two, Claude ten or more — so these
+ * get generous request timeouts rather than the short ones in lib/aws.ts. They still set *some*
+ * timeout, so a dropped keep-alive socket fails and retries instead of hanging until the Lambda dies.
+ */
+const s3 = new S3Client({ maxAttempts: 4, requestHandler: { connectionTimeout: 1_000, requestTimeout: 10_000 } });
+const textract = new TextractClient({ maxAttempts: 3, requestHandler: { connectionTimeout: 1_000, requestTimeout: 20_000 } });
+const bedrock = new BedrockRuntimeClient({ maxAttempts: 2, requestHandler: { connectionTimeout: 2_000, requestTimeout: 60_000 } });
 
 const KEY = /^rx\/([a-z0-9-]+)\/(rx-[a-f0-9]+)\/original\.jpg$/;
 

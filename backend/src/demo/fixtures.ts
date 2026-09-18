@@ -12,6 +12,9 @@ export const DEMO_PEOPLE = {
   daughter: { displayName: "Meera", relation: "Daughter", lang: "hi" as LanguageCode, city: "Pune" },
 };
 
+// Built once: a formatter per call holds native ICU memory that V8 will not collect in time.
+const IST_DAY = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kolkata", year: "numeric", month: "2-digit", day: "2-digit" });
+
 const HOUR = 3600 * 1000;
 const DAY = 24 * HOUR;
 export const HISTORY_DAYS = 30;
@@ -228,6 +231,6 @@ export function buildDemoSeed(input: { sid: string; now: number; ttl: number }):
 
 /** Epoch ms for hour:00 IST on the Indian day containing `epochMs`. */
 export function istTime(epochMs: number, hour: number): number {
-  const date = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kolkata", year: "numeric", month: "2-digit", day: "2-digit" }).format(new Date(epochMs));
+  const date = IST_DAY.format(new Date(epochMs));
   return Date.parse(`${date}T${String(hour).padStart(2, "0")}:00:00+05:30`);
 }

@@ -99,16 +99,19 @@ export function dailyCron(compactTime: string): string {
   return `cron(${Number(match[2])} ${Number(match[1])} * * ? *)`;
 }
 
+// Built once, not per call: every Intl.DateTimeFormat holds native ICU memory.
+const IST_DATE = new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kolkata", year: "numeric", month: "2-digit", day: "2-digit" });
+const IST_WEEKDAY = new Intl.DateTimeFormat("en-US", { timeZone: "Asia/Kolkata", weekday: "short" });
+const IST_WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
 /** Today's date in India as "yyyy-MM-dd". */
 export function istDate(date = new Date()): string {
-  return new Intl.DateTimeFormat("en-CA", { timeZone: "Asia/Kolkata", year: "numeric", month: "2-digit", day: "2-digit" }).format(date);
+  return IST_DATE.format(date);
 }
-
-const IST_WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 /** The day of the week in India, 0 = Sunday, for checks that only run on some days. */
 export function istWeekday(date = new Date()): number {
-  const short = new Intl.DateTimeFormat("en-US", { timeZone: "Asia/Kolkata", weekday: "short" }).format(date);
+  const short = IST_WEEKDAY.format(date);
   const index = IST_WEEKDAYS.indexOf(short);
   if (index < 0) throw new Error(`Unrecognised weekday "${short}"`);
   return index;

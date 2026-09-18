@@ -2,12 +2,12 @@ import { DeleteScheduleCommand, ResourceNotFoundException, SchedulerClient } fro
 import { DeleteCommand, QueryCommand } from "@aws-sdk/lib-dynamodb";
 import { isDemoFamily } from "@dosecircle/shared";
 import { scheduleName } from "../scheduling/plan.js";
-import { ddb, logger } from "./aws.js";
+import { ddb, FAST_CLIENT_CONFIG, logger } from "./aws.js";
 import { env, requireEnv } from "./env.js";
 import type { DeviceItem, DoseItem, MemberItem, ParentItem } from "./model.js";
 import { listParentDevices, listParents } from "./repository.js";
 
-const scheduler = new SchedulerClient({});
+const scheduler = new SchedulerClient(FAST_CLIENT_CONFIG);
 
 async function itemsUnder(pk: string): Promise<{ PK: string; SK: string }[]> {
   const items: { PK: string; SK: string }[] = [];

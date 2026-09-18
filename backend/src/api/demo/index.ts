@@ -20,10 +20,19 @@ import { openAlerts } from "../../views/dashboard.js";
 import { getInsights, getReport, getTimeline } from "../family/insights.js";
 import { doseView } from "../parent/index.js";
 
+// Built once: a formatter per call holds native ICU memory that V8 will not collect in time.
+const IST_HOUR = new Intl.DateTimeFormat("en-GB", { timeZone: "Asia/Kolkata", hour: "2-digit", hourCycle: "h23" });
+
 const SESSION_HOURS = 2;
 const MAX_RUNS_PER_SESSION = 20;
 const MAX_SESSIONS_PER_DAY = 300;
-const MAX_SESSIONS_PER_IP_PER_DAY = 10;
+/**
+ * Per caller, not per person: judges at one venue share a NAT address, and at ten the eleventh
+ * person to open the demo would have been locked out by the first ten. Forty keeps a shared network
+ * working while a single abuser still cannot get far — each session is capped at 20 doses, expires
+ * after two hours, and the daily total above is the real ceiling.
+ */
+const MAX_SESSIONS_PER_IP_PER_DAY = 40;
 
 interface DemoSession {
   PK: string;
@@ -130,7 +139,7 @@ async function startDose(event: APIGatewayProxyEventV2) {
   // Use whichever of the fictional family's two slots fits the current time in India, so the
   // reminder's time of day matches the clock on the judge's screen. The night slot includes insulin,
   // which is the critical medicine.
-  const istHour = Number(new Intl.DateTimeFormat("en-GB", { timeZone: "Asia/Kolkata", hour: "2-digit", hourCycle: "h23" }).format(new Date()));
+  const istHour = Number(IST_HOUR.format(new Date()));
   const slot = critical || istHour >= 15 || istHour < 4 ? "2100" : "0800";
   const doseId = makeDoseId(session.pid, istDoseStamp(new Date(scheduledTime)), runs);
   const execution = await sfn.send(

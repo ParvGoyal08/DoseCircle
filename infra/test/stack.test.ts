@@ -130,6 +130,17 @@ describe("DoseCircleStack", () => {
     for (const key of Object.keys(stage.Properties.RouteSettings)) expect(routeKeys).toContain(key);
   });
 
+  it("creates the stage only after its routes, so RouteSettings can resolve", () => {
+    // CloudFormation validates each RouteSettings key against the routes that already exist. It
+    // creates the stage and the routes in parallel, so without an explicit dependency the first
+    // deploy fails with "Unable to find Route by key ...". This caught it on a real deploy once.
+    const routes = template.findResources("AWS::ApiGatewayV2::Route");
+    const [stageId, stage] = Object.entries(template.findResources("AWS::ApiGatewayV2::Stage"))[0]!;
+    const dependsOn: string[] = [stage.DependsOn ?? []].flat();
+    const missing = Object.keys(routes).filter((routeId) => !dependsOn.includes(routeId));
+    expect(missing, `${stageId} must depend on every route`).toEqual([]);
+  });
+
   it("serves exactly the routes each backend router handles", () => {
     const routerKeys = (file: string, name: string) => {
       const source = readFileSync(new URL(`../../backend/src/api/${file}`, import.meta.url), "utf8");
