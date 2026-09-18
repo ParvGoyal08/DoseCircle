@@ -21,6 +21,8 @@
     "push.broadcast.body.check": {"text": "छूटी हुई जाँच पर अभी तक किसी ने जवाब नहीं दिया है।", "reviewedBy": null},
     "push.standDown.body": {"text": "ये छूटी हुई दवा का ध्यान रख रहे हैं। आपको कुछ करने की ज़रूरत नहीं है।", "reviewedBy": null},
     "push.tookLate.body": {"text": "अब दवा लेने की पुष्टि हो गई है।", "reviewedBy": null},
-    "push.refill.body": {"text": "यह दवा खत्म होने वाली है। कृपया दोबारा मँगवा लें।", "reviewedBy": null}
+    "push.refill.body": {"text": "यह दवा खत्म होने वाली है। कृपया दोबारा मँगवा लें।", "reviewedBy": null},
+    "push.rx.ready.body": {"text": "एक नई पर्ची की फ़ोटो जाँच के लिए तैयार है। जब तक आप हर पंक्ति की पुष्टि नहीं करते, कुछ भी सहेजा नहीं जाता।", "reviewedBy": null},
+    "push.rx.confirmed.body": {"text": "पर्ची से दवाएँ बदली गई हैं। कृपया सूची देख लें।", "reviewedBy": null}
   }
 }

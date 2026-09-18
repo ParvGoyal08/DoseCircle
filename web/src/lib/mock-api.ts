@@ -646,6 +646,16 @@ async function handle(pathWithQuery: string, method: string, body: Body): Promis
     }
     return { status: s.dose.status };
   }
+  if (route === "PUT /parent/name") {
+    s.parents[0] = { ...theParent(), displayName: String(body!.displayName) };
+    return { displayName: theParent().displayName };
+  }
+  if (route === "POST /parent/prescriptions") {
+    const rxId = id("rx");
+    s.prescriptions[rxId] = { pid: theParent().pid, confirmed: false };
+    const upload = { url: "mock://upload", fields: {} };
+    return { rxId, uploads: { model: upload, original: upload }, uploadOrder: ["model", "original"], expiresInSeconds: 300 };
+  }
   if (route === "PUT /parent/lang") {
     theParent().lang = body!.lang as LanguageCode;
     return { lang: theParent().lang };

@@ -146,6 +146,14 @@ describe("who can do what", () => {
     expect(decide(request(rohan, "ClaimDose", pending)).allowed).toBe(false);
   });
 
+  it("lets a parent's phone start a prescription for its own family, and no other", () => {
+    expect(decide(request(phone, "UploadPrescription", family)).allowed).toBe(true);
+    expect(decide(request(phone, "UploadPrescription", otherFamily)).allowed).toBe(false);
+    expect(decide(request(revokedPhone, "UploadPrescription", family)).allowed).toBe(false);
+    // Starting the reading is not the same as finishing it: only members confirm the rows.
+    expect(() => decide(request(phone, "ReviewPrescription", rx))).toThrow(/not valid for/);
+  });
+
   it("lets members view doses and timelines, and review prescriptions, in their family only", () => {
     expect(decide(request(asha, "ViewTimeline", escalatingDose)).allowed).toBe(true);
     expect(decide(request(stranger, "ViewDose", escalatingDose)).allowed).toBe(false);

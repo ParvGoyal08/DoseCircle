@@ -21,6 +21,8 @@
     "push.broadcast.body.check": {"text": "Nobody has responded to the missing reading yet.", "reviewedBy": "source"},
     "push.standDown.body": {"text": "They are taking care of the missed medicine. You do not need to do anything.", "reviewedBy": "source"},
     "push.tookLate.body": {"text": "The medicine has now been confirmed as taken.", "reviewedBy": "source"},
-    "push.refill.body": {"text": "This medicine is running low. Please arrange a refill.", "reviewedBy": "source"}
+    "push.refill.body": {"text": "This medicine is running low. Please arrange a refill.", "reviewedBy": "source"},
+    "push.rx.ready.body": {"text": "A new prescription photo is waiting to be checked. Nothing is saved until you confirm every line.", "reviewedBy": "source"},
+    "push.rx.confirmed.body": {"text": "The medicines have been updated from a prescription. Please check the list.", "reviewedBy": "source"}
   }
 }

@@ -7,39 +7,12 @@ import { Button, Card, cx } from "../../components/ui";
 import { useT } from "../../i18n";
 import { api, ApiError } from "../../lib/api";
 import { RequireFamily } from "../../lib/family";
+import { toJpeg, upload, VARIANTS } from "../../lib/prescription-upload";
 import type { Prescription, PresignedPost } from "../../lib/types";
 
 export function PrescriptionPage() {
   const { pid = "" } = useParams();
   return <RequireFamily>{(me) => <PrescriptionFlow fid={me.fid} pid={pid} lang={me.lang} />}</RequireFamily>;
-}
-
-/** Textract wants detail (≤2400px); Claude's image limit is 3.75 MB and 1568px is its sweet spot. */
-const VARIANTS = { original: { edge: 2400, maxBytes: 5 * 1024 * 1024 }, model: { edge: 1568, maxBytes: 3.75 * 1024 * 1024 } } as const;
-
-async function toJpeg(file: File, edge: number, maxBytes: number): Promise<Blob> {
-  const bitmap = await createImageBitmap(file, { imageOrientation: "from-image" });
-  const scale = Math.min(1, edge / Math.max(bitmap.width, bitmap.height));
-  const canvas = document.createElement("canvas");
-  canvas.width = Math.round(bitmap.width * scale);
-  canvas.height = Math.round(bitmap.height * scale);
-  canvas.getContext("2d")!.drawImage(bitmap, 0, 0, canvas.width, canvas.height);
-  bitmap.close();
-  for (const quality of [0.9, 0.8, 0.7, 0.6]) {
-    const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/jpeg", quality));
-    if (blob && blob.size <= maxBytes) return blob;
-  }
-  throw new Error("The photo is too large even after resizing.");
-}
-
-async function upload(post: PresignedPost, blob: Blob) {
-  // The local preview has no S3 bucket to upload to.
-  if (post.url.startsWith("mock://")) return;
-  const form = new FormData();
-  for (const [key, value] of Object.entries(post.fields)) form.append(key, value);
-  form.append("file", blob, "photo.jpg");
-  const response = await fetch(post.url, { method: "POST", body: form });
-  if (!response.ok) throw new Error(`Upload failed (${response.status})`);
 }
 
 type Step = "consent" | "choose" | "upload" | "reading" | "review" | "failed" | "saved";

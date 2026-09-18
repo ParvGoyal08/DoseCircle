@@ -1,4 +1,4 @@
-export type PushStep = "REMIND" | "NUDGE" | "ALERT" | "BROADCAST" | "STAND_DOWN" | "TOOK_LATE" | "REFILL";
+export type PushStep = "REMIND" | "NUDGE" | "ALERT" | "BROADCAST" | "STAND_DOWN" | "TOOK_LATE" | "REFILL" | "RX_READY" | "RX_CONFIRMED";
 
 export interface PushPayload {
   /** Notification title; may contain a name (names are never inserted into regional sentences). */

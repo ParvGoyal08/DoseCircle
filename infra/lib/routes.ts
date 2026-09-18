@@ -46,7 +46,9 @@ export const PARENT_ROUTE_KEYS = [
   "GET /parent/today",
   "GET /parent/doses/{doseId}",
   "POST /parent/readings",
+  "POST /parent/prescriptions",
   "POST /parent/push/subscription",
+  "PUT /parent/name",
   "PUT /parent/lang",
 ] as const;
 

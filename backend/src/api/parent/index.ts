@@ -15,10 +15,11 @@ import { PushSubscriptionSchema } from "../../lib/push-endpoints.js";
 import { takeFromBudget } from "../../lib/rate-limit.js";
 import { get, getDose, getParent, listDoses } from "../../lib/repository.js";
 import { router } from "../../lib/router.js";
-import { LanguageSchema, ReadingInputSchema } from "../../lib/schemas.js";
+import { DisplayNameSchema, LanguageSchema, ReadingInputSchema } from "../../lib/schemas.js";
 import { istDate, istWeekday } from "../../scheduling/plan.js";
 import { listChecks, listMedicines, listSlots } from "../../scheduling/sync-slots.js";
 import { listReadings, recordReading } from "../family/checks.js";
+import { startPrescription } from "../family/prescriptions.js";
 
 const PairSchema = z.object({ code: z.string().min(6).max(20) });
 
@@ -241,12 +242,48 @@ async function addParentReading(event: APIGatewayProxyEventV2) {
   return json(201, { reading: { checkId: reading.checkId, type: reading.type, values: reading.values, at: reading.at, text: formatReading(reading.type, reading.values) } });
 }
 
+const NameBody = z.object({ displayName: DisplayNameSchema });
+
+/** PUT /parent/name — the parent says what they are called, during setup or later. */
+async function setName(event: APIGatewayProxyEventV2) {
+  const { parent } = await requireParent(event);
+  const { displayName } = parseBody(event, NameBody);
+  await ddb.send(
+    new UpdateCommand({ TableName: env.tableName, Key: { PK: parent.PK, SK: parent.SK }, UpdateExpression: "SET displayName = :name", ExpressionAttributeValues: { ":name": displayName } }),
+  );
+  return json(200, { displayName });
+}
+
+/**
+ * POST /parent/prescriptions — the parent photographs their own prescription.
+ *
+ * They can start the reading but never finish it: the draft still goes to the family, and a family
+ * member has to tick every line before a single medicine is saved. That keeps the confirmation with
+ * the person best placed to check it against the paper.
+ */
+async function uploadPrescription(event: APIGatewayProxyEventV2) {
+  const { parent, principal } = await requireParent(event);
+  if (principal.kind !== "device") throw new HttpError(403, "Only a paired phone can do this");
+  // The parent agreed on their own screen that the photo is read by AI, possibly outside India.
+  parseBody(event, z.object({ consent: z.literal(true) }));
+  await authorize({
+    principal: devicePrincipal(principal, parent.pid),
+    action: "UploadPrescription",
+    resource: familyEntity(parent.fid),
+    entities: [parentEntity(parent)],
+  });
+  const started = await startPrescription(parent.fid, parent.pid, `parent:${principal.deviceId}`);
+  return json(201, started);
+}
+
 export const PARENT_ROUTES = {
   "POST /parent/pair": pair,
   "GET /parent/today": today,
   "GET /parent/doses/{doseId}": doseScreen,
   "POST /parent/readings": addParentReading,
+  "POST /parent/prescriptions": uploadPrescription,
   "POST /parent/push/subscription": saveSubscription,
+  "PUT /parent/name": setName,
   "PUT /parent/lang": setLanguage,
 } as const;
 

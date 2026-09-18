@@ -58,9 +58,12 @@ export async function createInvite(event: APIGatewayProxyEventV2) {
     ttl: ttlInHours(48),
   };
   await ddb.send(new PutCommand({ TableName: env.tableName, Item: invite, ConditionExpression: "attribute_not_exists(PK)" }));
-  // The code travels in the URL fragment, so it never reaches server or CDN logs.
+  // The code travels in the URL fragment, so it never reaches server or CDN logs. A parent invite
+  // carries the language the family chose too, so the first screen the parent sees is already in
+  // their own script rather than a picker they cannot read.
   const path = body.kind === "parent" ? "/join" : "/invite";
-  return json(201, { code, link: `${env.appOrigin}${path}#c=${code}`, expiresAt });
+  const lang = body.kind === "parent" ? `&l=${(await getParent(fid, body.pid))?.lang ?? "en"}` : "";
+  return json(201, { code, link: `${env.appOrigin}${path}#c=${code}${lang}`, expiresAt });
 }
 
 const LadderSchema = z.object({ memberIds: z.array(z.string().min(1).max(40)).min(1).max(20) });

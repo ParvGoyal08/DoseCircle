@@ -1,6 +1,6 @@
-import type { LanguageCode } from "@dosecircle/shared";
-import { Bell, BellOff, CheckCheck, ChevronRight, Globe, Loader2 } from "lucide-react";
-import { useEffect, useState } from "react";
+import { LANGUAGES, type LanguageCode } from "@dosecircle/shared";
+import { Bell, BellOff, Camera, CheckCheck, ChevronRight, Globe, Loader2 } from "lucide-react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, Navigate, useNavigate, useParams } from "react-router";
 import { InstallGuide } from "../../components/InstallGuide";
 import { defaultLanguage, LanguagePicker } from "../../components/LanguagePicker";
@@ -12,7 +12,8 @@ import { api, ApiError, mockApiEnabled } from "../../lib/api";
 import { pairedDevice, pairPhone, updateStoredLanguage } from "../../lib/device";
 import { formatCount } from "../../lib/format";
 import { enableReminders, isStandalone, keepSubscriptionFresh, pushSupport } from "../../lib/push";
-import type { DoseView, ParentToday } from "../../lib/types";
+import { uploadBoth } from "../../lib/prescription-upload";
+import type { DoseView, ParentToday, PresignedPost } from "../../lib/types";
 import { useApi } from "../../lib/useApi";
 
 function codeFromFragment(): string {
@@ -68,16 +69,36 @@ function RemindersCard({ lang: viewerLang }: { lang: string }) {
   );
 }
 
-/** /join#c=CODE — language first, then install, then the code, then permission. */
+function fragment(key: string): string {
+  return new URLSearchParams(window.location.hash.slice(1)).get(key) ?? "";
+}
+
+/**
+ * /join#c=CODE&l=kn — the dependent's whole setup: scan, name, an optional prescription, done.
+ *
+ * Three things this deliberately does not do. It does not open on a language picker: the family
+ * already chose one and it rides in the link, so the first words are in the reader's own script.
+ * It does not make them type a code that is already in the link. And it does not gate connecting
+ * behind installing to the home screen — that used to hide the code entry completely, so a parent
+ * who could not install was stuck and the family saw no sign the link had even arrived. Connecting
+ * is what tells the family it worked, so it happens first and install is offered afterwards.
+ */
 export function JoinPage() {
   const navigate = useNavigate();
-  const [chosen, setChosen] = useState<LanguageCode | null>(() => pairedDevice()?.lang ?? defaultLanguage());
+  const linkLang = fragment("l");
+  const [chosen, setChosen] = useState<LanguageCode | null>(
+    () => pairedDevice()?.lang ?? (LANGUAGES.some((l) => l.code === linkLang) ? (linkLang as LanguageCode) : defaultLanguage()),
+  );
   const { t, lang } = useT(chosen ?? "en");
   const [code, setCode] = useState(codeFromFragment);
-  const [status, setStatus] = useState<"idle" | "busy" | "invalid" | "done">(pairedDevice() ? "done" : "idle");
+  const [step, setStep] = useState<"connect" | "name" | "prescription" | "done">(pairedDevice() ? "name" : "connect");
+  const [status, setStatus] = useState<"idle" | "busy" | "invalid">("idle");
+  const [name, setName] = useState("");
+  const [savingName, setSavingName] = useState(false);
   const needsInstall = pushSupport() === "needs-install" && !isStandalone();
+  const tried = useRef(false);
 
-  const connect = async () => {
+  const connect = useCallback(async () => {
     setStatus("busy");
     try {
       const device = await pairPhone(code);
@@ -86,67 +107,191 @@ export function JoinPage() {
         await api("/parent/lang", { method: "PUT", auth: "device", body: { lang: chosen } });
         updateStoredLanguage(chosen);
       }
-      setStatus("done");
+      setName(device.displayName ?? "");
+      setStatus("idle");
+      setStep("name");
     } catch (error) {
       setStatus(error instanceof ApiError && (error.status === 404 || error.status === 409 || error.status === 400) ? "invalid" : "idle");
+    }
+  }, [code, chosen]);
+
+  // A scanned QR carries the code, so there is nothing to type: connect straight away.
+  useEffect(() => {
+    if (tried.current || step !== "connect" || codeFromFragment().replace(/[^A-Z0-9]/g, "").length < 8) return;
+    tried.current = true;
+    void connect();
+  }, [step, connect]);
+
+  const saveName = async () => {
+    setSavingName(true);
+    try {
+      if (name.trim()) await api("/parent/name", { method: "PUT", auth: "device", body: { displayName: name.trim() } });
+      setStep("prescription");
+    } finally {
+      setSavingName(false);
     }
   };
 
   return (
     <div className="min-h-dvh bg-paper">
-    <main className="mx-auto flex max-w-xl flex-col gap-6 px-4 pb-10 pt-4">
-      <div className="flex items-center gap-2.5">
-        <Logo className="size-10" />
-        <span className="text-xl font-semibold tracking-tight">DoseCircle</span>
-      </div>
+      <main className="mx-auto flex max-w-xl flex-col gap-6 px-4 pb-10 pt-4">
+        <div className="flex items-center gap-2.5">
+          <Logo className="size-10" />
+          <span className="text-xl font-semibold tracking-tight">DoseCircle</span>
+        </div>
 
-      <LanguagePicker value={chosen} onChange={setChosen} large />
+        {step === "connect" && (
+          <>
+            <LanguagePicker value={chosen} onChange={setChosen} large />
+            {chosen && (
+              <section className="sticker bg-surface p-5">
+                <label htmlFor="code" lang={lang} className="block text-2xl font-semibold leading-snug">
+                  {t("parent.join.title")}
+                </label>
+                <input
+                  id="code"
+                  inputMode="text"
+                  autoCapitalize="characters"
+                  autoComplete="one-time-code"
+                  spellCheck={false}
+                  maxLength={12}
+                  value={code}
+                  onChange={(e) => setCode(e.target.value.toUpperCase())}
+                  aria-label={t("parent.join.codeLabel")}
+                  className="tabular mt-4 h-20 w-full rounded-2xl border border-line-strong bg-paper text-center font-mono text-4xl font-semibold tracking-[0.25em] focus:border-indigo focus:bg-surface focus:outline-none"
+                />
+                {status === "invalid" && (
+                  <p lang={lang} role="alert" className="mt-3 text-lg font-medium text-missed">
+                    {t("parent.join.invalid")}
+                  </p>
+                )}
+                <Button tone="ink" size="lg" className="mt-4 min-h-16 w-full text-xl" onClick={connect} disabled={code.replace(/[^A-Z0-9]/g, "").length < 8 || status === "busy"}>
+                  {status === "busy" && <Loader2 aria-hidden className="size-6 animate-spin" />}
+                  <span lang={lang}>{status === "busy" ? t("parent.setup.connecting") : t("parent.join.button")}</span>
+                </Button>
+              </section>
+            )}
+          </>
+        )}
 
-      {chosen && needsInstall && <InstallGuide lang={chosen} code={code || undefined} />}
+        {step === "name" && (
+          <section className="sticker bg-surface p-5">
+            <p lang={lang} className="mb-3 text-lg font-semibold text-taken">
+              {t("parent.join.done")}
+            </p>
+            <label htmlFor="parent-name" lang={lang} className="block text-2xl font-semibold leading-snug">
+              {t("parent.setup.nameTitle")}
+            </label>
+            <p lang={lang} className="mt-1 text-lg text-muted">
+              {t("parent.setup.nameHelp")}
+            </p>
+            <input
+              id="parent-name"
+              autoComplete="name"
+              maxLength={40}
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="mt-4 h-20 w-full rounded-2xl border border-line-strong bg-paper px-4 text-3xl font-semibold focus:border-indigo focus:bg-surface focus:outline-none"
+            />
+            <Button tone="ink" size="lg" className="mt-4 min-h-16 w-full text-xl" onClick={saveName} disabled={savingName}>
+              {savingName && <Loader2 aria-hidden className="size-6 animate-spin" />}
+              <span lang={lang}>{t("onboard.next")}</span>
+            </Button>
+          </section>
+        )}
 
-      {chosen && !needsInstall && status !== "done" && (
-        <section className="sticker bg-surface p-5">
-          <label htmlFor="code" lang={lang} className="block text-2xl font-semibold leading-snug">
-            {t("parent.join.title")}
-          </label>
+        {step === "prescription" && chosen && (
+          <ParentPrescriptionStep lang={chosen} onDone={() => setStep("done")} />
+        )}
+
+        {step === "done" && chosen && (
+          <>
+            {needsInstall && <InstallGuide lang={chosen} />}
+            <RemindersCard lang={chosen} />
+            <Button tone="ink" size="lg" className="min-h-16 text-xl" onClick={() => navigate("/parent")}>
+              <span lang={lang}>{t("parent.today.title")}</span>
+              <ChevronRight aria-hidden className="size-6" />
+            </Button>
+          </>
+        )}
+      </main>
+    </div>
+  );
+}
+
+/**
+ * The optional last step of a parent's setup: photograph the prescription you are holding.
+ *
+ * The parent can start the reading but never finishes it — the draft goes to the family, who tick
+ * every line before a single medicine is saved. That keeps the confirmation with the person best
+ * placed to check it against the paper, and it is why this screen promises nothing more than
+ * "sent to your family".
+ */
+function ParentPrescriptionStep({ lang: parentLang, onDone }: { lang: LanguageCode; onDone: () => void }) {
+  const { t, lang } = useT(parentLang);
+  const input = useRef<HTMLInputElement>(null);
+  const [state, setState] = useState<"idle" | "busy" | "sent" | "failed">("idle");
+
+  const send = async (file: File) => {
+    setState("busy");
+    try {
+      const started = await api<{ uploads: { model: PresignedPost; original: PresignedPost } }>("/parent/prescriptions", {
+        method: "POST",
+        auth: "device",
+        body: { consent: true },
+      });
+      await uploadBoth(started.uploads, file);
+      setState("sent");
+    } catch {
+      setState("failed");
+    }
+  };
+
+  return (
+    <section className="sticker bg-surface p-5">
+      <h2 lang={lang} className="text-2xl font-semibold leading-snug">
+        {t("parent.setup.rxTitle")}
+      </h2>
+      <p lang={lang} className="mt-2 text-lg text-muted">
+        {t("parent.setup.rxHelp")}
+      </p>
+
+      {state === "sent" ? (
+        <p lang={lang} className="mt-4 rounded-2xl bg-taken-tint p-4 text-lg font-semibold text-taken">
+          {t("parent.setup.rxSent")}
+        </p>
+      ) : (
+        <>
           <input
-            id="code"
-            inputMode="text"
-            autoCapitalize="characters"
-            autoComplete="one-time-code"
-            spellCheck={false}
-            maxLength={12}
-            value={code}
-            onChange={(e) => setCode(e.target.value.toUpperCase())}
-            aria-label={t("parent.join.codeLabel")}
-            className="tabular mt-4 h-20 w-full rounded-2xl border border-line-strong bg-paper text-center font-mono text-4xl font-semibold tracking-[0.25em] focus:border-indigo focus:bg-surface focus:outline-none"
+            ref={input}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            className="sr-only"
+            onChange={(event) => {
+              const file = event.target.files?.[0];
+              if (file) void send(file);
+            }}
           />
-          {status === "invalid" && (
+          <Button tone="ink" size="lg" className="mt-4 min-h-16 w-full text-xl" disabled={state === "busy"} onClick={() => input.current?.click()}>
+            {state === "busy" ? <Loader2 aria-hidden className="size-6 animate-spin" /> : <Camera aria-hidden className="size-6" strokeWidth={2.25} />}
+            <span lang={lang}>{t("parent.setup.rxTake")}</span>
+          </Button>
+          {state === "failed" && (
             <p lang={lang} role="alert" className="mt-3 text-lg font-medium text-missed">
-              {t("parent.join.invalid")}
+              {t("common.error")}
             </p>
           )}
-          <Button tone="ink" size="lg" className="mt-4 min-h-16 w-full text-xl" onClick={connect} disabled={code.replace(/[^A-Z0-9]/g, "").length < 8 || status === "busy"}>
-            {status === "busy" && <Loader2 aria-hidden className="size-6 animate-spin" />}
-            <span lang={lang}>{t("parent.join.button")}</span>
-          </Button>
-        </section>
-      )}
-
-      {status === "done" && chosen && (
-        <>
-          <p lang={lang} className="sticker bg-taken-tint p-4 text-xl font-semibold text-taken">
-            {t("parent.join.done")}
+          <p lang={lang} className="mt-3 text-[15px] text-muted">
+            {t("parent.setup.rxConsent")}
           </p>
-          <RemindersCard lang={chosen} />
-          <Button tone="quiet" size="lg" className="min-h-16 text-xl" onClick={() => navigate("/parent")}>
-            <span lang={lang}>{t("parent.today.title")}</span>
-            <ChevronRight aria-hidden className="size-6" />
-          </Button>
         </>
       )}
-    </main>
-    </div>
+
+      <Button tone="quiet" size="lg" className="mt-4 min-h-16 w-full text-xl" onClick={onDone}>
+        <span lang={lang}>{state === "sent" ? t("parent.setup.finish") : t("parent.setup.skip")}</span>
+      </Button>
+    </section>
   );
 }
 

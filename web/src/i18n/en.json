@@ -401,6 +401,17 @@
     "people.addParentTitle": {"text": "Who else needs reminders?", "reviewedBy": "source"},
     "people.addParentHelp": {"text": "Add a second parent, or anyone else in the family who takes daily medicines. Each person gets their own reminders, their own language and their own dashboard.", "reviewedBy": "source"},
     "people.addParentDone": {"text": "Added. Now connect their phone.", "reviewedBy": "source"},
-    "home.everyone": {"text": "Who you look after", "reviewedBy": "source"}
+    "home.everyone": {"text": "Who you look after", "reviewedBy": "source"},
+    "parent.setup.connecting": {"text": "Connecting this phone…", "reviewedBy": "source"},
+    "parent.setup.nameTitle": {"text": "What should we call you?", "reviewedBy": "source"},
+    "parent.setup.nameHelp": {"text": "Your family sees this name on their screens.", "reviewedBy": "source"},
+    "parent.setup.rxTitle": {"text": "Have a prescription with you?", "reviewedBy": "source"},
+    "parent.setup.rxHelp": {"text": "Take a photo of it and your family will add the medicines for you. You can also skip this and do it later.", "reviewedBy": "source"},
+    "parent.setup.rxTake": {"text": "Take a photo", "reviewedBy": "source"},
+    "parent.setup.rxSent": {"text": "Sent to your family. They will check it and add the medicines.", "reviewedBy": "source"},
+    "parent.setup.rxConsent": {"text": "The photo is read by a computer and may be processed outside India. Your family checks every line before anything is saved.", "reviewedBy": "source"},
+    "parent.setup.skip": {"text": "Skip this", "reviewedBy": "source"},
+    "parent.setup.finish": {"text": "Finish", "reviewedBy": "source"},
+    "parent.setup.step": {"text": "Step", "reviewedBy": "source"}
   }
 }

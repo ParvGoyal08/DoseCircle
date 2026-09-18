@@ -21,6 +21,8 @@
     "push.broadcast.body.check": {"text": "ತಪ್ಪಿದ ಅಳತೆಗೆ ಇನ್ನೂ ಯಾರೂ ಸ್ಪಂದಿಸಿಲ್ಲ.", "reviewedBy": null},
     "push.standDown.body": {"text": "ಅವರು ತಪ್ಪಿದ ಔಷಧಿಯನ್ನು ನೋಡಿಕೊಳ್ಳುತ್ತಿದ್ದಾರೆ. ನೀವು ಏನೂ ಮಾಡಬೇಕಾಗಿಲ್ಲ.", "reviewedBy": null},
     "push.tookLate.body": {"text": "ಔಷಧಿ ತೆಗೆದುಕೊಂಡಿರುವುದು ಈಗ ಖಚಿತವಾಗಿದೆ.", "reviewedBy": null},
-    "push.refill.body": {"text": "ಈ ಔಷಧಿ ಮುಗಿಯುತ್ತಾ ಬಂದಿದೆ. ದಯವಿಟ್ಟು ಮತ್ತೆ ತರಿಸಿಕೊಳ್ಳಿ.", "reviewedBy": null}
+    "push.refill.body": {"text": "ಈ ಔಷಧಿ ಮುಗಿಯುತ್ತಾ ಬಂದಿದೆ. ದಯವಿಟ್ಟು ಮತ್ತೆ ತರಿಸಿಕೊಳ್ಳಿ.", "reviewedBy": null},
+    "push.rx.ready.body": {"text": "ಹೊಸ ಔಷಧಚೀಟಿಯ ಫೋಟೋ ಪರಿಶೀಲನೆಗೆ ಕಾಯುತ್ತಿದೆ. ನೀವು ಪ್ರತಿ ಸಾಲನ್ನೂ ದೃಢೀಕರಿಸುವವರೆಗೆ ಏನೂ ಉಳಿಸಲಾಗುವುದಿಲ್ಲ.", "reviewedBy": null},
+    "push.rx.confirmed.body": {"text": "ಔಷಧಚೀಟಿಯಿಂದ ಔಷಧಿಗಳನ್ನು ನವೀಕರಿಸಲಾಗಿದೆ. ದಯವಿಟ್ಟು ಪಟ್ಟಿಯನ್ನು ಪರಿಶೀಲಿಸಿ.", "reviewedBy": null}
   }
 }

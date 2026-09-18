@@ -401,6 +401,17 @@
     "people.addParentTitle": {"text": "और किसे रिमाइंडर चाहिए?", "reviewedBy": null},
     "people.addParentHelp": {"text": "दूसरे माता-पिता को, या परिवार के किसी और को जो रोज़ दवा लेते हैं, जोड़ें। हर व्यक्ति के अपने रिमाइंडर, अपनी भाषा और अपना डैशबोर्ड होता है।", "reviewedBy": null},
     "people.addParentDone": {"text": "जोड़ लिया गया। अब उनका फ़ोन जोड़ें।", "reviewedBy": null},
-    "home.everyone": {"text": "जिनका आप ध्यान रखते हैं", "reviewedBy": null}
+    "home.everyone": {"text": "जिनका आप ध्यान रखते हैं", "reviewedBy": null},
+    "parent.setup.connecting": {"text": "यह फ़ोन जोड़ा जा रहा है…", "reviewedBy": null},
+    "parent.setup.nameTitle": {"text": "हम आपको क्या कहकर बुलाएँ?", "reviewedBy": null},
+    "parent.setup.nameHelp": {"text": "आपके परिवार को उनकी स्क्रीन पर यही नाम दिखता है।", "reviewedBy": null},
+    "parent.setup.rxTitle": {"text": "क्या आपके पास पर्ची है?", "reviewedBy": null},
+    "parent.setup.rxHelp": {"text": "इसकी फ़ोटो लें, आपका परिवार दवाएँ जोड़ देगा। इसे छोड़कर बाद में भी कर सकते हैं।", "reviewedBy": null},
+    "parent.setup.rxTake": {"text": "फ़ोटो लें", "reviewedBy": null},
+    "parent.setup.rxSent": {"text": "आपके परिवार को भेज दिया गया। वे जाँचकर दवाएँ जोड़ देंगे।", "reviewedBy": null},
+    "parent.setup.rxConsent": {"text": "फ़ोटो को कंप्यूटर पढ़ता है और वह भारत के बाहर संसाधित हो सकती है। कुछ भी सहेजने से पहले आपका परिवार हर पंक्ति जाँचता है।", "reviewedBy": null},
+    "parent.setup.skip": {"text": "इसे छोड़ें", "reviewedBy": null},
+    "parent.setup.finish": {"text": "पूरा करें", "reviewedBy": null},
+    "parent.setup.step": {"text": "चरण", "reviewedBy": null}
   }
 }

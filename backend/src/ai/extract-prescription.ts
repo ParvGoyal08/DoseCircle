@@ -6,6 +6,7 @@ import { keys } from "@dosecircle/shared";
 import type { S3Event } from "aws-lambda";
 import { ddb, logger, metrics } from "../lib/aws.js";
 import { env, requireEnv } from "../lib/env.js";
+import { notifyPrescription } from "../lib/notify-prescription.js";
 import { runExtraction } from "./pipeline.js";
 
 /**
@@ -46,8 +47,10 @@ export async function handler(event: S3Event): Promise<void> {
     const [, fid, rxId] = match as unknown as [string, string, string];
     const rxKey = keys.prescription(fid, rxId);
 
+    // Claiming the work also hands back the row, so the parent id is known without a second read.
+    let pid: string;
     try {
-      await ddb.send(
+      const claimed = await ddb.send(
         new UpdateCommand({
           TableName: env.tableName,
           Key: rxKey,
@@ -55,8 +58,10 @@ export async function handler(event: S3Event): Promise<void> {
           ConditionExpression: "#status = :awaiting",
           ExpressionAttributeNames: { "#status": "status" },
           ExpressionAttributeValues: { ":extracting": "EXTRACTING", ":awaiting": "AWAITING_UPLOAD" },
+          ReturnValues: "ALL_NEW",
         }),
       );
+      pid = String((claimed.Attributes as { pid?: string } | undefined)?.pid ?? "");
     } catch (error) {
       if ((error as { name?: string }).name === "ConditionalCheckFailedException") {
         logger.info("Duplicate or unknown upload event; skipping", { rxId });
@@ -102,6 +107,11 @@ export async function handler(event: S3Event): Promise<void> {
       if (result.ok) {
         metrics.addMetric("GuardrailInterventions", "Count", result.guardrailInterventions);
         logger.info("Prescription ready", { rxId, rows: result.rows.length, levels: result.rows.map((r) => r.level), extractionMs });
+        // The draft is useless until a person checks it, and the parent cannot: tell the family.
+        // A failure here must not fail the extraction, which has already been saved.
+        await notifyPrescription({ fid, pid, rxId, kind: "READY" }).catch((error: Error) =>
+          logger.warn("Could not tell the family about the prescription", { rxId, error: error.message }),
+        );
       } else {
         metrics.addMetric("ExtractionFailed", "Count", 1);
         logger.info("Prescription could not be read", { rxId, failure: result.failure });

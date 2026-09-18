@@ -13,6 +13,7 @@ import { env, requireEnv } from "../../lib/env.js";
 import { HttpError, json, parseBody, pathParam, principalFrom } from "../../lib/http.js";
 import { newId } from "../../lib/ids.js";
 import type { PrescriptionItem, PrescriptionRow } from "../../lib/model.js";
+import { notifyPrescription } from "../../lib/notify-prescription.js";
 import { takeFromBudget } from "../../lib/rate-limit.js";
 import { get, getParent } from "../../lib/repository.js";
 import { MedicineInputSchema } from "../../lib/schemas.js";
@@ -43,6 +44,14 @@ export async function createPrescription(event: APIGatewayProxyEventV2) {
   const { pid } = parseBody(event, CreateSchema);
   const { entity, member } = await memberPrincipal(await principalFrom(event));
   await authorize({ principal: entity, action: "UploadPrescription", resource: familyEntity(fid), entities: [] });
+  return json(201, await startPrescription(fid, pid, member.mid));
+}
+
+/**
+ * The upload itself, shared by the family's route and the parent's own phone. Both produce the same
+ * draft, and in both cases a family member still has to tick every line before anything is saved.
+ */
+export async function startPrescription(fid: string, pid: string, createdBy: string) {
   if (!(await getParent(fid, pid))) throw new HttpError(404, "Parent not found");
   if (!(await takeFromBudget(`rx#${fid}#${istDate()}`, MAX_PER_FAMILY_PER_DAY, 86_400))) {
     throw new HttpError(429, "That is a lot of prescriptions for one day. Please add medicines by hand, or try tomorrow.");
@@ -56,7 +65,7 @@ export async function createPrescription(event: APIGatewayProxyEventV2) {
     fid,
     pid,
     status: "AWAITING_UPLOAD",
-    createdBy: member.mid,
+    createdBy,
     createdAt: now,
     consentAt: now,
     ttl: ttlInDays(7),
@@ -77,9 +86,8 @@ export async function createPrescription(event: APIGatewayProxyEventV2) {
     });
   const [model, original] = await Promise.all([slot("model", MAX_MODEL_BYTES), slot("original", MAX_ORIGINAL_BYTES)]);
   metrics.addMetric("PrescriptionsStarted", "Count", 1);
-  metrics.publishStoredMetrics();
   // Upload model.jpg first: the extractor starts when original.jpg arrives.
-  return json(201, { rxId, uploads: { model, original }, uploadOrder: ["model", "original"], expiresInSeconds: UPLOAD_SECONDS });
+  return { rxId, uploads: { model, original }, uploadOrder: ["model", "original"] as const, expiresInSeconds: UPLOAD_SECONDS };
 }
 
 async function authorizedPrescription(event: APIGatewayProxyEventV2): Promise<{ rx: PrescriptionItem; mid: string }> {
@@ -177,6 +185,8 @@ export async function confirmPrescription(event: APIGatewayProxyEventV2) {
     }),
   );
   metrics.addMetric("PrescriptionsConfirmed", "Count", 1);
-  metrics.publishStoredMetrics();
+  // The medicines just changed for everyone who looks after this person; the one who confirmed
+  // already knows, so they are left out.
+  await notifyPrescription({ fid: rx.fid, pid: rx.pid, rxId: rx.rxId, kind: "CONFIRMED", exceptMid: mid });
   return json(201, { rxId: rx.rxId, medIds: items.map((m) => m.medId) });
 }

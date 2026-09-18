@@ -401,6 +401,17 @@
     "people.addParentTitle": {"text": "ಇನ್ನು ಯಾರಿಗೆ ಜ್ಞಾಪನೆಗಳು ಬೇಕು?", "reviewedBy": null},
     "people.addParentHelp": {"text": "ಎರಡನೆಯ ತಂದೆ-ತಾಯಿಯನ್ನು ಅಥವಾ ದಿನನಿತ್ಯ ಔಷಧಿ ತೆಗೆದುಕೊಳ್ಳುವ ಕುಟುಂಬದ ಬೇರೊಬ್ಬರನ್ನು ಸೇರಿಸಿ. ಪ್ರತಿಯೊಬ್ಬರಿಗೂ ತಮ್ಮದೇ ಜ್ಞಾಪನೆಗಳು, ತಮ್ಮದೇ ಭಾಷೆ ಮತ್ತು ತಮ್ಮದೇ ಡ್ಯಾಶ್‌ಬೋರ್ಡ್ ಇರುತ್ತದೆ.", "reviewedBy": null},
     "people.addParentDone": {"text": "ಸೇರಿಸಲಾಗಿದೆ. ಈಗ ಅವರ ಫೋನ್ ಸಂಪರ್ಕಿಸಿ.", "reviewedBy": null},
-    "home.everyone": {"text": "ನೀವು ನೋಡಿಕೊಳ್ಳುವವರು", "reviewedBy": null}
+    "home.everyone": {"text": "ನೀವು ನೋಡಿಕೊಳ್ಳುವವರು", "reviewedBy": null},
+    "parent.setup.connecting": {"text": "ಈ ಫೋನ್ ಸಂಪರ್ಕಿಸುತ್ತಿದೆ…", "reviewedBy": null},
+    "parent.setup.nameTitle": {"text": "ನಿಮ್ಮನ್ನು ಏನೆಂದು ಕರೆಯೋಣ?", "reviewedBy": null},
+    "parent.setup.nameHelp": {"text": "ನಿಮ್ಮ ಕುಟುಂಬಕ್ಕೆ ಅವರ ಪರದೆಯಲ್ಲಿ ಈ ಹೆಸರು ಕಾಣಿಸುತ್ತದೆ.", "reviewedBy": null},
+    "parent.setup.rxTitle": {"text": "ನಿಮ್ಮ ಬಳಿ ಔಷಧಚೀಟಿ ಇದೆಯೇ?", "reviewedBy": null},
+    "parent.setup.rxHelp": {"text": "ಅದರ ಫೋಟೋ ತೆಗೆಯಿರಿ, ನಿಮ್ಮ ಕುಟುಂಬ ಔಷಧಿಗಳನ್ನು ಸೇರಿಸುತ್ತದೆ. ಇದನ್ನು ಬಿಟ್ಟು ನಂತರವೂ ಮಾಡಬಹುದು.", "reviewedBy": null},
+    "parent.setup.rxTake": {"text": "ಫೋಟೋ ತೆಗೆಯಿರಿ", "reviewedBy": null},
+    "parent.setup.rxSent": {"text": "ನಿಮ್ಮ ಕುಟುಂಬಕ್ಕೆ ಕಳುಹಿಸಲಾಗಿದೆ. ಅವರು ಪರಿಶೀಲಿಸಿ ಔಷಧಿಗಳನ್ನು ಸೇರಿಸುತ್ತಾರೆ.", "reviewedBy": null},
+    "parent.setup.rxConsent": {"text": "ಫೋಟೋವನ್ನು ಕಂಪ್ಯೂಟರ್ ಓದುತ್ತದೆ ಮತ್ತು ಅದು ಭಾರತದ ಹೊರಗೆ ಸಂಸ್ಕರಣೆಯಾಗಬಹುದು. ಏನನ್ನಾದರೂ ಉಳಿಸುವ ಮೊದಲು ನಿಮ್ಮ ಕುಟುಂಬ ಪ್ರತಿ ಸಾಲನ್ನೂ ಪರಿಶೀಲಿಸುತ್ತದೆ.", "reviewedBy": null},
+    "parent.setup.skip": {"text": "ಇದನ್ನು ಬಿಟ್ಟುಬಿಡಿ", "reviewedBy": null},
+    "parent.setup.finish": {"text": "ಮುಗಿಸಿ", "reviewedBy": null},
+    "parent.setup.step": {"text": "ಹಂತ", "reviewedBy": null}
   }
 }
