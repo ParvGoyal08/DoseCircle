@@ -38,18 +38,20 @@ export function LanguagePicker({ value, onChange, large = false }: { value: Lang
               )}
             >
               <input type="radio" name="language" value={language.code} checked={selected} onChange={() => onChange(language.code)} className="sr-only" />
-              <span lang={language.code} className={cx("font-semibold", large ? "text-[28px]" : "text-2xl")}>
-                {language.endonym}
-              </span>
-              <span className="flex items-center gap-2">
+              {/* The badge sits under the endonym, not beside it: Kannada and Devanagari run long, and
+                  alongside a two-line badge it pushed the tick past the edge of the card. */}
+              <span className="flex min-w-0 flex-col gap-1 py-3">
+                <span lang={language.code} className={cx("font-semibold", large ? "text-[28px]" : "text-2xl")}>
+                  {language.endonym}
+                </span>
                 {language.draft && (
-                  <span lang={language.code} className="rounded-full bg-offline-tint px-2 py-0.5 text-[11px] font-semibold text-offline">
+                  <span lang={language.code} className={cx("w-fit rounded-full px-2 py-0.5 text-[11px] font-semibold", selected ? "bg-white/20 text-white" : "bg-offline-tint text-offline")}>
                     {i18next.getFixedT(language.code)("lang.draft")}
                   </span>
                 )}
-                <span aria-hidden className={cx("grid size-7 place-items-center rounded-full border-2", selected ? "border-white bg-white text-indigo" : "border-line-strong")}>
-                  {selected && <Check className="size-4" strokeWidth={3} />}
-                </span>
+              </span>
+              <span aria-hidden className={cx("grid size-7 shrink-0 place-items-center rounded-full border-2", selected ? "border-white bg-white text-indigo" : "border-line-strong")}>
+                {selected && <Check className="size-4" strokeWidth={3} />}
               </span>
             </label>
           );

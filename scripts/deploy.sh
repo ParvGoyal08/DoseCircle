@@ -68,11 +68,15 @@ OUT() { jq -r ".DoseCircle.$1" "$STATE/outputs.json"; }
 
 step "4a. Build the web app"
 cd "$ROOT/web"
+# SHOW_DRAFT_LANGUAGES offers Kannada and Hindi before a native speaker has signed off every string.
+# They are labelled "draft translation" in the picker. Set it to false to hold them back until the
+# review is done; the code path is the same either way.
 cat > .env.production.local <<EOF
 VITE_API_URL=$(OUT ApiUrl)
 VITE_USER_POOL_ID=$(OUT UserPoolId)
 VITE_USER_POOL_CLIENT_ID=$(OUT UserPoolClientId)
 VITE_VAPID_PUBLIC_KEY=$VAPID_PUBLIC_KEY
+VITE_SHOW_DRAFT_LANGUAGES=${SHOW_DRAFT_LANGUAGES:-true}
 EOF
 rm -rf dist
 pnpm build

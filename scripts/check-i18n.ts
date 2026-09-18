@@ -52,7 +52,7 @@ for (const { name, dir } of CATALOGUES) {
       }
     }
     const share = Math.round((reviewed / sourceKeys.length) * 100);
-    console.log(`  ${code}: ${reviewed}/${sourceKeys.length} reviewed (${share}%)${reviewed === sourceKeys.length ? " — ships" : " — hidden in production until 100%"}`);
+    console.log(`  ${code}: ${reviewed}/${sourceKeys.length} reviewed (${share}%)${reviewed === sourceKeys.length ? " — ships unmarked" : ' — ships marked "draft translation" until 100%'}`);
   }
 }
 

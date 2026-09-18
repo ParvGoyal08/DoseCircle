@@ -220,9 +220,8 @@ export function LandingPage() {
         title="Amma reads Kannada. Arjun reads English. Meera reads Hindi."
         body="These are the app's real screens, and medicine names are never translated. No sentence has a name or a number spliced into it, because Kannada inflects nouns and a spliced sentence is usually wrong."
       >
-        {/* These three panes deliberately render the Kannada and Hindi drafts, which the app itself
-            still hides: a section headed "each person, their own language" showing three English
-            screens would be worse than useless. The note below says so plainly. */}
+        {/* These panes always render the real script, whether or not drafts are switched on for the
+            app, so this section can never quietly become three English screens. */}
         <div className="grid gap-10 md:grid-cols-3" aria-hidden>
           <Showcase label="Amma · ಕನ್ನಡ">
             <ParentDoseScreen dose={SHOWCASE_DOSE} onTaken={async () => {}} framed showDraftLanguage />
@@ -239,9 +238,9 @@ export function LandingPage() {
           </Showcase>
         </div>
         <p className="mt-8 max-w-3xl text-[15px] text-hero-muted">
-          The Kannada and Hindi above are <strong className="font-semibold text-white">drafts shown for illustration</strong>. In the app itself they
-          stay hidden until a native speaker signs off every string, and until then those people see English rather than a
-          translation nobody has checked. That gate is enforced by a test, not by good intentions.
+          The Kannada and Hindi are <strong className="font-semibold text-white">drafts awaiting a native speaker</strong>. They are offered in the app
+          and labelled &ldquo;draft translation&rdquo; wherever a language is chosen, so nobody is shown unchecked wording as though it
+          were finished. Every string records who reviewed it, and one switch holds drafts back entirely once the review is done.
         </p>
       </Section>
 

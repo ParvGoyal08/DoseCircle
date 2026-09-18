@@ -44,4 +44,33 @@ describe("language gate", () => {
   it("never splices names or numbers into sentences", () => {
     for (const catalogue of [en, kn, hi]) for (const { text } of Object.values(catalogue.strings)) expect(text).not.toMatch(/\{\{|\}\}/);
   });
+
+  it("marks every unreviewed language it offers as a draft", () => {
+    // Drafts are offered in production at the moment (VITE_SHOW_DRAFT_LANGUAGES), so the one thing
+    // that must hold is that nothing unreviewed is ever presented as finished.
+    for (const language of pickerLanguages()) expect(language.draft).toBe(!isFullyReviewed(language.code));
+    expect(pickerLanguages().find((l) => l.code === "en")?.draft).toBe(false);
+  });
+});
+
+describe("language gate with drafts offered", async () => {
+  // A second module instance with the switch on, which is how the deployed app is configured.
+  vi.resetModules();
+  vi.doMock("../src/lib/config", () => ({ config: { apiUrl: "https://api.example", showDraftLanguages: true }, isSimulated: false }));
+  const drafts = await import("../src/i18n");
+
+  it("offers Kannada and Hindi, each labelled as a draft", () => {
+    const offered = drafts.pickerLanguages();
+    expect(offered.map((l) => l.code).sort()).toEqual(["en", "hi", "kn"]);
+    expect(offered.find((l) => l.code === "kn")).toMatchObject({ draft: true, endonym: "ಕನ್ನಡ" });
+    expect(offered.find((l) => l.code === "hi")).toMatchObject({ draft: true, endonym: "हिन्दी" });
+    expect(offered.find((l) => l.code === "en")?.draft).toBe(false);
+  });
+
+  it("renders those languages rather than quietly falling back to English", () => {
+    expect(drafts.displayLanguage("kn")).toBe("kn");
+    expect(drafts.displayLanguage("hi")).toBe("hi");
+    // A language with no catalogue at all is still English, switch or no switch.
+    expect(drafts.displayLanguage("ta")).toBe("en");
+  });
 });

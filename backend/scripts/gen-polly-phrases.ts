@@ -63,8 +63,15 @@ for (const { lang, languageCode } of VOICES) {
   for (const phrase of VOICE_PHRASES) {
     const { catalogue, key } = PHRASE_KEYS[phrase];
     const entry = load(catalogue, lang).strings[key];
-    if (!entry?.reviewedBy) {
-      console.log(`skip ${lang}/${phrase}: "${key}" is not reviewed yet`);
+    if (!entry) {
+      console.log(`skip ${lang}/${phrase}: no string for "${key}"`);
+      continue;
+    }
+    // Drafts are spoken only when asked for, matching VITE_SHOW_DRAFT_LANGUAGES on the web side: a
+    // parent reading a marked draft of her own language should not be met with a silent Listen button.
+    // These are eight fixed sentences with no name, number or medicine name in them.
+    if (!entry.reviewedBy && process.env.SPEAK_DRAFTS !== "true") {
+      console.log(`skip ${lang}/${phrase}: "${key}" is not reviewed yet (set SPEAK_DRAFTS=true to record drafts)`);
       continue;
     }
     const bytes = await synthesize(languageCode, entry.text);

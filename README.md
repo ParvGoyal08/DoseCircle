@@ -42,7 +42,7 @@ Built for WeMakeDevs × AWS **First Commit** (Bharat Builds Tour), 17–20 Septe
 | Printable doctor report (an app record, not a medical record) | Built |
 | Judge demo mode: fictional family, 60× speed, reset | Built |
 | Voice clips for the reminder screen | Waiting on native recordings |
-| Kannada and Hindi text | Drafted; hidden until a native speaker signs off |
+| Kannada and Hindi text | Shipping as drafts, labelled as such, pending a native speaker |
 
 ### Daily checks, without pretending to be a doctor
 
@@ -135,9 +135,11 @@ Each person picks their own language, and Kannada is first-class.
   because Kannada and other Indian languages inflect nouns. Names live in notification titles and their own
   UI elements; numbers and dates go through `Intl`.
 - **Medicine names are never translated**, and always appear in Latin script exactly as printed on the strip.
-- **Nothing ships unreviewed.** Each string records who reviewed it. A language appears in the picker only
-  when every string is signed off, and a missing string falls back to **English, never another Indian
-  language**. `pnpm i18n:check` enforces this, and reviewers work from a spreadsheet
+- **Nothing unreviewed is passed off as finished.** Each string records who reviewed it. Kannada and
+  Hindi are offered today as **drafts**, labelled "draft translation" wherever a language is chosen, so
+  the person picking one knows what they are getting; a single switch holds them back entirely once a
+  native speaker has signed off. A missing string falls back to **English, never another Indian
+  language**. `pnpm i18n:check` reports coverage, and reviewers work from a spreadsheet
   (`pnpm i18n:export kn`). See [docs/languages.md](docs/languages.md).
 
 ![The family analytics dashboard](docs/images/dashboard.png)
@@ -200,7 +202,7 @@ builds and uploads the web app. See [docs/deploy.md](docs/deploy.md).
 ## AI tools used
 
 **Claude Code** (Anthropic) was used throughout: planning, writing the code and tests, the design system,
-the Kannada and Hindi draft translations, and these docs. Every draft translation is marked unreviewed until
+the Kannada and Hindi draft translations, and these docs. Every draft translation is marked as a draft until
 a native speaker signs it off. Listed here as the hackathon rules require.
 
 ## Credits and licences
