@@ -394,6 +394,8 @@
     "parent.today.step2": {"text": "You press the big green button.", "reviewedBy": "source"},
     "parent.today.step3": {"text": "If you do not, your family is told, one person at a time.", "reviewedBy": "source"},
     "parent.today.reminderTimes": {"text": "Your reminder times", "reviewedBy": "source"},
-    "parent.today.nextAt": {"text": "Next reminder", "reviewedBy": "source"}
+    "parent.today.nextAt": {"text": "Next reminder", "reviewedBy": "source"},
+    "people.inviteHelp": {"text": "Send this to the person you want to add. They sign in once, and after that they are told when a dose is missed.", "reviewedBy": "source"},
+    "people.shareMessage": {"text": "Please join our family circle on DoseCircle, so you are told if a dose is missed.", "reviewedBy": "source"}
   }
 }

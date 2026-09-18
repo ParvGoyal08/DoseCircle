@@ -394,6 +394,8 @@
     "parent.today.step2": {"text": "आप बड़ा हरा बटन दबाते हैं।", "reviewedBy": null},
     "parent.today.step3": {"text": "अगर आप नहीं दबाते, तो आपके परिवार को एक-एक करके बताया जाता है।", "reviewedBy": null},
     "parent.today.reminderTimes": {"text": "आपके रिमाइंडर का समय", "reviewedBy": null},
-    "parent.today.nextAt": {"text": "अगला रिमाइंडर", "reviewedBy": null}
+    "parent.today.nextAt": {"text": "अगला रिमाइंडर", "reviewedBy": null},
+    "people.inviteHelp": {"text": "जिस व्यक्ति को जोड़ना है उसे यह भेजें। वे एक बार साइन इन करते हैं, उसके बाद दवा छूटने पर उन्हें बताया जाता है।", "reviewedBy": null},
+    "people.shareMessage": {"text": "कृपया DoseCircle पर हमारे परिवार से जुड़ें, ताकि दवा छूटने पर आपको बताया जाए।", "reviewedBy": null}
   }
 }

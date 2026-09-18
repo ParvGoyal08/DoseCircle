@@ -1,7 +1,8 @@
-import { Crown, Loader2, LogOut, ShieldCheck, TriangleAlert, UserMinus, UserPlus } from "lucide-react";
+import { ChevronRight, Crown, Loader2, LogOut, ShieldCheck, TriangleAlert, UserMinus, UserPlus } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router";
 import { FamilyShell, Field, inputClass } from "../../components/FamilyShell";
+import { ShareInvite } from "../../components/ShareInvite";
 import { Avatar, Button, Card, cx } from "../../components/ui";
 import { useT } from "../../i18n";
 import { api, ApiError } from "../../lib/api";
@@ -19,7 +20,7 @@ function People({ fid, mid, lang: myLang, isOwner }: { fid: string; mid: string;
   const navigate = useNavigate();
   const list = useApi(() => api<{ members: FamilyMember[] }>(`/families/${fid}/members`, { auth: "family" }), [fid]);
   const family = useApi(() => api<Dashboard>(`/families/${fid}`, { auth: "family" }), [fid]);
-  const [invite, setInvite] = useState<string | null>(null);
+  const [invite, setInvite] = useState<{ link: string; code: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const members = list.data?.members ?? [];
@@ -54,8 +55,8 @@ function People({ fid, mid, lang: myLang, isOwner }: { fid: string; mid: string;
           <Button
             tone="ink"
             onClick={async () => {
-              const result = await api<{ link: string }>(`/families/${fid}/invites`, { method: "POST", auth: "family", body: { kind: "member" } });
-              setInvite(result.link);
+              const result = await api<{ link: string; code: string }>(`/families/${fid}/invites`, { method: "POST", auth: "family", body: { kind: "member" } });
+              setInvite(result);
             }}
           >
             <UserPlus aria-hidden className="size-5" />
@@ -70,10 +71,7 @@ function People({ fid, mid, lang: myLang, isOwner }: { fid: string; mid: string;
 
       {invite && (
         <Card className="mb-6 p-4">
-          <p lang={lang} className="text-[15px] font-semibold">
-            {t("onboard.copyLink")}
-          </p>
-          <p className="mt-2 break-all rounded-xl bg-paper p-3 font-mono text-[14px]">{invite}</p>
+          <ShareInvite link={invite.link} code={invite.code} message={t("people.shareMessage")} help={t("people.inviteHelp")} lang={myLang} />
         </Card>
       )}
 
@@ -171,7 +169,12 @@ function People({ fid, mid, lang: myLang, isOwner }: { fid: string; mid: string;
   );
 }
 
-/** Deleting a family removes the parent's whole record, so it asks for the name to be typed out. */
+/**
+ * Deleting a family wipes the parent's whole record, so it asks for the name to be typed out — but
+ * it is also something almost nobody does, and a red panel shouting on every visit to a page people
+ * open to invite a relative gets the emphasis exactly backwards. It stays one click away, folded up
+ * and quiet, and only unfolds into the warning when somebody actually goes looking for it.
+ */
 function DangerZone({ fid, familyName, lang: myLang }: { fid: string; familyName: string; lang: string }) {
   const { t, lang } = useT(myLang);
   const { reload } = useFamily();
@@ -181,13 +184,17 @@ function DangerZone({ fid, familyName, lang: myLang }: { fid: string; familyName
   const [error, setError] = useState<string | null>(null);
 
   return (
-    <Card className="mt-8 border-2 border-missed/40 p-4">
-      <h2 lang={lang} className="flex items-center gap-2 text-xl font-semibold text-missed">
-        <TriangleAlert aria-hidden className="size-5" /> {t("people.dangerTitle")}
-      </h2>
-      <p lang={lang} className="mt-1 text-[15px] text-ink">
-        {t("people.dangerHelp")}
-      </p>
+    <details className="group mt-12 border-t border-line pt-5">
+      <summary lang={lang} className="inline-flex cursor-pointer list-none items-center gap-2 rounded-lg text-[14.5px] text-muted hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-indigo">
+        <ChevronRight aria-hidden className="size-4 transition-transform group-open:rotate-90" />
+        {t("people.dangerTitle")}
+      </summary>
+
+      <div className="mt-4 max-w-xl rounded-[var(--radius-card)] bg-missed-tint p-4">
+        <p lang={lang} className="flex items-start gap-2 text-[15px] font-medium text-ink">
+          <TriangleAlert aria-hidden className="mt-0.5 size-5 shrink-0 text-missed" />
+          {t("people.dangerHelp")}
+        </p>
       <div className="mt-4 max-w-sm">
         <Field label={t("people.dangerConfirmLabel")} lang={lang}>
           <input className={inputClass} value={confirmName} onChange={(e) => setConfirmName(e.target.value)} placeholder={familyName} autoComplete="off" />
@@ -219,6 +226,7 @@ function DangerZone({ fid, familyName, lang: myLang }: { fid: string; familyName
         {busy && <Loader2 aria-hidden className="size-5 animate-spin" />}
         <span lang={lang}>{t("people.dangerButton")}</span>
       </Button>
-    </Card>
+      </div>
+    </details>
   );
 }

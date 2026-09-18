@@ -1,11 +1,11 @@
 import type { LanguageCode } from "@dosecircle/shared";
-import { Bell, Check, Copy, Loader2, MessageCircle } from "lucide-react";
-import QRCode from "qrcode";
+import { Bell, Loader2 } from "lucide-react";
 import { useEffect, useState, type FormEvent } from "react";
 import { Link, Navigate, useNavigate, useSearchParams } from "react-router";
 import { Field, inputClass } from "../../components/FamilyShell";
 import { defaultLanguage, LanguagePicker } from "../../components/LanguagePicker";
 import { Logo } from "../../components/Logo";
+import { ShareInvite } from "../../components/ShareInvite";
 import { Button } from "../../components/ui";
 import { useT } from "../../i18n";
 import { api, ApiError, mockApiEnabled } from "../../lib/api";
@@ -144,16 +144,12 @@ export function SignInPage() {
 export function PhoneInvite({ fid, pid, parentName, lang: viewerLang }: { fid: string; pid: string; parentName: string; lang: string }) {
   const { t, lang } = useT(viewerLang);
   const [invite, setInvite] = useState<{ link: string; code: string } | null>(null);
-  const [qr, setQr] = useState<string | null>(null);
-  const [copied, setCopied] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const create = async () => {
     setError(null);
     try {
-      const result = await api<{ link: string; code: string }>(`/families/${fid}/invites`, { method: "POST", auth: "family", body: { kind: "parent", pid } });
-      setInvite(result);
-      setQr(await QRCode.toDataURL(result.link, { margin: 1, width: 220, color: { dark: "#1c1917", light: "#ffffff" } }));
+      setInvite(await api<{ link: string; code: string }>(`/families/${fid}/invites`, { method: "POST", auth: "family", body: { kind: "parent", pid } }));
     } catch (e) {
       setError(errorText(e));
     }
@@ -169,41 +165,12 @@ export function PhoneInvite({ fid, pid, parentName, lang: viewerLang }: { fid: s
       </div>
     );
 
-  const whatsapp = `https://wa.me/?text=${encodeURIComponent(`${t("onboard.shareMessage")}\n${invite.link}`)}`;
   return (
     <div className="sticker bg-surface p-4">
       <p className="text-lg font-semibold">{parentName}</p>
-      <p lang={lang} className="mt-1 text-[15px] text-muted">
-        {t("onboard.connectPhoneHelp")}
-      </p>
-      <p className="tabular mt-3 font-mono text-3xl font-semibold tracking-[0.2em]">{invite.code}</p>
-      <div className="mt-3 flex flex-wrap gap-2">
-        <a href={whatsapp} target="_blank" rel="noreferrer" className="pressable inline-flex min-h-12 items-center gap-2 rounded-[var(--radius-button)] border border-line-strong bg-taken px-4 font-semibold text-white">
-          <MessageCircle aria-hidden className="size-5" strokeWidth={2.25} />
-          <span lang={lang}>{t("onboard.shareWhatsApp")}</span>
-        </a>
-        <Button
-          tone="quiet"
-          onClick={async () => {
-            await navigator.clipboard.writeText(invite.link);
-            setCopied(true);
-          }}
-        >
-          {copied ? <Check aria-hidden className="size-5" /> : <Copy aria-hidden className="size-5" />}
-          <span lang={lang}>{copied ? t("onboard.copied") : t("onboard.copyLink")}</span>
-        </Button>
+      <div className="mt-1">
+        <ShareInvite link={invite.link} code={invite.code} message={t("onboard.shareMessage")} help={t("onboard.connectPhoneHelp")} lang={viewerLang} />
       </div>
-      {qr && (
-        <div className="mt-4 flex items-center gap-4">
-          <img src={qr} alt="" className="size-32 rounded-lg border border-line" />
-          <p lang={lang} className="text-[15px] text-muted">
-            {t("onboard.scanQr")}
-          </p>
-        </div>
-      )}
-      <p lang={lang} className="mt-3 text-[14px] text-muted">
-        {t("onboard.codeExpires")}
-      </p>
     </div>
   );
 }
