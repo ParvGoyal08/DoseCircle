@@ -52,7 +52,7 @@ function ReportView({ fid, pid, myLang }: { fid: string; pid: string; myLang: st
           {ui.t("report.language")}
         </summary>
         <div className="mt-3">
-          <LanguagePicker value={reportLang} onChange={setReportLang} />
+          <LanguagePicker value={reportLang} onChange={setReportLang} heading={false} />
         </div>
       </details>
 

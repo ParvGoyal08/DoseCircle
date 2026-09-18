@@ -251,7 +251,7 @@ function AddParent({ fid, lang: myLang, onAdded }: { fid: string; lang: string; 
           <p lang={lang} className="mb-2 text-[15px] font-semibold">
             {t("onboard.parentLanguage")}
           </p>
-          <LanguagePicker value={parentLang} onChange={setParentLang} />
+          <LanguagePicker value={parentLang} onChange={setParentLang} heading={false} />
         </div>
         {error && (
           <p role="alert" className="rounded-xl bg-missed-tint px-3 py-2 font-medium text-missed">

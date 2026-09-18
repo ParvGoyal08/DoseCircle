@@ -262,7 +262,7 @@ export function OnboardingPage() {
               <p lang={lang} className="mb-2 text-[15px] font-semibold">
                 {t("onboard.parentLanguage")}
               </p>
-              <LanguagePicker value={form.parentLang} onChange={(code) => setForm({ ...form, parentLang: code })} />
+              <LanguagePicker value={form.parentLang} onChange={(code) => setForm({ ...form, parentLang: code })} heading={false} />
             </div>
           </section>
           {error && (
