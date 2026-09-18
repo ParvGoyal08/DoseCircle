@@ -206,7 +206,6 @@ function MySettings({ fid, myLang, isOwner }: { fid: string; myLang: LanguageCod
             {t("settings.myLanguage")}
           </h2>
           <LanguagePicker
-            heading={false}
             value={myLang}
             onChange={async (code) => {
               await api("/me/lang", { method: "PUT", auth: "family", body: { lang: code } });

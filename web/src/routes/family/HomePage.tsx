@@ -1,18 +1,16 @@
 import type { SlotName } from "@dosecircle/shared";
-import { Activity, BellRing, ChevronRight, CirclePause, FileText, Loader2, Pill, Plus, Settings, Smartphone, UserPlus, Users } from "lucide-react";
+import { Activity, BellRing, ChartLine, CirclePause, Loader2, Pill, PillBottle, Plus, TriangleAlert, Users } from "lucide-react";
 import { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router";
 import { FamilyAlert } from "../../components/FamilyAlert";
 import { FamilyShell } from "../../components/FamilyShell";
-import { InsightsGrid, InsightsHero } from "../../components/InsightsDashboard";
 import { Timeline } from "../../components/Timeline";
-import { OutcomeLegend, WeekStrip } from "../../components/WeekStrip";
-import { Avatar, Button, Card, cx, SLOT_ICONS, StatusPill } from "../../components/ui";
+import { Avatar, Card, cx, SLOT_ICONS, StatusPill } from "../../components/ui";
 import { useT } from "../../i18n";
 import { api, ApiError } from "../../lib/api";
 import { RequireFamily } from "../../lib/family";
-import { formatAgo, formatNumber, formatTime } from "../../lib/format";
-import type { Dashboard, Insights, ParentCard, Timeline as TimelineData } from "../../lib/types";
+import { formatNumber, formatTime } from "../../lib/format";
+import type { Dashboard, ParentCard, Timeline as TimelineData } from "../../lib/types";
 import { useApi } from "../../lib/useApi";
 import { EnableMyAlerts } from "./AuthPages";
 
@@ -36,9 +34,7 @@ function Home({ fid, lang: myLang, mid, role }: { fid: string; lang: string; mid
   const dashboard = useApi(() => api<Dashboard>(`/families/${fid}`, { auth: "family" }), [fid], 30_000);
   const data = dashboard.data;
   const [selectedPid, setSelectedPid] = useState<string | null>(null);
-  const [days, setDays] = useState<7 | 30>(30);
   const parent = data?.parents.find((p) => p.pid === selectedPid) ?? data?.parents[0];
-  const insights = useApi(parent ? () => api<Insights>(`/families/${fid}/parents/${parent.pid}/insights`, { auth: "family", query: { days: String(days) } }) : null, [fid, parent?.pid, days]);
 
   return (
     <FamilyShell lang={myLang} full>
@@ -48,6 +44,8 @@ function Home({ fid, lang: myLang, mid, role }: { fid: string; lang: string; mid
         </div>
       ) : (
         <div className="space-y-6">
+          <StatusBanner parents={data.parents} openAlerts={data.openAlerts.length} myLang={myLang} />
+
           {/* Always visible, even with one person: it is how you learn the app holds more than one,
               and it is where you add the next. */}
           <nav aria-label={t("home.everyone")} className="flex flex-wrap items-center gap-2">
@@ -85,12 +83,6 @@ function Home({ fid, lang: myLang, mid, role }: { fid: string; lang: string; mid
           </nav>
 
           <EnableMyAlerts lang={myLang} />
-
-          {insights.data ? (
-            <InsightsHero parentName={parent.displayName} lastReceiptAt={parent.lastReceiptAt} insights={insights.data} days={days} onDays={setDays} lang={myLang} />
-          ) : (
-            <div className="hero-surface h-72 animate-pulse rounded-[24px]" />
-          )}
 
           <div className="grid gap-5 lg:grid-cols-12">
             <section aria-labelledby="alerts-heading" className="lg:col-span-7">
@@ -135,11 +127,72 @@ function Home({ fid, lang: myLang, mid, role }: { fid: string; lang: string; mid
               <TodayCard parent={parent} fid={fid} myLang={myLang} />
             </div>
           </div>
-
-          {insights.data && <InsightsGrid insights={insights.data} lang={myLang} />}
         </div>
       )}
     </FamilyShell>
+  );
+}
+
+/**
+ * The one thing the home screen owes a family: is anything wrong right now.
+ *
+ * It counts across everybody, not the person the switcher happens to have selected, because
+ * "should I be worried" is not a per-person question. The headline never has a number spliced into
+ * it — Kannada and Hindi attach case endings to nouns, so the sentence stays whole and the counts
+ * live in their own elements beside it.
+ */
+function StatusBanner({ parents, openAlerts, myLang }: { parents: ParentCard[]; openAlerts: number; myLang: string }) {
+  const { t, lang } = useT(myLang);
+  const active = parents.filter((p) => !p.paused);
+  const doses = active.flatMap((p) => p.today);
+  const taken = doses.filter((d) => d.status === "TAKEN" || d.status === "TAKEN_LATE").length;
+  const missed = doses.filter((d) => d.status === "UNRESOLVED" || (d.status === "CLAIMED" && d.missClass === "MISSED")).length;
+  // Counted off the slots, not the dose records: a slot later today has no dose row yet, and the
+  // list underneath already shows it as "later today". An escalating dose is left out of all three
+  // — the headline and the alert beside it are about that dose, and counting it here as well would
+  // say the same thing twice.
+  const due = active.reduce((n, p) => n + p.slots.filter((s) => (p.today.find((d) => d.slotName === s.slotName)?.status ?? "PENDING") === "PENDING").length, 0);
+  const refills = parents.reduce((n, p) => n + p.refills.length, 0);
+  const allPaused = parents.length > 0 && parents.every((p) => p.paused);
+  const noMedicines = parents.every((p) => p.slots.length === 0);
+
+  const state = openAlerts > 0 ? "alert" : allPaused ? "paused" : noMedicines ? "empty" : missed > 0 ? "missed" : "calm";
+  const { Icon, headline, tint, ink } = {
+    alert: { Icon: TriangleAlert, headline: t("home.statusNeedsYou"), tint: "bg-missed-tint", ink: "text-missed" },
+    missed: { Icon: TriangleAlert, headline: t("home.statusMissed"), tint: "bg-due-tint", ink: "text-due" },
+    paused: { Icon: CirclePause, headline: t("home.paused"), tint: "bg-offline-tint", ink: "text-offline" },
+    empty: { Icon: Pill, headline: t("home.noMedicines"), tint: "bg-sunken", ink: "text-muted" },
+    calm: { Icon: BellRing, headline: t("home.allCalm"), tint: "bg-taken-tint", ink: "text-taken" },
+  }[state];
+
+  return (
+    <section aria-labelledby="status-headline" className="sticker overflow-hidden bg-surface">
+      <p className="flex items-center gap-3.5 px-5 py-4">
+        <span aria-hidden className={cx("grid size-11 shrink-0 place-items-center rounded-full", tint, ink)}>
+          <Icon className="size-5.5" strokeWidth={2.25} />
+        </span>
+        <span id="status-headline" lang={lang} className={cx("text-[18px] font-semibold leading-snug", ink)}>
+          {headline}
+        </span>
+      </p>
+      {state !== "empty" && (
+        <dl className="grid grid-cols-2 divide-x divide-y divide-line border-t border-line sm:grid-cols-4 sm:divide-y-0">
+          {[
+            { label: t("home.statTaken"), value: taken },
+            { label: t("home.statDue"), value: due },
+            { label: t("home.statMissed"), value: missed, warn: missed > 0 },
+            { label: t("home.refills"), value: refills, warn: refills > 0 },
+          ].map(({ label, value, warn }) => (
+            <div key={label} className="px-5 py-3">
+              <dt lang={lang} className="text-[13.5px] text-muted">
+                {label}
+              </dt>
+              <dd className={cx("tabular text-[26px] font-semibold leading-tight", warn ? "text-missed" : "text-ink")}>{formatNumber(value, lang)}</dd>
+            </div>
+          ))}
+        </dl>
+      )}
+    </section>
   );
 }
 
@@ -204,37 +257,31 @@ function TodayCard({ parent, fid, myLang }: { parent: ParentCard; fid: string; m
             })}
         </ul>
       )}
-      {/* What a family actually opens this card for is the medicines and the readings. Everything else
-          is occasional, so it sits below at half the weight instead of competing as an equal. */}
-      <nav className="border-t border-line bg-paper/60 p-3">
-        <div className="grid grid-cols-2 gap-2">
-          {[
-            { to: `${base}/medicines`, icon: Pill, label: t("action.medicines") },
-            { to: `${base}/checks`, icon: Activity, label: t("action.checks") },
-          ].map(({ to, icon: Icon, label }) => (
-            <Link
-              key={to}
-              to={to}
-              className="pressable inline-flex min-h-14 items-center gap-2.5 rounded-xl bg-indigo px-4 text-[15.5px] font-semibold text-white shadow-[0_8px_20px_-12px_rgb(37_35_110/0.9)]"
-            >
-              <Icon aria-hidden className="size-5" strokeWidth={2.25} />
-              <span lang={lang}>{label}</span>
-            </Link>
-          ))}
-        </div>
-        <div className="mt-2 grid grid-cols-2 gap-2">
+      {/* Four things a family does from here, all at a size an older reader can hit without aiming.
+          Settings moved to the header, where it is on every screen, and the charts and the doctor's
+          report moved to their own page — neither belongs in the list you reach for when you are
+          checking whether Amma took her tablet. */}
+      <nav className="grid grid-cols-2 gap-2 border-t border-line bg-paper/60 p-3">
         {[
-          { to: `${base}/report`, icon: FileText, label: t("action.report") },
-          { to: `${base}/settings`, icon: Settings, label: t("action.settings") },
-          { to: "/people", icon: Users, label: t("action.people") },
+          { to: `${base}/medicines`, icon: Pill, label: t("action.medicines") },
+          { to: `${base}/checks`, icon: Activity, label: t("action.checks") },
         ].map(({ to, icon: Icon, label }) => (
-          <Link key={to} to={to} className="pressable inline-flex min-h-11 items-center gap-2 rounded-xl bg-surface px-3 text-[14px] font-medium text-muted ring-1 ring-line hover:text-ink hover:ring-line-strong">
-            <Icon aria-hidden className="size-4.5" strokeWidth={2.25} />
+          <Link key={to} to={to} className="pressable inline-flex min-h-14 items-center gap-2.5 rounded-xl bg-indigo px-4 text-[16.5px] font-semibold text-white shadow-[0_8px_20px_-12px_rgb(37_35_110/0.9)]">
+            <Icon aria-hidden className="size-5.5" strokeWidth={2.25} />
             <span lang={lang}>{label}</span>
           </Link>
         ))}
-        <button type="button" onClick={sendTest} disabled={testState !== "idle"} className="pressable inline-flex min-h-11 items-center gap-2 rounded-xl bg-surface px-3 text-[14.5px] font-semibold ring-1 ring-line hover:ring-line-strong disabled:opacity-60">
-          <BellRing aria-hidden className="size-4.5 text-indigo-soft dark:text-ink" strokeWidth={2.25} />
+        <Link to="/people" className="pressable inline-flex min-h-14 items-center gap-2.5 rounded-xl bg-surface px-4 text-[16.5px] font-semibold text-ink ring-1 ring-line-strong hover:ring-indigo-soft">
+          <Users aria-hidden className="size-5.5 text-muted" strokeWidth={2.25} />
+          <span lang={lang}>{t("action.people")}</span>
+        </Link>
+        <button
+          type="button"
+          onClick={sendTest}
+          disabled={testState !== "idle"}
+          className="pressable inline-flex min-h-14 items-center gap-2.5 rounded-xl bg-surface px-4 text-[16.5px] font-semibold text-ink ring-1 ring-line-strong hover:ring-indigo-soft disabled:opacity-60"
+        >
+          <BellRing aria-hidden className="size-5.5 text-muted" strokeWidth={2.25} />
           <span lang={lang}>{t("action.testReminder")}</span>
         </button>
         {testState !== "idle" && (
@@ -242,7 +289,10 @@ function TodayCard({ parent, fid, myLang }: { parent: ParentCard; fid: string; m
             {testState === "sent" ? t("action.testSent") : t("action.testLimit")}
           </p>
         )}
-        </div>
+        <Link to={`${base}/insights`} className="col-span-2 inline-flex min-h-11 items-center justify-center gap-2 rounded-xl text-[14.5px] font-semibold text-muted hover:text-ink">
+          <ChartLine aria-hidden className="size-4.5" strokeWidth={2.25} />
+          <span lang={lang}>{t("action.insights")}</span>
+        </Link>
       </nav>
     </section>
   );

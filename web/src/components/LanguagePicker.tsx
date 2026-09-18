@@ -11,40 +11,19 @@ export function defaultLanguage(): LanguageCode | null {
 /**
  * Endonyms only, each in its own script, no flags and no "regional" labels.
  *
- * `heading` asks for "Choose your language" in every offered language at once. That is the right
- * thing when the reader has not chosen one yet and may not be able to read the rest of the page —
- * the parent's join screen, the first pick during sign-up. It is noise anywhere a heading has
- * already said it in the reader's own language, so those screens pass `heading={false}` and the
- * legend stays for screen readers only.
+ * The prompt is never printed once per offered language. Stacking "Choose your language" in three
+ * scripts above three cards that already say ಕನ್ನಡ, हिन्दी and English repeats in words what the
+ * cards say in the only form that needs no reading, and it pushed the cards below the fold on a
+ * small phone. The legend stays for screen readers. Screens that want a visible label write one
+ * themselves, in the reader's own language.
  */
-export function LanguagePicker({
-  value,
-  onChange,
-  large = false,
-  heading = true,
-}: {
-  value: LanguageCode | null;
-  onChange: (code: LanguageCode) => void;
-  large?: boolean;
-  heading?: boolean;
-}) {
+export function LanguagePicker({ value, onChange, large = false }: { value: LanguageCode | null; onChange: (code: LanguageCode) => void; large?: boolean }) {
   const languages = pickerLanguages();
   return (
     <fieldset>
-      <legend className={heading ? "w-full" : "sr-only"}>
-        {heading ? (
-          <span className="flex flex-col gap-0.5">
-            {languages.map((language) => (
-              <span key={language.code} lang={language.code} className={cx("font-semibold text-ink", large ? "text-2xl" : "text-lg", language.code !== languages[0]?.code && "text-muted")}>
-                {i18next.getFixedT(language.code)("lang.choose")}
-              </span>
-            ))}
-          </span>
-        ) : (
-          i18next.getFixedT(value ?? "en")("lang.choose")
-        )}
-      </legend>
-      <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-3">
+      <legend className="sr-only">{i18next.getFixedT(value ?? "en")("lang.choose")}</legend>
+      {/* No top margin: the legend is screen-reader only, so anything here would be dead space. */}
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
         {languages.map((language) => {
           const selected = value === language.code;
           return (

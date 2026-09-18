@@ -6,6 +6,7 @@ import { DemoPrescriptionPage } from "./routes/demo/DemoPrescriptionPage";
 import { InviteAcceptPage, OnboardingPage, SignInPage } from "./routes/family/AuthPages";
 import { ChecksPage } from "./routes/family/ChecksPage";
 import { AlertPage, HomePage } from "./routes/family/HomePage";
+import { InsightsPage } from "./routes/family/InsightsPage";
 import { MedicinesPage } from "./routes/family/MedicinesPage";
 import { PeoplePage } from "./routes/family/PeoplePage";
 import { PrescriptionPage } from "./routes/family/PrescriptionPage";
@@ -42,6 +43,7 @@ const router = createBrowserRouter([
       { path: "/parents/:pid/checks", element: <ChecksPage /> },
       { path: "/people", element: <PeoplePage /> },
       { path: "/parents/:pid/prescription", element: <PrescriptionPage /> },
+      { path: "/parents/:pid/insights", element: <InsightsPage /> },
       { path: "/parents/:pid/report", element: <ReportPage /> },
       { path: "/parents/:pid/settings", element: <ParentSettingsPage /> },
       { path: "/settings", element: <MySettingsPage /> },

@@ -418,6 +418,12 @@
     "people.caregiversTitle": {"text": "किसे सूचना जाती है", "reviewedBy": null},
     "people.phoneConnected": {"text": "फ़ोन जुड़ा है", "reviewedBy": null},
     "people.phoneMissing": {"text": "फ़ोन अभी नहीं जुड़ा", "reviewedBy": null},
-    "people.openDashboard": {"text": "उनका डैशबोर्ड खोलें", "reviewedBy": null}
+    "people.openDashboard": {"text": "उनका डैशबोर्ड खोलें", "reviewedBy": null},
+    "home.statusNeedsYou": {"text": "परिवार में किसी को अभी आपकी ज़रूरत है।", "reviewedBy": null},
+    "home.statusMissed": {"text": "आज हर खुराक नहीं ली गई।", "reviewedBy": null},
+    "home.statTaken": {"text": "आज ली गईं", "reviewedBy": null},
+    "home.statDue": {"text": "अभी बाकी", "reviewedBy": null},
+    "home.statMissed": {"text": "आज छूटीं", "reviewedBy": null},
+    "action.insights": {"text": "अब तक कैसा चल रहा है", "reviewedBy": null}
   }
 }

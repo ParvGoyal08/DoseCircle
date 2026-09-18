@@ -418,6 +418,12 @@
     "people.caregiversTitle": {"text": "ಯಾರಿಗೆ ಸೂಚನೆ ಹೋಗುತ್ತದೆ", "reviewedBy": null},
     "people.phoneConnected": {"text": "ಫೋನ್ ಸಂಪರ್ಕಗೊಂಡಿದೆ", "reviewedBy": null},
     "people.phoneMissing": {"text": "ಫೋನ್ ಇನ್ನೂ ಸಂಪರ್ಕಗೊಂಡಿಲ್ಲ", "reviewedBy": null},
-    "people.openDashboard": {"text": "ಅವರ ಡ್ಯಾಶ್‌ಬೋರ್ಡ್ ತೆರೆಯಿರಿ", "reviewedBy": null}
+    "people.openDashboard": {"text": "ಅವರ ಡ್ಯಾಶ್‌ಬೋರ್ಡ್ ತೆರೆಯಿರಿ", "reviewedBy": null},
+    "home.statusNeedsYou": {"text": "ಕುಟುಂಬದಲ್ಲಿ ಯಾರಿಗೋ ಈಗ ನಿಮ್ಮ ಅಗತ್ಯವಿದೆ.", "reviewedBy": null},
+    "home.statusMissed": {"text": "ಇಂದು ಎಲ್ಲ ಔಷಧಿಗಳನ್ನು ತೆಗೆದುಕೊಂಡಿಲ್ಲ.", "reviewedBy": null},
+    "home.statTaken": {"text": "ಇಂದು ತೆಗೆದುಕೊಂಡವು", "reviewedBy": null},
+    "home.statDue": {"text": "ಇನ್ನೂ ಬಾಕಿ", "reviewedBy": null},
+    "home.statMissed": {"text": "ಇಂದು ತಪ್ಪಿದವು", "reviewedBy": null},
+    "action.insights": {"text": "ಇಲ್ಲಿಯವರೆಗೆ ಹೇಗಿದೆ", "reviewedBy": null}
   }
 }

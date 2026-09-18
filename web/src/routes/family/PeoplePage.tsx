@@ -93,12 +93,16 @@ function People({ fid, mid, lang: myLang, isOwner }: { fid: string; mid: string;
                     )}
                   </p>
                 </div>
-                <Link
-                  to={`/parents/${p.pid}/medicines`}
-                  className="pressable inline-flex min-h-11 items-center gap-2 rounded-[var(--radius-button)] px-4 text-[14.5px] font-semibold ring-1 ring-line-strong hover:ring-indigo-soft"
-                >
-                  <span lang={lang}>{t("action.medicines")}</span>
-                </Link>
+                {/* Reminder times and pausing are this person's own settings, so they live on this
+                    person's row rather than on the home screen's action list. */}
+                {[
+                  { to: `/parents/${p.pid}/medicines`, label: t("action.medicines") },
+                  { to: `/parents/${p.pid}/settings`, label: t("action.settings") },
+                ].map(({ to, label }) => (
+                  <Link key={to} to={to} className="pressable inline-flex min-h-11 items-center gap-2 rounded-[var(--radius-button)] px-4 text-[14.5px] font-semibold ring-1 ring-line-strong hover:ring-indigo-soft">
+                    <span lang={lang}>{label}</span>
+                  </Link>
+                ))}
               </Card>
             </li>
           ))}
@@ -306,7 +310,7 @@ function AddParent({ fid, lang: myLang, onAdded }: { fid: string; lang: string; 
           <p lang={lang} className="mb-2 text-[15px] font-semibold">
             {t("onboard.parentLanguage")}
           </p>
-          <LanguagePicker value={parentLang} onChange={setParentLang} heading={false} />
+          <LanguagePicker value={parentLang} onChange={setParentLang} />
         </div>
         {error && (
           <p role="alert" className="rounded-xl bg-missed-tint px-3 py-2 font-medium text-missed">

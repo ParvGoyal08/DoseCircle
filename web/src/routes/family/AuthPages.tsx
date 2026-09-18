@@ -239,7 +239,12 @@ export function OnboardingPage() {
           <p lang={lang} className="text-[16px] text-muted">
             {t("onboard.intro")}
           </p>
-          <LanguagePicker value={myLang} onChange={setMyLang} />
+          <div>
+            <p lang={lang} className="mb-2 text-[15px] font-semibold">
+              {t("lang.choose")}
+            </p>
+            <LanguagePicker value={myLang} onChange={setMyLang} />
+          </div>
           <section className="space-y-4">
             <h2 lang={lang} className="text-xl font-semibold">
               {t("onboard.you")}
@@ -262,7 +267,7 @@ export function OnboardingPage() {
               <p lang={lang} className="mb-2 text-[15px] font-semibold">
                 {t("onboard.parentLanguage")}
               </p>
-              <LanguagePicker value={form.parentLang} onChange={(code) => setForm({ ...form, parentLang: code })} heading={false} />
+              <LanguagePicker value={form.parentLang} onChange={(code) => setForm({ ...form, parentLang: code })} />
             </div>
           </section>
           {error && (
@@ -332,7 +337,12 @@ export function InviteAcceptPage() {
         <h1 lang={lang} className="font-display text-4xl md:text-[44px]">
           {t("invite.title")}
         </h1>
-        <LanguagePicker value={myLang} onChange={setMyLang} />
+        <div>
+          <p lang={lang} className="mb-2 text-[15px] font-semibold">
+            {t("lang.choose")}
+          </p>
+          <LanguagePicker value={myLang} onChange={setMyLang} />
+        </div>
         <Field label={t("onboard.yourName")} lang={lang}>
           <input className={inputClass} required maxLength={40} value={name} onChange={(e) => setName(e.target.value)} />
         </Field>

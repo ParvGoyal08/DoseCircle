@@ -418,6 +418,12 @@
     "people.caregiversTitle": {"text": "Who is alerted", "reviewedBy": "source"},
     "people.phoneConnected": {"text": "Phone connected", "reviewedBy": "source"},
     "people.phoneMissing": {"text": "Phone not connected yet", "reviewedBy": "source"},
-    "people.openDashboard": {"text": "Open their dashboard", "reviewedBy": "source"}
+    "people.openDashboard": {"text": "Open their dashboard", "reviewedBy": "source"},
+    "home.statusNeedsYou": {"text": "Someone in the family needs you now.", "reviewedBy": "source"},
+    "home.statusMissed": {"text": "Not every dose was taken today.", "reviewedBy": "source"},
+    "home.statTaken": {"text": "Taken today", "reviewedBy": "source"},
+    "home.statDue": {"text": "Still to come", "reviewedBy": "source"},
+    "home.statMissed": {"text": "Missed today", "reviewedBy": "source"},
+    "action.insights": {"text": "How it is going", "reviewedBy": "source"}
   }
 }
