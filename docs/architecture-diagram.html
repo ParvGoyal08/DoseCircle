@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>DoseCircle architecture</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400;9..40,500;9..40,600;9..40,700&family=Playfair+Display:ital,wght@0,500;0,600;1,500&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --paper: #f8f7f2; --surface: #fff; --ink: #172b2a; --muted: #4a5653; --line: #e1e4dd;
+    --green: #245f52; --green-deep: #173f37; --green-tint: #e9f1ed; --gold: #d4b46a; --gold-tint: #f5ecd6;
+    --missed: #9f1d12; --missed-tint: #fbe9e6;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  html, body { width: 1920px; height: 1080px; background: var(--paper); color: var(--ink); font-family: "DM Sans", sans-serif; overflow: hidden; }
+  .serif { font-family: "Playfair Display", serif; font-weight: 500; }
+  .abs { position: absolute; }
+  header { position: absolute; left: 64px; top: 48px; right: 64px; display: flex; align-items: flex-end; justify-content: space-between; }
+  h1 { font-size: 54px; line-height: 1; letter-spacing: -0.5px; }
+  h1 em { color: var(--green); }
+  .sub { margin-top: 12px; font-size: 20px; color: var(--muted); }
+  .chips { display: flex; gap: 10px; }
+  .chip { border-radius: 999px; padding: 9px 16px; font-size: 16px; font-weight: 600; background: var(--surface); border: 1px solid var(--line); }
+  .chip.gold { background: var(--gold-tint); border-color: #e8d7a8; color: #5c4712; }
+
+  .col-label { position: absolute; top: 186px; font-size: 13px; font-weight: 700; letter-spacing: 2.4px; text-transform: uppercase; color: var(--green); }
+  .card { position: absolute; background: var(--surface); border: 1px solid var(--line); border-radius: 20px; padding: 18px 20px; box-shadow: 0 18px 40px -30px rgb(23 63 55 / .45); }
+  .card .aws { font-size: 12px; font-weight: 700; letter-spacing: 1.6px; text-transform: uppercase; color: #8a6d1f; }
+  .card .name { font-size: 22px; font-weight: 700; margin-top: 3px; }
+  .card .what { font-size: 15.5px; color: var(--muted); margin-top: 5px; line-height: 1.4; }
+  .person { display: flex; gap: 14px; align-items: center; }
+  .avatar { flex: none; width: 58px; height: 58px; border-radius: 999px; display: grid; place-items: center; font-size: 26px; font-weight: 700; }
+
+  .loop { position: absolute; left: 1180px; top: 214px; width: 676px; height: 520px; border-radius: 28px; background: var(--green-deep); color: #fff; padding: 28px 30px; }
+  .loop h2 { font-size: 30px; }
+  .loop .lead { font-size: 16px; color: rgb(255 255 255 / .72); margin-top: 6px; }
+  .steps { margin-top: 22px; display: grid; grid-template-columns: 1fr 1fr; gap: 14px 16px; }
+  .step { display: flex; gap: 12px; align-items: flex-start; background: rgb(255 255 255 / .07); border: 1px solid rgb(255 255 255 / .12); border-radius: 16px; padding: 13px 14px; min-height: 96px; }
+  .step .num { flex: none; width: 30px; height: 30px; border-radius: 999px; display: grid; place-items: center; background: var(--gold); color: var(--green-deep); font-weight: 700; font-size: 15px; }
+  .step b { display: block; font-size: 17px; }
+  .step span:not(.num) { display: block; font-size: 14px; color: rgb(255 255 255 / .74); margin-top: 3px; line-height: 1.35; }
+  .step small { display: inline-block; margin-top: 6px; font-size: 11.5px; font-weight: 700; letter-spacing: 1.2px; text-transform: uppercase; color: var(--gold); }
+
+  .band { position: absolute; left: 64px; top: 790px; width: 1046px; height: 230px; border-radius: 24px; background: var(--surface); border: 1px solid var(--line); padding: 22px 26px; }
+  .band h3, .ops h3 { font-size: 13px; font-weight: 700; letter-spacing: 2.4px; text-transform: uppercase; color: var(--green); }
+  .chain { margin-top: 16px; display: flex; align-items: stretch; gap: 0; }
+  .link { flex: 1; background: var(--paper); border: 1px solid var(--line); border-radius: 16px; padding: 12px 14px; }
+  .link .aws { font-size: 11px; font-weight: 700; letter-spacing: 1.4px; text-transform: uppercase; color: #8a6d1f; }
+  .link b { display: block; font-size: 17px; margin-top: 2px; }
+  .link span { display: block; font-size: 13.5px; color: var(--muted); margin-top: 4px; line-height: 1.35; }
+  .link.human { background: var(--green-tint); border-color: #cfe0d7; }
+  .arrow { flex: none; width: 30px; display: grid; place-items: center; color: var(--green); font-size: 22px; font-weight: 700; }
+
+  .ops { position: absolute; left: 1180px; top: 790px; width: 676px; height: 230px; border-radius: 24px; background: var(--surface); border: 1px solid var(--line); padding: 22px 26px; }
+  .ops-grid { margin-top: 14px; display: grid; grid-template-columns: 1fr 1fr; gap: 10px 22px; }
+  .ops-grid div { font-size: 15.5px; color: var(--muted); line-height: 1.35; }
+  .ops-grid b { color: var(--ink); }
+  svg.wires { position: absolute; inset: 0; pointer-events: none; }
+</style>
+</head>
+<body>
+  <header>
+    <div>
+      <h1 class="serif">How DoseCircle runs <em>on AWS</em></h1>
+      <p class="sub">Fully serverless in Mumbai (ap-south-1), deployed with the AWS CDK</p>
+    </div>
+    <div class="chips">
+      <span class="chip gold">≈ ₹2.5 per person per month</span>
+      <span class="chip">Waiting for a tap costs nothing</span>
+    </div>
+  </header>
+
+  <!-- Column labels -->
+  <p class="col-label" style="left:64px">People</p>
+  <p class="col-label" style="left:410px">Front door</p>
+  <p class="col-label" style="left:790px">Logic &amp; data</p>
+
+  <!-- People -->
+  <div class="card person" style="left:64px; top:228px; width:300px; height:136px">
+    <span class="avatar" style="background:var(--green-tint); color:var(--green)">A</span>
+    <div><div class="name">Family</div><div class="what">Sign in, add medicines, get alerted, take it on</div></div>
+  </div>
+  <div class="card person" style="left:64px; top:470px; width:300px; height:136px">
+    <span class="avatar" style="background:var(--gold-tint); color:#6b4800">K</span>
+    <div><div class="name">Person taking medicines</div><div class="what">Scans a code. No account, no password</div></div>
+  </div>
+
+  <!-- Front door -->
+  <div class="card" style="left:410px; top:214px; width:310px; height:120px">
+    <div class="aws">AWS Amplify Hosting</div><div class="name">The app</div><div class="what">Installable web app with offline service worker</div>
+  </div>
+  <div class="card" style="left:410px; top:364px; width:310px; height:140px">
+    <div class="aws">Amazon API Gateway</div><div class="name">HTTP API</div><div class="what">Family: Cognito sign-in token<br/>Phones: their own device key</div>
+  </div>
+  <div class="card" style="left:410px; top:534px; width:310px; height:120px">
+    <div class="aws">Amazon Cognito</div><div class="name">Family sign-in</div><div class="what">Email and password, reset by code</div>
+  </div>
+
+  <!-- Logic & data -->
+  <div class="card" style="left:790px; top:214px; width:320px; height:120px">
+    <div class="aws">AWS Lambda · Node.js 24 · arm64</div><div class="name">APIs and workflow steps</div><div class="what">Also sends the web push</div>
+  </div>
+  <div class="card" style="left:790px; top:364px; width:320px; height:140px">
+    <div class="aws">Amazon Verified Permissions</div><div class="name">Cedar policies</div><div class="what">Every action checked: who may see, change or claim what</div>
+  </div>
+  <div class="card" style="left:790px; top:534px; width:320px; height:120px">
+    <div class="aws">Amazon DynamoDB</div><div class="name">One table</div><div class="what">Conditional writes: only one person can claim</div>
+  </div>
+
+  <!-- The dose loop -->
+  <section class="loop">
+    <h2 class="serif">One missed dose, start to finish</h2>
+    <p class="lead">One Step Functions execution per dose. It waits for a tap, and the waiting is free.</p>
+    <div class="steps">
+      <div class="step"><span class="num">1</span><div><b>Right on time</b><span>One schedule per person per time of day, in Indian time</span><small>EventBridge Scheduler</small></div></div>
+      <div class="step"><span class="num">2</span><div><b>Reminder to her phone</b><span>Web push in her language; the workflow waits for her tap</span><small>Step Functions · task token</small></div></div>
+      <div class="step"><span class="num">3</span><div><b>Did it arrive?</b><span>Her phone confirms delivery, so a miss is told apart from an offline phone</span><small>Lambda receipt</small></div></div>
+      <div class="step"><span class="num">4</span><div><b>The family is asked</b><span>One person at a time, in the order they chose; faster for critical medicines</span><small>Step Functions loop</small></div></div>
+      <div class="step"><span class="num">5</span><div><b>“I'll handle it”</b><span>One tap claims it; two people can never both claim</span><small>DynamoDB condition</small></div></div>
+      <div class="step"><span class="num">6</span><div><b>Everyone else stands down</b><span>And every alert can explain why it happened</span><small>Execution history</small></div></div>
+    </div>
+  </section>
+
+  <!-- Prescription -->
+  <section class="band">
+    <h3>A prescription photo becomes medicines</h3>
+    <div class="chain">
+      <div class="link"><div class="aws">Amazon S3</div><b>Private upload</b><span>Signed upload link, deleted after 7 days</span></div>
+      <div class="arrow">→</div>
+      <div class="link"><div class="aws">Amazon Textract</div><b>Reads the page</b><span>Printed and handwritten English</span></div>
+      <div class="arrow">→</div>
+      <div class="link"><div class="aws">Amazon Bedrock</div><b>Claude Sonnet 4.6</b><span>Medicines and dose codes, e.g. 1-0-1</span></div>
+      <div class="arrow">→</div>
+      <div class="link"><div class="aws">Bedrock Guardrails</div><b>No medical advice</b><span>Blocks advice in the notes</span></div>
+      <div class="arrow">→</div>
+      <div class="link human"><div class="aws" style="color:var(--green)">A person</div><b>Checks every line</b><span>Nothing is saved until then</span></div>
+    </div>
+  </section>
+
+  <!-- Operations -->
+  <section class="ops">
+    <h3>Running it safely</h3>
+    <div class="ops-grid">
+      <div><b>Amazon CloudWatch</b><br/>Dose funnel dashboard and alarms</div>
+      <div><b>AWS X-Ray</b><br/>Traces across every Lambda</div>
+      <div><b>SSM Parameter Store</b><br/>Push keys and secrets, never in code</div>
+      <div><b>AWS Budgets</b><br/>Spend alerts and route throttles</div>
+      <div><b>Amazon Polly</b><br/>Reminder voice clips, made once at build time</div>
+      <div><b>AWS CDK</b><br/>The whole stack as TypeScript</div>
+    </div>
+  </section>
+
+  <!-- Wires -->
+  <svg class="wires" width="1920" height="1080" viewBox="0 0 1920 1080">
+    <defs>
+      <marker id="a" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 10 5 0 10z" fill="#245f52" /></marker>
+      <marker id="g" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 10 5 0 10z" fill="#b8962f" /></marker>
+    </defs>
+    <g fill="none" stroke="#245f52" stroke-width="2.5" stroke-linecap="round">
+      <!-- people -> app / API -->
+      <path d="M364 280 C 390 280, 385 274, 406 274" marker-end="url(#a)" />
+      <path d="M364 300 C 390 300, 380 420, 406 420" marker-end="url(#a)" />
+      <path d="M364 538 C 390 538, 380 450, 406 450" marker-end="url(#a)" />
+      <!-- API <-> Cognito -->
+      <path d="M565 504 L565 530" marker-end="url(#a)" />
+      <!-- API -> Lambda -->
+      <path d="M720 420 C 755 420, 750 280, 786 280" marker-end="url(#a)" />
+      <!-- Lambda -> Verified Permissions, DynamoDB -->
+      <path d="M950 334 L950 360" marker-end="url(#a)" />
+      <path d="M1110 294 C 1135 294, 1135 594, 1114 594" marker-end="url(#a)" />
+      <!-- Lambda <-> dose loop -->
+      <path d="M1110 262 L1176 262" marker-end="url(#a)" marker-start="url(#a)" />
+    </g>
+    <!-- push to her phone, from the loop -->
+    <path d="M1180 700 C 760 760, 420 700, 370 580" fill="none" stroke="#b8962f" stroke-width="2.5" stroke-dasharray="7 7" marker-end="url(#g)" />
+    <text x="760" y="742" font-family="DM Sans" font-size="15" font-weight="600" fill="#6b5418">web push reminder, in her language</text>
+  </svg>
+</body>
+</html>
