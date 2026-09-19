@@ -1,7 +1,7 @@
 import { SLOT_NAMES, type LanguageCode, type SlotName } from "@dosecircle/shared";
-import { CirclePause, CirclePlay, LogOut, MoveDown, MoveUp, Smartphone, UserPlus } from "lucide-react";
+import { ChevronRight, CirclePause, CirclePlay, LogOut, MoveDown, MoveUp, Pill, Smartphone, UserPlus } from "lucide-react";
 import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router";
+import { Link, useNavigate, useParams } from "react-router";
 import { FamilyShell, inputClass } from "../../components/FamilyShell";
 import { LanguageToggle } from "../../components/LanguagePicker";
 import { Avatar, Button, Card, SLOT_ICONS } from "../../components/ui";
@@ -32,11 +32,15 @@ function ParentSettings({ fid, pid, myLang, isOwner }: { fid: string; pid: strin
   const [order, setOrder] = useState<string[]>([]);
   const [times, setTimes] = useState<Record<SlotName, string> | null>(null);
   const [saved, setSaved] = useState<string | null>(null);
+  const [name, setName] = useState("");
+  const [personLang, setPersonLang] = useState<LanguageCode>("en");
 
   useEffect(() => {
     if (parent) {
       setOrder(parent.ladder.map((p) => p.mid));
       setTimes(parent.slotTimes);
+      setName(parent.displayName);
+      setPersonLang(parent.lang);
     }
   }, [parent]);
 
@@ -59,6 +63,47 @@ function ParentSettings({ fid, pid, myLang, isOwner }: { fid: string; pid: strin
   return (
     <FamilyShell lang={myLang} back="/home" title={parent.displayName}>
       <div className="space-y-6">
+        {/* Everything about this person lives with the family: their phone only scans a code and never
+            asks them to set anything up. */}
+        <Card className="p-4">
+          <h2 lang={lang} className="text-xl font-semibold">
+            {t("settings.person")}
+          </h2>
+          <p lang={lang} className="mt-1 text-[15px] text-muted">
+            {t("settings.personHelp")}
+          </p>
+          <label className="mt-4 block">
+            <span lang={lang} className="text-[15px] font-semibold">
+              {t("onboard.parentName")}
+            </span>
+            <input className={`${inputClass} mt-1`} maxLength={40} value={name} onChange={(e) => setName(e.target.value)} />
+          </label>
+          <p lang={lang} className="mt-4 text-[15px] font-semibold">
+            {t("onboard.parentLanguage")}
+          </p>
+          <div className="mt-1.5">
+            <LanguageToggle value={personLang} onChange={setPersonLang} lang={lang} />
+          </div>
+          <div className="mt-4 flex flex-wrap items-center gap-3">
+            <Button
+              tone="ink"
+              disabled={!name.trim() || (name.trim() === parent.displayName && personLang === parent.lang)}
+              onClick={async () => {
+                await api(endpoint, { method: "PATCH", auth: "family", body: { displayName: name.trim(), lang: personLang } });
+                await dashboard.reload();
+                flash("person");
+              }}
+            >
+              <span lang={lang}>{saved === "person" ? t("settings.saved") : t("settings.saveNameLang")}</span>
+            </Button>
+            <Link to={`/parents/${pid}/medicines`} className="pressable inline-flex min-h-12 items-center gap-2 rounded-full border border-line-strong px-4 text-[15px] font-semibold hover:border-indigo/40">
+              <Pill aria-hidden className="size-4.5" />
+              <span lang={lang}>{t("action.medicines")}</span>
+              <ChevronRight aria-hidden className="size-4" />
+            </Link>
+          </div>
+        </Card>
+
         <Card className="p-4">
           <h2 lang={lang} className="text-xl font-semibold">
             {t("settings.order")}

@@ -94,7 +94,7 @@ const STEPS: Step[] = [
     id: "join",
     who: "Amma's phone · ಕನ್ನಡ",
     title: "Amma joins by scanning",
-    body: "She points her camera at Arjun's code and types her name. No account and no password — her phone is the key.",
+    body: "She points her camera at Arjun's code and she is in. Nothing to type — Arjun already set her name, language and medicines. Her phone is the key.",
     aws: "One-time code · only its hash is stored",
     screen: () => <JoinScreen />,
     frame: "phone",
@@ -453,17 +453,16 @@ function JoinScreen() {
           <Check className="mt-1 size-5 shrink-0" strokeWidth={3} />
           {t("parent.join.done")}
         </p>
-        <p lang={lang} className="mt-5 text-[23px] font-semibold leading-snug">
-          {t("parent.setup.nameTitle")}
+      </section>
+      <p lang={lang} className="font-display mt-5 text-[30px] leading-tight">
+        {t("parent.today.title")}
+      </p>
+      <section className="mt-4 rounded-2xl bg-surface p-4 ring-1 ring-line">
+        <p lang={lang} className="text-[17px] font-medium leading-snug">
+          {t("parent.notify.why")}
         </p>
-        <p lang={lang} className="mt-1 text-[16px] text-muted">
-          {t("parent.setup.nameHelp")}
-        </p>
-        <div className="mt-4 flex h-16 items-center rounded-2xl border-2 border-indigo bg-surface px-4 text-[28px] font-semibold">
-          Shantha<span className="ml-0.5 h-8 w-[2px] animate-pulse bg-indigo" />
-        </div>
-        <p lang={lang} className="mt-4 grid min-h-14 place-items-center rounded-2xl bg-indigo text-[19px] font-semibold text-white">
-          {t("onboard.next")}
+        <p lang={lang} className="mt-4 grid min-h-14 place-items-center rounded-2xl bg-indigo px-3 text-center text-[19px] font-semibold text-white">
+          {t("parent.notify.button")}
         </p>
       </section>
     </div>

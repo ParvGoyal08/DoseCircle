@@ -12,12 +12,15 @@ import { PeoplePage } from "./routes/family/PeoplePage";
 import { PrescriptionPage } from "./routes/family/PrescriptionPage";
 import { ReportPage } from "./routes/family/ReportPage";
 import { MySettingsPage, ParentSettingsPage } from "./routes/family/SettingsPages";
+import { AppLaunch } from "./routes/AppLaunch";
 import { LandingPage } from "./routes/LandingPage";
 import { JoinPage, ParentDosePage, ParentHomePage } from "./routes/parent/ParentPages";
 import "./lib/auth";
 
 const router = createBrowserRouter([
   { path: "/", element: <LandingPage /> },
+  // The installed app opens here and goes to the right screen for this phone.
+  { path: "/app", element: <AppLaunch /> },
   { path: "/demo", element: <DemoPage /> },
   { path: "/demo/prescription", element: <DemoPrescriptionPage /> },
 

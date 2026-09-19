@@ -127,6 +127,15 @@ export async function updateParent(event: APIGatewayProxyEventV2) {
   await ddb.send(
     new UpdateCommand({ TableName: env.tableName, Key: { PK: parent.PK, SK: parent.SK }, UpdateExpression: `SET ${sets.join(", ")}`, ExpressionAttributeNames: names, ExpressionAttributeValues: values }),
   );
+  // Reminders are written in each phone's language, so a phone already connected follows the change.
+  if (body.lang) {
+    const phones = await devicesOf(pid);
+    await Promise.all(
+      phones.map((d) =>
+        ddb.send(new UpdateCommand({ TableName: env.tableName, Key: { PK: d.PK, SK: d.SK }, UpdateExpression: "SET lang = :lang", ExpressionAttributeValues: { ":lang": body.lang } })),
+      ),
+    );
+  }
   if (slotTimes || body.paused !== undefined) await syncSlots(fid, pid);
   return json(200, { pid, updated: Object.keys(body) });
 }

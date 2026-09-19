@@ -1,7 +1,7 @@
 import { ArrowDown, ArrowRight, Camera, Check, Hand, KeyRound, Languages, ScanLine, Smartphone, UserPlus, Users, type LucideIcon } from "lucide-react";
 import { motion, useReducedMotion } from "motion/react";
 import { useEffect, useState, type ReactNode } from "react";
-import { Link } from "react-router";
+import { Link, Navigate } from "react-router";
 import { FamilyCircle, type CircleStage } from "../components/FamilyCircle";
 import { Logo } from "../components/Logo";
 import { QrScanner } from "../components/QrScanner";
@@ -9,6 +9,7 @@ import { applyTheme, initialTheme } from "../components/ThemeToggle";
 import { DemoStory } from "../components/DemoStory";
 import { cx } from "../components/ui";
 import { pairedDevice } from "../lib/device";
+import { isStandalone } from "../lib/push";
 
 /** The hero loops through a whole escalation so the idea lands before anyone reads a word. */
 const LOOP: { stage: CircleStage; alerted: string[]; claimed: string | null; ms: number }[] = [
@@ -55,6 +56,12 @@ const scrollTo = (id: string) => document.getElementById(id)?.scrollIntoView({ b
 const AWS = ["EventBridge Scheduler", "Step Functions", "Lambda", "DynamoDB", "Verified Permissions", "Textract", "Bedrock", "Polly"];
 
 export function LandingPage() {
+  // Apps installed before start_url moved to /app still open here; send them on too.
+  if (isStandalone()) return <Navigate to="/app" replace />;
+  return <Landing />;
+}
+
+function Landing() {
   useLightPage();
   const device = pairedDevice();
   const frame = useLoop();
@@ -104,20 +111,20 @@ export function LandingPage() {
         <div className="relative mx-auto grid max-w-6xl items-center gap-14 px-4 pb-20 pt-14 md:px-6 md:pt-20 lg:grid-cols-[1fr_1.05fr] lg:gap-12 lg:pb-24">
           <div>
             <motion.p {...rise(0)} className="eyebrow">
-              Medicine reminders for families
+              Medicine reminders for the people you care
             </motion.p>
             <motion.h1 {...rise(0.05)} className="font-display mt-6 text-[46px] leading-[1.02] text-[#173432] sm:text-[62px] xl:text-[76px] dark:text-ink">
-              When Amma misses her medicine, <span className="italic text-indigo">the right person knows.</span>
+              When they forget, <span className="italic text-indigo">you’re still there.</span>
             </motion.h1>
             <motion.p {...rise(0.12)} className="mt-6 max-w-lg text-[17px] leading-[1.7] text-muted">
-              A reminder on her phone, in her own language. If she doesn't confirm it, the family is asked one person at a time until someone takes responsibility.
+              A gentle reminder for them. A little peace of mind for you. If they miss their medicine, DoseCircle makes sure someone who cares knows.
             </motion.p>
             <motion.div {...rise(0.18)} className="mt-8 flex flex-wrap items-center gap-3">
-              <button type="button" onClick={() => scrollTo("demo")} className={pillPrimary}>
+              <Link to="/signin?mode=create" className={pillPrimary}>
+                Set up your circle <ArrowRight aria-hidden className="size-4.5" />
+              </Link>
+              <button type="button" onClick={() => scrollTo("demo")} className={pillOutline}>
                 See how it works <ArrowDown aria-hidden className="size-4.5" />
-              </button>
-              <button type="button" onClick={() => scrollTo("start")} className={pillOutline}>
-                Get started
               </button>
             </motion.div>
             <motion.ul {...rise(0.24)} className="mt-12 flex flex-wrap gap-x-8 gap-y-4">

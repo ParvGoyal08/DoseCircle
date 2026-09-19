@@ -1,7 +1,7 @@
 import { LANGUAGES, type LanguageCode } from "@dosecircle/shared";
-import { Bell, BellOff, Camera, CheckCheck, ChevronRight, Loader2, ScanLine } from "lucide-react";
+import { Bell, BellOff, CheckCheck, ChevronRight, Loader2, ScanLine } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Link, Navigate, useNavigate, useParams } from "react-router";
+import { Link, Navigate, useLocation, useNavigate, useParams } from "react-router";
 import { InstallGuide } from "../../components/InstallGuide";
 import { defaultLanguage, LanguageToggle } from "../../components/LanguagePicker";
 import { QrScanner } from "../../components/QrScanner";
@@ -12,9 +12,8 @@ import { useT } from "../../i18n";
 import { api, ApiError, mockApiEnabled } from "../../lib/api";
 import { pairedDevice, pairPhone, updateStoredLanguage } from "../../lib/device";
 import { formatCount } from "../../lib/format";
-import { enableReminders, isStandalone, keepSubscriptionFresh, pushSubject, pushSupport } from "../../lib/push";
-import { uploadBoth } from "../../lib/prescription-upload";
-import type { DoseView, ParentToday, PresignedPost } from "../../lib/types";
+import { enableReminders, keepSubscriptionFresh, pushSubject, pushSupport } from "../../lib/push";
+import type { DoseView, ParentToday } from "../../lib/types";
 import { useApi } from "../../lib/useApi";
 
 function codeFromFragment(): string {
@@ -91,64 +90,59 @@ function fragment(key: string): string {
 }
 
 /**
- * /join#c=CODE&l=kn — the dependent's whole setup: scan, name, an optional prescription, done.
+ * /join#c=CODE&l=kn — connecting the phone, and nothing else.
  *
- * Three things this deliberately does not do. It does not open on a language picker: the family
- * already chose one and it rides in the link, so the first words are in the reader's own script.
- * It does not make them type a code that is already in the link. And it does not gate connecting
- * behind installing to the home screen — that used to hide the code entry completely, so a parent
- * who could not install was stuck and the family saw no sign the link had even arrived. Connecting
- * is what tells the family it worked, so it happens first and install is offered afterwards.
+ * The family has already set up everything about this person — their name, their language, their
+ * medicines — so the phone asks for none of it. It used to ask "what should we call you?", and a
+ * test typed "X" and renamed a real person on every family member's screen. Scanning the code (or
+ * typing it) connects and goes straight to today's medicines; anything that needs changing is changed
+ * by the family in that person's settings.
+ *
+ * It does not gate connecting behind installing to the home screen — that used to hide the code
+ * entry completely, so a parent who could not install was stuck. Install is offered on the next screen.
  */
 export function JoinPage() {
   const navigate = useNavigate();
   const linkLang = fragment("l");
-  const [chosen, setChosen] = useState<LanguageCode | null>(
+  const [chosen, setChosenState] = useState<LanguageCode | null>(
     () => pairedDevice()?.lang ?? (LANGUAGES.some((l) => l.code === linkLang) ? (linkLang as LanguageCode) : defaultLanguage()),
   );
+  // Only a language picked on this screen overrides the one the family set up.
+  const picked = useRef(false);
+  const setChosen = (code: LanguageCode) => {
+    picked.current = true;
+    setChosenState(code);
+  };
   const { t, lang } = useT(chosen ?? "en");
   const [code, setCode] = useState(codeFromFragment);
-  const [step, setStep] = useState<"connect" | "name" | "prescription" | "done">(pairedDevice() ? "name" : "connect");
   const [status, setStatus] = useState<"idle" | "busy" | "invalid">("idle");
-  const [name, setName] = useState("");
-  const [savingName, setSavingName] = useState(false);
   const [scanning, setScanning] = useState(false);
-  const needsInstall = pushSupport() === "needs-install" && !isStandalone();
   const tried = useRef(false);
+  const hasCode = codeFromFragment().replace(/[^A-Z0-9]/g, "").length >= 8;
 
   const connect = useCallback(async (scanned?: string) => {
     setStatus("busy");
     try {
       const device = await pairPhone(scanned ?? code);
-      // The parent's own choice wins over what the family set up.
-      if (chosen && chosen !== device.lang) {
+      if (picked.current && chosen && chosen !== device.lang) {
         await api("/parent/lang", { method: "PUT", auth: "device", body: { lang: chosen } });
         updateStoredLanguage(chosen);
       }
-      setName(device.displayName ?? "");
-      setStatus("idle");
-      setStep("name");
+      navigate("/parent", { replace: true, state: { justConnected: true } });
     } catch (error) {
       setStatus(error instanceof ApiError && (error.status === 404 || error.status === 409 || error.status === 400) ? "invalid" : "idle");
     }
-  }, [code, chosen]);
+  }, [code, chosen, navigate]);
 
   // A scanned QR carries the code, so there is nothing to type: connect straight away.
   useEffect(() => {
-    if (tried.current || step !== "connect" || codeFromFragment().replace(/[^A-Z0-9]/g, "").length < 8) return;
+    if (tried.current || !hasCode) return;
     tried.current = true;
     void connect();
-  }, [step, connect]);
+  }, [hasCode, connect]);
 
-  const saveName = async () => {
-    setSavingName(true);
-    try {
-      if (name.trim()) await api("/parent/name", { method: "PUT", auth: "device", body: { displayName: name.trim() } });
-      setStep("prescription");
-    } finally {
-      setSavingName(false);
-    }
-  };
+  // Already connected and no new code: this phone belongs on its today screen.
+  if (pairedDevice() && !hasCode) return <Navigate to="/parent" replace />;
 
   return (
     <div className="min-h-dvh bg-paper">
@@ -158,174 +152,53 @@ export function JoinPage() {
           <span className="text-xl font-semibold tracking-tight">DoseCircle</span>
         </div>
 
-        {step === "connect" && (
-          <>
-            {/* The language rides in the family's link, so this is a correction, not a first step:
-                small, above the code, and the code box is there whether or not anyone touches it. */}
-            <LanguageToggle value={chosen} onChange={setChosen} lang={lang} size="lg" />
-            <section className="sticker bg-surface p-5">
-              <label htmlFor="code" lang={lang} className="block text-2xl font-semibold leading-snug">
-                {t("parent.join.title")}
-              </label>
-              <input
-                id="code"
-                inputMode="text"
-                autoCapitalize="characters"
-                autoComplete="one-time-code"
-                spellCheck={false}
-                maxLength={12}
-                value={code}
-                onChange={(e) => setCode(e.target.value.toUpperCase())}
-                aria-label={t("parent.join.codeLabel")}
-                className="tabular mt-4 h-20 w-full rounded-2xl border border-line-strong bg-paper text-center font-mono text-4xl font-semibold tracking-[0.25em] focus:border-indigo focus:bg-surface focus:outline-none"
-              />
-              {status === "invalid" && (
-                <p lang={lang} role="alert" className="mt-3 text-lg font-medium text-missed">
-                  {t("parent.join.invalid")}
-                </p>
-              )}
-              <Button tone="ink" size="lg" className="mt-4 min-h-16 w-full text-xl" onClick={() => void connect()} disabled={code.replace(/[^A-Z0-9]/g, "").length < 8 || status === "busy"}>
-                {status === "busy" && <Loader2 aria-hidden className="size-6 animate-spin" />}
-                <span lang={lang}>{status === "busy" ? t("parent.setup.connecting") : t("parent.join.button")}</span>
-              </Button>
-              {/* Scanning here connects straight away: no typing an eight-letter code. */}
-              <Button tone="quiet" size="lg" className="mt-3 min-h-16 w-full text-xl" onClick={() => setScanning(true)} disabled={status === "busy"}>
-                <ScanLine aria-hidden className="size-6" />
-                <span lang={lang}>{t("scan.button")}</span>
-              </Button>
-            </section>
-            {scanning && (
-              <QrScanner
-                lang={lang}
-                onClose={() => setScanning(false)}
-                onFound={(target) => {
-                  const scanned = new URLSearchParams(target.split("#")[1] ?? "").get("c") ?? "";
-                  setCode(scanned);
-                  void connect(scanned);
-                }}
-              />
-            )}
-          </>
-        )}
-
-        {step === "name" && (
-          <section className="sticker bg-surface p-5">
-            <p lang={lang} className="mb-3 text-lg font-semibold text-taken">
-              {t("parent.join.done")}
+        {/* The language rides in the family's link, so this is a correction, not a first step:
+            small, above the code, and the code box is there whether or not anyone touches it. */}
+        <LanguageToggle value={chosen} onChange={setChosen} lang={lang} size="lg" />
+        <section className="sticker bg-surface p-5">
+          <label htmlFor="code" lang={lang} className="block text-2xl font-semibold leading-snug">
+            {t("parent.join.title")}
+          </label>
+          <input
+            id="code"
+            inputMode="text"
+            autoCapitalize="characters"
+            autoComplete="one-time-code"
+            spellCheck={false}
+            maxLength={12}
+            value={code}
+            onChange={(e) => setCode(e.target.value.toUpperCase())}
+            aria-label={t("parent.join.codeLabel")}
+            className="tabular mt-4 h-20 w-full rounded-2xl border border-line-strong bg-paper text-center font-mono text-4xl font-semibold tracking-[0.25em] focus:border-indigo focus:bg-surface focus:outline-none"
+          />
+          {status === "invalid" && (
+            <p lang={lang} role="alert" className="mt-3 text-lg font-medium text-missed">
+              {t("parent.join.invalid")}
             </p>
-            <label htmlFor="parent-name" lang={lang} className="block text-2xl font-semibold leading-snug">
-              {t("parent.setup.nameTitle")}
-            </label>
-            <p lang={lang} className="mt-1 text-lg text-muted">
-              {t("parent.setup.nameHelp")}
-            </p>
-            <input
-              id="parent-name"
-              autoComplete="name"
-              maxLength={40}
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              className="mt-4 h-20 w-full rounded-2xl border border-line-strong bg-paper px-4 text-3xl font-semibold focus:border-indigo focus:bg-surface focus:outline-none"
-            />
-            <Button tone="ink" size="lg" className="mt-4 min-h-16 w-full text-xl" onClick={saveName} disabled={savingName}>
-              {savingName && <Loader2 aria-hidden className="size-6 animate-spin" />}
-              <span lang={lang}>{t("onboard.next")}</span>
-            </Button>
-          </section>
-        )}
-
-        {step === "prescription" && chosen && (
-          <ParentPrescriptionStep lang={chosen} onDone={() => setStep("done")} />
-        )}
-
-        {step === "done" && chosen && (
-          <>
-            {needsInstall && <InstallGuide lang={chosen} />}
-            <RemindersCard lang={chosen} />
-            <Button tone="ink" size="lg" className="min-h-16 text-xl" onClick={() => navigate("/parent")}>
-              <span lang={lang}>{t("parent.today.title")}</span>
-              <ChevronRight aria-hidden className="size-6" />
-            </Button>
-          </>
+          )}
+          <Button tone="ink" size="lg" className="mt-4 min-h-16 w-full text-xl" onClick={() => void connect()} disabled={code.replace(/[^A-Z0-9]/g, "").length < 8 || status === "busy"}>
+            {status === "busy" && <Loader2 aria-hidden className="size-6 animate-spin" />}
+            <span lang={lang}>{status === "busy" ? t("parent.setup.connecting") : t("parent.join.button")}</span>
+          </Button>
+          {/* Scanning here connects straight away: no typing an eight-letter code. */}
+          <Button tone="quiet" size="lg" className="mt-3 min-h-16 w-full text-xl" onClick={() => setScanning(true)} disabled={status === "busy"}>
+            <ScanLine aria-hidden className="size-6" />
+            <span lang={lang}>{t("scan.button")}</span>
+          </Button>
+        </section>
+        {scanning && (
+          <QrScanner
+            lang={lang}
+            onClose={() => setScanning(false)}
+            onFound={(target) => {
+              const scanned = new URLSearchParams(target.split("#")[1] ?? "").get("c") ?? "";
+              setCode(scanned);
+              void connect(scanned);
+            }}
+          />
         )}
       </main>
     </div>
-  );
-}
-
-/**
- * The optional last step of a parent's setup: photograph the prescription you are holding.
- *
- * The parent can start the reading but never finishes it — the draft goes to the family, who tick
- * every line before a single medicine is saved. That keeps the confirmation with the person best
- * placed to check it against the paper, and it is why this screen promises nothing more than
- * "sent to your family".
- */
-function ParentPrescriptionStep({ lang: parentLang, onDone }: { lang: LanguageCode; onDone: () => void }) {
-  const { t, lang } = useT(parentLang);
-  const input = useRef<HTMLInputElement>(null);
-  const [state, setState] = useState<"idle" | "busy" | "sent" | "failed">("idle");
-
-  const send = async (file: File) => {
-    setState("busy");
-    try {
-      const started = await api<{ uploads: { model: PresignedPost; original: PresignedPost } }>("/parent/prescriptions", {
-        method: "POST",
-        auth: "device",
-        body: { consent: true },
-      });
-      await uploadBoth(started.uploads, file);
-      setState("sent");
-    } catch {
-      setState("failed");
-    }
-  };
-
-  return (
-    <section className="sticker bg-surface p-5">
-      <h2 lang={lang} className="text-2xl font-semibold leading-snug">
-        {t("parent.setup.rxTitle")}
-      </h2>
-      <p lang={lang} className="mt-2 text-lg text-muted">
-        {t("parent.setup.rxHelp")}
-      </p>
-
-      {state === "sent" ? (
-        <p lang={lang} className="mt-4 rounded-2xl bg-taken-tint p-4 text-lg font-semibold text-taken">
-          {t("parent.setup.rxSent")}
-        </p>
-      ) : (
-        <>
-          <input
-            ref={input}
-            type="file"
-            accept="image/*"
-            capture="environment"
-            className="sr-only"
-            onChange={(event) => {
-              const file = event.target.files?.[0];
-              if (file) void send(file);
-            }}
-          />
-          <Button tone="ink" size="lg" className="mt-4 min-h-16 w-full text-xl" disabled={state === "busy"} onClick={() => input.current?.click()}>
-            {state === "busy" ? <Loader2 aria-hidden className="size-6 animate-spin" /> : <Camera aria-hidden className="size-6" strokeWidth={2.25} />}
-            <span lang={lang}>{t("parent.setup.rxTake")}</span>
-          </Button>
-          {state === "failed" && (
-            <p lang={lang} role="alert" className="mt-3 text-lg font-medium text-missed">
-              {t("common.error")}
-            </p>
-          )}
-          <p lang={lang} className="mt-3 text-[15px] text-muted">
-            {t("parent.setup.rxConsent")}
-          </p>
-        </>
-      )}
-
-      <Button tone="quiet" size="lg" className="mt-4 min-h-16 w-full text-xl" onClick={onDone}>
-        <span lang={lang}>{state === "sent" ? t("parent.setup.finish") : t("parent.setup.skip")}</span>
-      </Button>
-    </section>
   );
 }
 
@@ -377,6 +250,7 @@ function NothingToday({ hasSchedule, lang: parentLang }: { hasSchedule: boolean;
 
 /** /parent — the calm "today" screen. */
 export function ParentHomePage() {
+  const justConnected = (useLocation().state as { justConnected?: boolean } | null)?.justConnected === true;
   const device = pairedDevice() ?? (mockApiEnabled ? { token: "mock", displayName: "Shantha", lang: "kn" as const } : null);
   const today = useApi(device ? () => api<ParentToday>("/parent/today", { auth: "device" }) : null, [], 60_000);
   // The phone's push subscription can be replaced by the browser; re-register it if so.
@@ -405,6 +279,12 @@ export function ParentHomePage() {
         </h1>
       </header>
 
+      {justConnected && (
+        <p lang={lang} role="status" className="flex items-center gap-3 rounded-[var(--radius-card)] bg-taken-tint p-4 text-lg font-semibold text-taken">
+          <CheckCheck aria-hidden className="size-6 shrink-0" strokeWidth={2.25} />
+          {t("parent.join.done")}
+        </p>
+      )}
       <InstallGuide lang={lang} />
       <RemindersCard lang={lang} />
 
