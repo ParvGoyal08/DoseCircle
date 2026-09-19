@@ -1,4 +1,4 @@
-import { ArrowLeft, ArrowRight, Check, CircleAlert, Cloud, MessageCircle, RotateCcw, Smartphone, TriangleAlert, WifiOff } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, CircleAlert, MessageCircle, RotateCcw, Smartphone, TriangleAlert, WifiOff } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import QRCode from "qrcode";
 import { useEffect, useRef, useState, type ReactNode } from "react";
@@ -74,7 +74,6 @@ interface Step {
   who: string;
   title: string;
   body: string;
-  aws: string;
   screen: () => ReactNode;
   /** "phone" draws a phone around the screen; "panel" is a view from behind the scenes. */
   frame: "phone" | "panel";
@@ -86,7 +85,6 @@ const STEPS: Step[] = [
     who: "Arjun's phone · English",
     title: "Arjun sets up the family",
     body: "From Bengaluru, Arjun adds his mother, picks Kannada for her reminders, and invites his sister Meera.",
-    aws: "Amazon Cognito · sign-in",
     screen: () => <SetupScreen />,
     frame: "phone",
   },
@@ -95,7 +93,6 @@ const STEPS: Step[] = [
     who: "Amma's phone · ಕನ್ನಡ",
     title: "Amma joins by scanning",
     body: "She points her camera at Arjun's code and she is in. Nothing to type — Arjun already set her name, language and medicines. Her phone is the key.",
-    aws: "One-time code · only its hash is stored",
     screen: () => <JoinScreen />,
     frame: "phone",
   },
@@ -104,7 +101,6 @@ const STEPS: Step[] = [
     who: "Arjun's phone · English",
     title: "Her medicines, from one photo",
     body: "Arjun photographs the prescription. Each line is read for him, and nothing is saved until he has checked every one.",
-    aws: "Textract → Claude on Bedrock → Guardrail",
     screen: () => <PrescriptionScreen />,
     frame: "phone",
   },
@@ -113,7 +109,6 @@ const STEPS: Step[] = [
     who: "Amma's phone · ಕನ್ನಡ",
     title: "8:00 — the reminder rings, in Kannada",
     body: "Medicine names exactly as printed on the strip, never translated, and one large button to say she took them.",
-    aws: "EventBridge Scheduler starts Step Functions",
     screen: () => <ParentDoseScreen dose={DOSE} onTaken={async () => {}} framed showDraftLanguage />,
     frame: "phone",
   },
@@ -122,7 +117,6 @@ const STEPS: Step[] = [
     who: "Behind the scenes",
     title: "No tap. Did it reach her phone?",
     body: "Her phone confirmed the reminder arrived, so this is a missed dose, not a phone that is switched off — and the family is told which.",
-    aws: "Step Functions waits for the tap · waiting is free",
     screen: () => <MissedPanel />,
     frame: "panel",
   },
@@ -131,7 +125,6 @@ const STEPS: Step[] = [
     who: "Arjun's phone · English",
     title: "The family is asked, one at a time",
     body: "Arjun first, in English. If he can't respond in time, Meera is asked next, in Hindi — never everyone at once.",
-    aws: "Lambda sends a web push",
     screen: () => (
       <div className="px-3 pt-3">
         <FamilyAlert alert={alert("ESCALATING", null)} viewerLang="en" viewerMid="arjun" ladder={LADDER} alertedCount={1} onClaim={async () => "claimed"} onWhy={() => {}} />
@@ -144,7 +137,6 @@ const STEPS: Step[] = [
     who: "Meera's phone · हिन्दी",
     title: "Meera takes it. Arjun stands down.",
     body: "One tap on “I'll handle it”, and everyone else is told she has it. No five worried calls to Amma.",
-    aws: "DynamoDB conditional write · one claim only",
     screen: () => (
       <div className="px-3 pt-3">
         <FamilyAlert alert={alert("CLAIMED", "Meera")} viewerLang="hi" viewerMid="meera" ladder={LADDER} alertedCount={2} onClaim={async () => "claimed"} onWhy={() => {}} showDraftLanguage />
@@ -157,7 +149,6 @@ const STEPS: Step[] = [
     who: "Arjun's phone · English",
     title: "Why was I alerted?",
     body: "Every step, when it happened, and the rule that allowed it. Nobody is left wondering why their phone buzzed.",
-    aws: "Amazon Verified Permissions · Cedar",
     screen: () => <WhyScreen />,
     frame: "phone",
   },
@@ -224,13 +215,7 @@ function DesktopStory({ active, onActive, header }: { active: number; onActive: 
                   {open && (
                     <span className="mt-1.5 block pl-10">
                       <span className="block text-[15.5px] leading-relaxed text-muted">{step.body}</span>
-                      <span className="mt-3 flex flex-wrap items-center gap-2">
-                        <span className="inline-flex items-center gap-1.5 rounded-full bg-indigo-tint px-2.5 py-1 text-[13px] font-semibold text-indigo-soft ring-1 ring-indigo-tint">
-                          <Cloud aria-hidden className="size-3.5 shrink-0" />
-                          {step.aws}
-                        </span>
-                        <span className="text-[13px] font-medium text-muted">{step.who}</span>
-                      </span>
+                      <span className="mt-2 block text-[13px] font-medium text-muted">{step.who}</span>
                     </span>
                   )}
                 </button>
@@ -334,10 +319,6 @@ function StepText({ step, index, dim }: { step: Step; index: number; dim: boolea
       </p>
       <h3 className="font-display mt-4 text-[28px] leading-tight tracking-tight md:text-[34px]">{step.title}</h3>
       <p className="mt-3 text-[17px] leading-relaxed text-muted">{step.body}</p>
-      <p className="mt-5 inline-flex items-center gap-2 rounded-full bg-indigo-tint px-3 py-1.5 text-[13.5px] font-semibold text-indigo-soft ring-1 ring-indigo-tint">
-        <Cloud aria-hidden className="size-4 shrink-0" />
-        {step.aws}
-      </p>
     </div>
   );
 }
