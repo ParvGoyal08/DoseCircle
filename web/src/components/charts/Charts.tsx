@@ -79,7 +79,7 @@ export function TrendArea({ values, target = 0.8, height = 96, tone = "light", m
       {points.length > 0 && (
         <span aria-hidden className="absolute size-3 -translate-x-1/2 -translate-y-1/2 rounded-full ring-2" style={{ left: "100%", top: `${(points[points.length - 1]![1] / height) * 100}%`, background: stroke, ["--tw-ring-color" as string]: tone === "dark" ? "#14133A" : "var(--color-surface)" }} />
       )}
-      <span aria-hidden className={cx("tabular absolute left-0 -translate-y-full pb-0.5 text-[11.5px] font-medium", tone === "dark" ? "text-white/70" : "text-muted")} style={{ top: `${(y(target) / height) * 100}%` }}>
+      <span aria-hidden className={cx("tabular absolute left-0 -translate-y-full pb-0.5 text-[12.5px] font-medium", tone === "dark" ? "text-white/70" : "text-muted")} style={{ top: `${(y(target) / height) * 100}%` }}>
         80%
       </span>
     </div>
@@ -159,15 +159,15 @@ export function ReadingTrend({ lines, dates, height = 110, lang }: { lines: Read
           ))}
         </svg>
         {/* The two labels sit at the values they name, not at the edges of the padded axis. */}
-        <span aria-hidden className="tabular absolute left-0 -translate-y-1/2 bg-surface pr-1 text-[11.5px] font-medium text-muted" style={{ top: `${(y(highest) / height) * 100}%` }}>
+        <span aria-hidden className="tabular absolute left-0 -translate-y-1/2 bg-surface pr-1 text-[12.5px] font-medium text-muted" style={{ top: `${(y(highest) / height) * 100}%` }}>
           {formatNumber(highest, lang)}
         </span>
-        <span aria-hidden className="tabular absolute left-0 -translate-y-1/2 bg-surface pr-1 text-[11.5px] font-medium text-muted" style={{ top: `${(y(lowest) / height) * 100}%` }}>
+        <span aria-hidden className="tabular absolute left-0 -translate-y-1/2 bg-surface pr-1 text-[12.5px] font-medium text-muted" style={{ top: `${(y(lowest) / height) * 100}%` }}>
           {formatNumber(lowest, lang)}
         </span>
       </div>
       {lines.length > 1 && (
-        <ul className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-[12.5px] text-muted">
+        <ul className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-[13.5px] text-muted">
           {lines.map((line) => (
             <li key={line.key} className="inline-flex items-center gap-1.5">
               <span aria-hidden className="h-0.5 w-4 rounded-full" style={{ background: line.stroke }} />
@@ -376,7 +376,7 @@ export function Columns({ bars, lang, highlightLast = false }: { bars: { label: 
         <div key={bar.label} className="flex h-full min-w-0 flex-1 flex-col items-center justify-end gap-1.5">
           <span className="tabular text-[13px] font-semibold text-ink">{formatNumber(bar.value, lang)}</span>
           <div className="w-full rounded-t-md" style={{ height: `${Math.max(3, (bar.value / max) * 100)}%`, background: bar.tone ?? (highlightLast && i === bars.length - 1 ? "var(--color-haldi)" : "var(--color-indigo-soft)") }} />
-          <span className="tabular w-full truncate text-center text-[12px] font-medium text-muted">{bar.label}</span>
+          <span className="tabular w-full truncate text-center text-[13px] font-medium text-muted">{bar.label}</span>
         </div>
       ))}
     </div>

@@ -43,7 +43,7 @@ export function LanguagePicker({ value, onChange, large = false }: { value: Lang
                   {language.endonym}
                 </span>
                 {language.draft && (
-                  <span lang={language.code} className={cx("w-fit rounded-full px-2 py-0.5 text-[11px] font-semibold", selected ? "bg-white/20 text-white" : "bg-offline-tint text-offline")}>
+                  <span lang={language.code} className={cx("w-fit rounded-full px-2 py-0.5 text-[12.5px] font-semibold", selected ? "bg-white/20 text-white" : "bg-offline-tint text-offline")}>
                     {i18next.getFixedT(language.code)("lang.draft")}
                   </span>
                 )}

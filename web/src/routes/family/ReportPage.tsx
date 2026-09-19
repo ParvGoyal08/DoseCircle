@@ -57,7 +57,7 @@ function ReportView({ fid, pid, myLang }: { fid: string; pid: string; myLang: st
       </details>
 
       {data && (
-        <article lang={lang} className="mx-auto max-w-[800px] rounded-[var(--radius-card)] border border-line bg-surface p-8 print:max-w-none print:rounded-none print:border-0 print:p-0">
+        <article lang={lang} className="mx-auto max-w-[800px] rounded-[var(--radius-card)] border border-line bg-surface p-4 sm:p-8 print:max-w-none print:rounded-none print:border-0 print:p-0">
           <header className="flex flex-wrap items-end justify-between gap-4 border-b border-line pb-4">
             <div>
               <p className="text-[13px] font-semibold uppercase tracking-wider text-muted">{t("report.title")}</p>
@@ -66,14 +66,17 @@ function ReportView({ fid, pid, myLang }: { fid: string; pid: string; myLang: st
                 {formatDay(data.from, lang, { day: "numeric", month: "short", year: "numeric" })} – {formatDay(data.to, lang, { day: "numeric", month: "short", year: "numeric" })}
               </p>
             </div>
-            <p className="max-w-xs text-right text-[13px] text-muted">
+            <p className="max-w-xs text-[13px] text-muted sm:text-right">
               {t("report.subtitle")}
               <br />
               <span className="tabular">{formatDay(data.generatedAt, lang, { day: "numeric", month: "short", year: "numeric", hour: "numeric", minute: "2-digit" })}</span>
             </p>
           </header>
 
-          <table className="mt-6 w-full border-collapse text-left text-[15px]">
+          {/* Six columns do not fit a phone at any readable size. The table scrolls inside its own
+              box rather than pushing the whole page sideways; on paper it has the full width. */}
+          <div className="-mx-4 mt-6 overflow-x-auto px-4 sm:mx-0 sm:px-0 print:overflow-visible">
+          <table className="w-full min-w-[520px] border-collapse text-left text-[15px] print:min-w-0">
             <thead>
               <tr className="border-b border-ink/60 text-[13px] uppercase tracking-wide text-muted">
                 <th className="py-2 pr-2 font-semibold" />
@@ -102,6 +105,7 @@ function ReportView({ fid, pid, myLang }: { fid: string; pid: string; myLang: st
               ))}
             </tbody>
           </table>
+          </div>
 
           <section className="mt-8 break-inside-avoid">
             <h2 className="mb-3 text-lg font-semibold">{t("report.grid")}</h2>
@@ -203,11 +207,11 @@ function ReportView({ fid, pid, myLang }: { fid: string; pid: string; myLang: st
                     ))}
                 </tbody>
               </table>
-              <p className="mt-2 text-[12.5px] text-muted">{t("checks.notAdvice")}</p>
+              <p className="mt-2 text-[13px] text-muted">{t("checks.notAdvice")}</p>
             </section>
           )}
 
-          <footer className="mt-8 border-t border-line pt-3 text-[12px] text-muted">{t("app.notMedicalAdvice")}</footer>
+          <footer className="mt-8 border-t border-line pt-3 text-[13px] text-muted">{t("app.notMedicalAdvice")}</footer>
         </article>
       )}
     </FamilyShell>

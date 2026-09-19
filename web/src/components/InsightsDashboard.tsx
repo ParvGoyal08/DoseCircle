@@ -123,7 +123,9 @@ export function InsightsHero({ parentName, lastReceiptAt, insights, days, onDays
             </p>
           </div>
 
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+          {/* One per row on a phone. Two across left each caption about 110px, and three cards in two
+              columns left the last one alone on its row. */}
+          <div className="grid grid-cols-1 gap-3 min-[480px]:grid-cols-2 sm:grid-cols-3">
             <Kpi icon={Flame} label={t("dash.streak")} lang={lang} value={formatNumber(h.currentStreak, lang)} foot={`${t("dash.bestStreak")} · ${formatNumber(h.bestStreak, lang)}`} />
             <Kpi icon={Zap} label={t("dash.response")} lang={lang} value={typicalResponse === null ? "–" : formatNumber(typicalResponse, lang, { style: "unit", unit: "minute", unitDisplay: "short" })} foot={t("dash.responseHint")} />
             <Kpi
@@ -159,7 +161,7 @@ function Kpi({ icon: Icon, label, value, foot, lang, accent = false }: { icon: L
         <span lang={lang}>{label}</span>
       </p>
       <p className="tabular mt-2 text-3xl font-semibold tracking-tight text-white">{value}</p>
-      <p lang={lang} className="mt-1 line-clamp-2 text-[12.5px] text-hero-muted">
+      <p lang={lang} className="mt-1 line-clamp-2 text-[13.5px] text-hero-muted">
         {foot}
       </p>
     </div>
@@ -215,7 +217,7 @@ export function InsightsGrid({ insights, lang: viewerLang }: { insights: Insight
         title={<span lang={lang}>{t("dash.calendar")}</span>}
         className="lg:col-span-7"
         action={
-          <span className="hidden flex-wrap gap-3 text-[12.5px] text-muted sm:flex">
+          <span className="hidden flex-wrap gap-3 text-[13.5px] text-muted sm:flex">
             {(["on_time", "late", "missed", "unknown"] as const).map((o) => (
               <span key={o} className="inline-flex items-center gap-1.5">
                 <Swatch outcome={o} />
@@ -376,7 +378,7 @@ export function InsightsGrid({ insights, lang: viewerLang }: { insights: Insight
                   <span className={cx("tabular text-[15px] font-semibold", r.daysLeft <= r.thresholdDays ? "text-missed" : "text-ink")}>{formatNumber(r.daysLeft, lang, { style: "unit", unit: "day", unitDisplay: "short" })}</span>
                 </div>
                 <DaysLeftGauge daysLeft={r.daysLeft} thresholdDays={r.thresholdDays} />
-                <p className="mt-1.5 text-[12.5px] text-muted">
+                <p className="mt-1.5 text-[13.5px] text-muted">
                   <span lang={lang}>{t("dash.runsOut")}</span> · <span className="tabular">{formatDay(r.runOutDate, lang, { weekday: "short", day: "numeric", month: "short" })}</span>
                 </p>
               </li>
@@ -445,7 +447,7 @@ function ReadingPanel({ series, dates, t, lang }: { series: Insights["readings"]
       action={
         series.latest && (
           <span className="shrink-0 text-right">
-            <span lang={lang} className="block text-[12.5px] text-muted">
+            <span lang={lang} className="block text-[13.5px] text-muted">
               {t("checks.latest")}
             </span>
             <span lang="en" className="tabular text-[19px] font-semibold text-ink">
@@ -467,12 +469,12 @@ function ReadingPanel({ series, dates, t, lang }: { series: Insights["readings"]
               const spread = series.spread.find((s) => s.key === series.chart.primary);
               return (
                 <div key={which} className="rounded-xl bg-paper p-2.5">
-                  <dt lang={lang} className="text-[12.5px] text-muted">
+                  <dt lang={lang} className="text-[13.5px] text-muted">
                     {t(`checks.${which}`)}
                   </dt>
                   <dd className="tabular mt-0.5 text-[17px] font-semibold">
                     {spread ? formatNumber(spread[which], lang) : "–"}
-                    <span lang="en" className="ml-1 text-[12.5px] font-medium text-muted">
+                    <span lang="en" className="ml-1 text-[13.5px] font-medium text-muted">
                       {unit}
                     </span>
                   </dd>

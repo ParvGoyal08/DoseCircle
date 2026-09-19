@@ -23,9 +23,13 @@ export function FamilyShell({ lang: viewerLang, title, back, actions, children, 
               { to: "/home", icon: House, label: t("home.title") },
               { to: "/settings", icon: Settings, label: t("action.settings") },
             ].map(({ to, icon: Icon, label }) => (
-              <NavLink key={to} to={to} className={({ isActive }) => cx("inline-flex min-h-10 items-center gap-2 rounded-full px-3.5 text-[15px] font-semibold transition-colors", isActive ? "bg-indigo text-white" : "text-ink hover:bg-sunken")}>
-                <Icon aria-hidden className="size-4.5" strokeWidth={2.25} />
-                <span lang={lang}>{label}</span>
+              // Icon-only on a phone: with captions, "Family home" folded onto two lines at 360px. A
+              // house and a gear are understood without them, and the caption stays for screen readers.
+              <NavLink key={to} to={to} aria-label={label} className={({ isActive }) => cx("inline-flex min-h-11 min-w-11 items-center justify-center gap-2 rounded-full text-[15px] font-semibold transition-colors sm:min-h-10 sm:px-3.5", isActive ? "bg-indigo text-white" : "text-ink hover:bg-sunken")}>
+                <Icon aria-hidden className="size-5 sm:size-4.5" strokeWidth={2.25} />
+                <span lang={lang} className="sr-only whitespace-nowrap sm:not-sr-only">
+                  {label}
+                </span>
               </NavLink>
             ))}
             <ThemeToggle />

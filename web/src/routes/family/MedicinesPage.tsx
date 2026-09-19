@@ -273,16 +273,19 @@ function Medicines({ fid, pid, lang: myLang }: { fid: string; pid: string; lang:
       back="/home"
       title={t("meds.title")}
       actions={
-        <>
-          <Link to={`/parents/${pid}/prescription`} className="inline-flex min-h-12 items-center gap-2 rounded-[var(--radius-button)] bg-ink px-4 font-semibold text-paper">
-            <Camera aria-hidden className="size-5" strokeWidth={2.25} />
+        // Full width and stacked on a phone. Left to wrap, "Photograph a prescription" took a row on
+        // its own and "Add by hand" dropped under it at half the width, which read as a mistake;
+        // side by side, the longer label folded inside its half.
+        <div className="grid w-full gap-2 sm:flex sm:w-auto">
+          <Link to={`/parents/${pid}/prescription`} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-[var(--radius-button)] bg-ink px-3 text-center font-semibold leading-tight text-paper sm:px-4">
+            <Camera aria-hidden className="size-5 shrink-0" strokeWidth={2.25} />
             <span lang={lang}>{t("meds.scan")}</span>
           </Link>
-          <Button tone="quiet" onClick={() => setAdding(true)}>
-            <Plus aria-hidden className="size-5" />
+          <Button tone="quiet" className="leading-tight" onClick={() => setAdding(true)}>
+            <Plus aria-hidden className="size-5 shrink-0" />
             <span lang={lang}>{t("meds.add")}</span>
           </Button>
-        </>
+        </div>
       }
     >
       {adding && (
@@ -339,45 +342,52 @@ function MedicineRow({ medicine, lang: viewerLang, endpoint, onChanged }: { medi
   return (
     <li>
       <Card className="p-4">
-        <div className="flex flex-wrap items-start gap-3">
-          <Pill aria-hidden className="mt-1 size-6 text-muted" strokeWidth={2.25} />
+        {/* On a phone the two buttons used to share the top row with the name, which left the name
+            about a hundred pixels: "Glycomet" broke mid-word and every chip folded onto two lines.
+            The buttons now sit under the details on a phone and move up beside them only when
+            there is room. */}
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start">
+          <div className="flex min-w-0 flex-1 items-start gap-3">
+          <Pill aria-hidden className="mt-1 size-6 shrink-0 text-muted" strokeWidth={2.25} />
           <div className="min-w-0 flex-1">
             <p lang="en" className="medicine-name text-xl font-semibold">
               {medicine.nameAsPrinted} {medicine.strength && <span className="font-normal text-muted">{medicine.strength}</span>}
             </p>
             <p className="mt-1 flex flex-wrap gap-1.5">
               {medicine.asNeeded ? (
-                <span lang={lang} className="rounded-full bg-paper px-2.5 py-1 text-[14px] font-semibold">
+                <span lang={lang} className="whitespace-nowrap rounded-full bg-paper px-2.5 py-1 text-[14px] font-semibold">
                   {t("meds.asNeeded")}
                 </span>
               ) : (
                 SLOT_NAMES.filter((s) => medicine.slots[s] !== undefined && medicine.slots[s] !== null).map((slot) => (
-                  <span key={slot} className="inline-flex items-center gap-1.5 rounded-full bg-paper px-2.5 py-1 text-[14px] font-semibold">
+                  <span key={slot} className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full bg-paper px-2.5 py-1 text-[14px] font-semibold">
                     <span lang={lang}>{t(`slot.${slot}`)}</span>
                     <span className="tabular text-muted">{formatCount(medicine.slots[slot] ?? null)}</span>
                   </span>
                 ))
               )}
               {medicine.food && (
-                <span lang={lang} className="rounded-full bg-paper px-2.5 py-1 text-[14px] font-semibold">
+                <span lang={lang} className="whitespace-nowrap rounded-full bg-paper px-2.5 py-1 text-[14px] font-semibold">
                   {t(`parent.food.${medicine.food}`)}
                 </span>
               )}
               {medicine.critical && (
-                <span lang={lang} className="rounded-full bg-critical-tint px-2.5 py-1 text-[14px] font-semibold text-critical">
+                <span lang={lang} className="whitespace-nowrap rounded-full bg-critical-tint px-2.5 py-1 text-[14px] font-semibold text-critical">
                   {t("status.critical")}
                 </span>
               )}
             </p>
           </div>
-          <div className="flex gap-2">
-            <Button tone="quiet" size="sm" onClick={() => setRefilling((v) => !v)}>
+          </div>
+          <div className="flex gap-2 border-t border-line pt-3 sm:border-0 sm:pt-0">
+            <Button tone="quiet" size="sm" className="flex-1 sm:flex-none" onClick={() => setRefilling((v) => !v)}>
               <PackagePlus aria-hidden className="size-4" />
               <span lang={lang}>{t("meds.refill")}</span>
             </Button>
             <Button
               tone="quiet"
               size="sm"
+              className="flex-1 sm:flex-none"
               onClick={async () => {
                 if (!window.confirm(t("meds.stopConfirm"))) return;
                 await api(endpoint, { method: "DELETE", auth: "family" });

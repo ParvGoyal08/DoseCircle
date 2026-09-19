@@ -134,7 +134,7 @@ export function PrescriptionReview({ prescription, lang: viewerLang, onSave, sav
                   </div>
 
                   <div className="mt-3 rounded-xl bg-paper p-3">
-                    <p lang={lang} className="text-[12px] font-semibold uppercase tracking-wider text-muted">
+                    <p lang={lang} className="text-[13px] font-semibold uppercase tracking-wider text-muted">
                       {t("rx.asWritten")}
                     </p>
                     <p lang="en" className="medicine-name mt-1 flex flex-wrap gap-1.5">

@@ -378,27 +378,29 @@ function TodayCard({ parent, fid, myLang }: { parent: ParentCard; fid: string; m
         </ul>
       )}
       {/* Four things a family does from here, all at a size an older reader can hit without aiming.
+          On a phone each tile puts its icon above the label: side by side, a 147px tile left
+          "Daily checks" about 85px and every label but one folded onto two lines.
           Settings moved to the header, where it is on every screen, and the charts and the doctor's
           report moved to their own page — neither belongs in the list you reach for when you are
           checking whether Amma took her tablet. */}
       <nav className="grid grid-cols-2 gap-2 border-t border-line bg-paper/60 p-3">
         {[...(empty ? [] : [{ to: `${base}/medicines`, icon: Pill, label: t("action.medicines") }]), { to: `${base}/checks`, icon: Activity, label: t("action.checks") }].map(({ to, icon: Icon, label }) => (
-          <Link key={to} to={to} className="pressable inline-flex min-h-14 items-center gap-2.5 rounded-xl bg-indigo px-4 text-[16.5px] font-semibold text-white shadow-[0_8px_20px_-12px_rgb(37_35_110/0.9)]">
-            <Icon aria-hidden className="size-5.5" strokeWidth={2.25} />
+          <Link key={to} to={to} className="pressable inline-flex min-h-[76px] flex-col items-start justify-center gap-1.5 rounded-xl py-3 text-left leading-tight sm:min-h-14 sm:flex-row sm:items-center sm:gap-2.5 sm:py-0 bg-indigo px-3.5 text-[16px] sm:px-4 sm:text-[16.5px] font-semibold text-white shadow-[0_8px_20px_-12px_rgb(37_35_110/0.9)]">
+            <Icon aria-hidden className="size-5.5 shrink-0" strokeWidth={2.25} />
             <span lang={lang}>{label}</span>
           </Link>
         ))}
-        <Link to="/people" className="pressable inline-flex min-h-14 items-center gap-2.5 rounded-xl bg-surface px-4 text-[16.5px] font-semibold text-ink ring-1 ring-line-strong hover:ring-indigo-soft">
-          <Users aria-hidden className="size-5.5 text-muted" strokeWidth={2.25} />
+        <Link to="/people" className="pressable inline-flex min-h-[76px] flex-col items-start justify-center gap-1.5 rounded-xl py-3 text-left leading-tight sm:min-h-14 sm:flex-row sm:items-center sm:gap-2.5 sm:py-0 bg-surface px-3.5 text-[16px] sm:px-4 sm:text-[16.5px] font-semibold text-ink ring-1 ring-line-strong hover:ring-indigo-soft">
+          <Users aria-hidden className="size-5.5 shrink-0 text-muted" strokeWidth={2.25} />
           <span lang={lang}>{t("action.people")}</span>
         </Link>
         <button
           type="button"
           onClick={sendTest}
           disabled={testState !== "idle"}
-          className="pressable inline-flex min-h-14 items-center gap-2.5 rounded-xl bg-surface px-4 text-[16.5px] font-semibold text-ink ring-1 ring-line-strong hover:ring-indigo-soft disabled:opacity-60"
+          className="pressable inline-flex min-h-[76px] flex-col items-start justify-center gap-1.5 rounded-xl py-3 text-left leading-tight sm:min-h-14 sm:flex-row sm:items-center sm:gap-2.5 sm:py-0 bg-surface px-3.5 text-[16px] sm:px-4 sm:text-[16.5px] font-semibold text-ink ring-1 ring-line-strong hover:ring-indigo-soft disabled:opacity-60"
         >
-          <BellRing aria-hidden className="size-5.5 text-muted" strokeWidth={2.25} />
+          <BellRing aria-hidden className="size-5.5 shrink-0 text-muted" strokeWidth={2.25} />
           <span lang={lang}>{t("action.testReminder")}</span>
         </button>
         {testState !== "idle" && (

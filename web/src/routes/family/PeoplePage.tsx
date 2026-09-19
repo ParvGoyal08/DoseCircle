@@ -75,34 +75,40 @@ function People({ fid, mid, lang: myLang, isOwner }: { fid: string; mid: string;
         <ul className="mt-4 space-y-3">
           {parents.map((p) => (
             <li key={p.pid}>
-              <Card className="flex flex-wrap items-center gap-3 p-4">
+              {/* Same rule as the medicine cards: on a phone the buttons get their own row, so the
+                  name and its status keep the full width instead of folding around them. */}
+              <Card className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center">
+                <div className="flex min-w-0 flex-1 items-center gap-3">
                 <Avatar name={p.displayName} size={44} />
                 <div className="min-w-0 flex-1">
                   <p className="text-xl font-semibold">{p.displayName}</p>
                   <p className="mt-1 flex flex-wrap items-center gap-1.5 text-[14px]">
                     <span
                       lang={lang}
-                      className={cx("rounded-full px-2.5 py-1 font-medium", p.lastReceiptAt ? "bg-taken-tint text-taken" : "bg-due-tint text-due")}
+                      className={cx("whitespace-nowrap rounded-full px-2.5 py-1 font-medium", p.lastReceiptAt ? "bg-taken-tint text-taken" : "bg-due-tint text-due")}
                     >
                       {p.lastReceiptAt ? t("people.phoneConnected") : t("people.phoneMissing")}
                     </span>
                     {p.paused && (
-                      <span lang={lang} className="rounded-full bg-offline-tint px-2.5 py-1 font-medium text-offline">
+                      <span lang={lang} className="whitespace-nowrap rounded-full bg-offline-tint px-2.5 py-1 font-medium text-offline">
                         {t("home.paused")}
                       </span>
                     )}
                   </p>
                 </div>
+                </div>
                 {/* Reminder times and pausing are this person's own settings, so they live on this
                     person's row rather than on the home screen's action list. */}
-                {[
-                  { to: `/parents/${p.pid}/medicines`, label: t("action.medicines") },
-                  { to: `/parents/${p.pid}/settings`, label: t("action.settings") },
-                ].map(({ to, label }) => (
-                  <Link key={to} to={to} className="pressable inline-flex min-h-11 items-center gap-2 rounded-[var(--radius-button)] px-4 text-[14.5px] font-semibold ring-1 ring-line-strong hover:ring-indigo-soft">
-                    <span lang={lang}>{label}</span>
-                  </Link>
-                ))}
+                <div className="grid grid-cols-2 gap-2 sm:flex">
+                  {[
+                    { to: `/parents/${p.pid}/medicines`, label: t("action.medicines") },
+                    { to: `/parents/${p.pid}/settings`, label: t("action.settings") },
+                  ].map(({ to, label }) => (
+                    <Link key={to} to={to} className="pressable inline-flex min-h-11 items-center justify-center gap-2 rounded-[var(--radius-button)] px-4 text-[14.5px] font-semibold ring-1 ring-line-strong hover:ring-indigo-soft">
+                      <span lang={lang}>{label}</span>
+                    </Link>
+                  ))}
+                </div>
               </Card>
             </li>
           ))}
@@ -145,7 +151,8 @@ function People({ fid, mid, lang: myLang, isOwner }: { fid: string; mid: string;
           return (
             <li key={member.mid}>
               <Card className="p-4">
-                <div className="flex flex-wrap items-center gap-3">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+                  <div className="flex min-w-0 flex-1 items-start gap-3">
                   <Avatar name={member.displayName} size={44} />
                   <div className="min-w-0 flex-1">
                     <p className="text-xl font-semibold">
@@ -159,14 +166,14 @@ function People({ fid, mid, lang: myLang, isOwner }: { fid: string; mid: string;
                     <p className="mt-1 flex flex-wrap items-center gap-1.5 text-[14px]">
                       <span
                         lang={lang}
-                        className={cx("inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 font-semibold", member.role === "owner" ? "bg-haldi-tint text-ink" : "bg-paper text-muted")}
+                        className={cx("inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-1 font-semibold", member.role === "owner" ? "bg-haldi-tint text-ink" : "bg-paper text-muted")}
                       >
                         {member.role === "owner" ? <Crown aria-hidden className="size-3.5" /> : <ShieldCheck aria-hidden className="size-3.5" />}
                         {t(`people.${member.role}`)}
                       </span>
-                      {member.relation && <span className="rounded-full bg-paper px-2.5 py-1 text-muted">{member.relation}</span>}
+                      {member.relation && <span className="whitespace-nowrap rounded-full bg-paper px-2.5 py-1 text-muted">{member.relation}</span>}
                       {member.ladderPositions.length > 0 ? (
-                        <span lang={lang} className="inline-flex flex-wrap items-center gap-1.5 rounded-full bg-paper px-2.5 py-1 text-muted">
+                        <span lang={lang} className="inline-flex flex-wrap items-center gap-1.5 whitespace-nowrap rounded-full bg-paper px-2.5 py-1 text-muted">
                           {t("people.inAlertOrder")}
                           {member.ladderPositions.map((position) => (
                             <span key={position.pid} className="inline-flex items-center gap-1">
@@ -176,20 +183,21 @@ function People({ fid, mid, lang: myLang, isOwner }: { fid: string; mid: string;
                           ))}
                         </span>
                       ) : (
-                        <span lang={lang} className="rounded-full bg-offline-tint px-2.5 py-1 font-medium text-offline">
+                        <span lang={lang} className="whitespace-nowrap rounded-full bg-offline-tint px-2.5 py-1 font-medium text-offline">
                           {t("people.notInOrder")}
                         </span>
                       )}
                       {!member.joined && (
-                        <span lang={lang} className="rounded-full bg-paper px-2.5 py-1 text-muted">
+                        <span lang={lang} className="whitespace-nowrap rounded-full bg-paper px-2.5 py-1 text-muted">
                           {t("people.notJoined")}
                         </span>
                       )}
                     </p>
                   </div>
+                  </div>
 
                   {isOwner && (
-                    <div className="flex flex-wrap gap-2">
+                    <div className="flex gap-2 border-t border-line pt-3 sm:border-0 sm:pt-0 [&>*]:flex-1 sm:[&>*]:flex-none">
                       <Button
                         tone="quiet"
                         size="sm"

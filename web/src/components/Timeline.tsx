@@ -58,12 +58,12 @@ export function Timeline({ items, lang: viewerLang, live = false }: { items: Tim
               </p>
               <div className="mt-1.5 flex flex-wrap gap-1.5">
                 {item.stateName && (
-                  <code className="rounded-md border-[1.5px] border-indigo/40 bg-indigo-tint px-1.5 py-0.5 font-mono text-[11.5px] font-semibold text-indigo" title={t("timeline.stateTag")}>
+                  <code className="rounded-md border-[1.5px] border-indigo/40 bg-indigo-tint px-1.5 py-0.5 font-mono text-[12.5px] font-semibold text-indigo" title={t("timeline.stateTag")}>
                     {item.stateName}
                   </code>
                 )}
                 {item.authorizedBy?.map((policy) => (
-                  <code key={policy} className="inline-flex items-center gap-1 rounded-md border-[1.5px] border-taken/40 bg-taken-tint px-1.5 py-0.5 font-mono text-[11.5px] font-semibold text-taken" title={t("timeline.allowedBy")}>
+                  <code key={policy} className="inline-flex items-center gap-1 rounded-md border-[1.5px] border-taken/40 bg-taken-tint px-1.5 py-0.5 font-mono text-[12.5px] font-semibold text-taken" title={t("timeline.allowedBy")}>
                     <ShieldCheck aria-hidden className="size-3" strokeWidth={2.5} />
                     {policy}
                   </code>
