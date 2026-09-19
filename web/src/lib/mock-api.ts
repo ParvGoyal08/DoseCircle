@@ -447,6 +447,14 @@ async function handle(pathWithQuery: string, method: string, body: Body): Promis
     if (typeof body!.displayName === "string") theParent().displayName = body!.displayName;
     return { pid: theParent().pid, updated: Object.keys(body!) };
   }
+  if (/^DELETE \/families\/[^/]+\/parents\/[^/]+$/.test(route)) {
+    const pid = route.split("/")[4]!;
+    const person = db().parents.find((p) => p.pid === pid);
+    if (!person) throw new ApiError(404, { message: "Parent not found" });
+    if (String(body!.confirmName).trim().toLowerCase() !== person.displayName.trim().toLowerCase()) throw new ApiError(400, { message: "The name does not match" });
+    db().parents = db().parents.filter((p) => p.pid !== pid);
+    return { pid, removed: true };
+  }
   if (/^POST \/families\/[^/]+\/parents\/[^/]+\/test-dose$/.test(route)) {
     if (theParent().paused) throw new ApiError(409, { message: "Reminders are paused for this person", reason: "paused" });
     if (!s.medicines.some((m) => m.active && !m.asNeeded)) throw new ApiError(400, { message: "Add a medicine first", reason: "no_medicines" });

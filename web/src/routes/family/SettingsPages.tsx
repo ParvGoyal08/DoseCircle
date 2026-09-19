@@ -1,15 +1,16 @@
 import { SLOT_NAMES, type LanguageCode, type SlotName } from "@dosecircle/shared";
-import { ChevronRight, CirclePause, CirclePlay, LogOut, MoveDown, MoveUp, Pill, Smartphone, UserPlus } from "lucide-react";
+import { ChevronRight, CirclePause, CirclePlay, Loader2, LogOut, MoveDown, MoveUp, Pill, Smartphone, TriangleAlert, UserPlus } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router";
-import { FamilyShell, inputClass } from "../../components/FamilyShell";
+import { Field, FamilyShell, inputClass } from "../../components/FamilyShell";
 import { LanguageToggle } from "../../components/LanguagePicker";
 import { Avatar, Button, Card, SLOT_ICONS } from "../../components/ui";
 import { useT } from "../../i18n";
-import { api } from "../../lib/api";
+import { api, ApiError } from "../../lib/api";
 import { signOut } from "../../lib/auth";
 import { RequireFamily, useFamily } from "../../lib/family";
 import { formatAgo } from "../../lib/format";
+import { forgetPerson } from "../../lib/person";
 import type { Dashboard } from "../../lib/types";
 import { useApi } from "../../lib/useApi";
 import { EnableMyAlerts, PhoneInvite } from "./AuthPages";
@@ -171,7 +172,7 @@ function ParentSettings({ fid, pid, myLang, isOwner }: { fid: string; pid: strin
               flash("times");
             }}
           >
-            <span lang={lang}>{saved === "times" ? t("settings.saved") : t("meds.save")}</span>
+            <span lang={lang}>{saved === "times" ? t("settings.saved") : t("settings.saveNameLang")}</span>
           </Button>
         </Card>
 
@@ -228,8 +229,69 @@ function ParentSettings({ fid, pid, myLang, isOwner }: { fid: string; pid: strin
             <PhoneInvite fid={fid} pid={pid} parentName={parent.displayName} lang={myLang} />
           </div>
         </Card>
+
+        {isOwner && <RemovePerson fid={fid} pid={pid} name={parent.displayName} myLang={myLang} />}
       </div>
     </FamilyShell>
+  );
+}
+
+/**
+ * Removing someone deletes a lot, so it is folded away at the very bottom, quiet until opened, and
+ * asks for their name typed out — the same pattern as deleting the whole family.
+ */
+function RemovePerson({ fid, pid, name, myLang }: { fid: string; pid: string; name: string; myLang: string }) {
+  const { t, lang } = useT(myLang);
+  const navigate = useNavigate();
+  const [confirmName, setConfirmName] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const matches = confirmName.trim().toLowerCase() === name.trim().toLowerCase();
+
+  return (
+    <details className="group border-t border-line pt-5">
+      <summary lang={lang} className="inline-flex cursor-pointer list-none items-center gap-2 rounded-lg text-[14.5px] text-muted hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-indigo">
+        <ChevronRight aria-hidden className="size-4 transition-transform group-open:rotate-90" />
+        {t("settings.removeTitle")}
+      </summary>
+      <div className="mt-4 max-w-xl rounded-[var(--radius-card)] bg-missed-tint p-4">
+        <p lang={lang} className="flex items-start gap-2 text-[15px] font-medium text-ink">
+          <TriangleAlert aria-hidden className="mt-0.5 size-5 shrink-0 text-missed" />
+          {t("settings.removeHelp")}
+        </p>
+        <div className="mt-4 max-w-sm">
+          <Field label={t("settings.removeConfirmLabel")} lang={lang}>
+            <input className={inputClass} value={confirmName} onChange={(e) => setConfirmName(e.target.value)} placeholder={name} autoComplete="off" />
+          </Field>
+        </div>
+        {error && (
+          <p role="alert" className="mt-3 rounded-xl bg-surface px-3 py-2 font-medium text-missed">
+            {error}
+          </p>
+        )}
+        <Button
+          tone="quiet"
+          className="mt-3 !border-missed !text-missed"
+          disabled={busy || !matches}
+          onClick={async () => {
+            setBusy(true);
+            setError(null);
+            try {
+              await api(`/families/${fid}/parents/${pid}`, { method: "DELETE", auth: "family", body: { confirmName: confirmName.trim() } });
+              forgetPerson(pid);
+              navigate("/people", { replace: true });
+            } catch (e) {
+              setError(e instanceof ApiError ? e.message : String(e));
+            } finally {
+              setBusy(false);
+            }
+          }}
+        >
+          {busy && <Loader2 aria-hidden className="size-5 animate-spin" />}
+          <span lang={lang}>{t("settings.removeButton")}</span>
+        </Button>
+      </div>
+    </details>
   );
 }
 

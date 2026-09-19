@@ -2,7 +2,7 @@ import { router } from "../../lib/router.js";
 import { addCheck, addReading, deleteReading, getReadings, listParentChecks, stopCheck, updateCheck } from "./checks.js";
 import { getDashboard } from "./dashboard.js";
 import { getInsights, getReport, getTimeline } from "./insights.js";
-import { createInvite, listDevices, revokeDevice, saveMemberSubscription, sendTestDose, setLadder, updateParent } from "./manage.js";
+import { createInvite, listDevices, removeParent, revokeDevice, saveMemberSubscription, sendTestDose, setLadder, updateParent } from "./manage.js";
 import { deleteFamily, leaveFamily, listFamilyMembers, removeMember, updateMember } from "./members.js";
 import { confirmPrescription, createPrescription, getPrescription, listPendingPrescriptions } from "./prescriptions.js";
 import { addMedicine, listParentMedicines, refillMedicine, stopMedicine, updateMedicine } from "./medicines.js";
@@ -24,6 +24,7 @@ export const FAMILY_ROUTES = {
   "POST /families/{fid}/parents": addParent,
   "PUT /families/{fid}/parents/{pid}/ladder": setLadder,
   "PATCH /families/{fid}/parents/{pid}": updateParent,
+  "DELETE /families/{fid}/parents/{pid}": removeParent,
   "POST /families/{fid}/parents/{pid}/test-dose": sendTestDose,
   "GET /families/{fid}/parents/{pid}/devices": listDevices,
   "DELETE /families/{fid}/parents/{pid}/devices/{deviceId}": revokeDevice,

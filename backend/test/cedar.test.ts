@@ -117,6 +117,12 @@ describe("who can do what", () => {
     }
   });
 
+  it("lets only an owner remove a person the family looks after", () => {
+    expect(decide(request(asha, "RemoveParent", mother)).allowed).toBe(true);
+    expect(decide(request(rohan, "RemoveParent", mother)).allowed).toBe(false);
+    expect(decide(request(stranger, "RemoveParent", mother)).allowed).toBe(false);
+  });
+
   it("lets anybody leave their own family, owner or not", () => {
     expect(decide(request(rohan, "LeaveFamily", family)).allowed).toBe(true);
     expect(decide(request(asha, "LeaveFamily", family)).allowed).toBe(true);

@@ -20,3 +20,12 @@ export function rememberPerson(pid: string) {
     // Without storage the navigation falls back to the home screen for per-person pages.
   }
 }
+
+/** After someone is removed, the navigation must not keep pointing at them. */
+export function forgetPerson(pid: string) {
+  try {
+    if (localStorage.getItem(KEY) === pid) localStorage.removeItem(KEY);
+  } catch {
+    // Nothing stored, nothing to forget.
+  }
+}

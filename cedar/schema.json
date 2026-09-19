@@ -376,6 +376,20 @@
             "attributes": {}
           }
         }
+      },
+      "RemoveParent": {
+        "appliesTo": {
+          "principalTypes": [
+            "Member"
+          ],
+          "resourceTypes": [
+            "Parent"
+          ],
+          "context": {
+            "type": "Record",
+            "attributes": {}
+          }
+        }
       }
     }
   }

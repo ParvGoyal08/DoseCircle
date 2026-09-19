@@ -327,7 +327,7 @@ export class DoseCircleStack extends Stack {
     // Family app: sign-in with Cognito. Keys must match FAMILY_ROUTES (checked in stack.test.ts).
     const familyApi = apiFunction("FamilyApi", "api/family/index.ts", Duration.seconds(20));
     stateMachine.grantStartExecution(familyApi); // "Send a test reminder"
-    stateMachine.grantExecution(familyApi, "states:GetExecutionHistory"); // "Why am I seeing this?"
+    stateMachine.grantExecution(familyApi, "states:GetExecutionHistory", "states:StopExecution"); // "Why am I seeing this?", and removing a person mid-reminder
     familyApi.addToRolePolicy(
       new PolicyStatement({
         actions: ["scheduler:CreateSchedule", "scheduler:UpdateSchedule", "scheduler:DeleteSchedule", "scheduler:GetSchedule"],

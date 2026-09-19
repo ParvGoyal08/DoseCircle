@@ -34,6 +34,7 @@ export type Action =
   | "SendTestReminder"
   | "ViewReport"
   | "ManageDevices"
+  | "RemoveParent"
   | "ManageMembers"
   | "LeaveFamily"
   | "DeleteFamily"

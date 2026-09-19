@@ -17,6 +17,7 @@ export const FAMILY_ROUTE_KEYS = [
   "POST /families/{fid}/parents",
   "PUT /families/{fid}/parents/{pid}/ladder",
   "PATCH /families/{fid}/parents/{pid}",
+  "DELETE /families/{fid}/parents/{pid}",
   "POST /families/{fid}/parents/{pid}/test-dose",
   "GET /families/{fid}/parents/{pid}/devices",
   "DELETE /families/{fid}/parents/{pid}/devices/{deviceId}",

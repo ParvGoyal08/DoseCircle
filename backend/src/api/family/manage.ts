@@ -15,6 +15,7 @@ import { PushSubscriptionSchema } from "../../lib/push-endpoints.js";
 import { subscriptionsFor } from "../../lib/webpush.js";
 import { testReminderSlot } from "./test-reminder.js";
 import { takeFromBudget } from "../../lib/rate-limit.js";
+import { deleteParentRecords } from "../../lib/purge.js";
 import { getParent, listMembers } from "../../lib/repository.js";
 import { DisplayNameSchema, LanguageSchema, SlotNameSchema, TimeSchema } from "../../lib/schemas.js";
 import { listChecks, listMedicines, listSlots, syncSlots } from "../../scheduling/sync-slots.js";
@@ -138,6 +139,20 @@ export async function updateParent(event: APIGatewayProxyEventV2) {
   }
   if (slotTimes || body.paused !== undefined) await syncSlots(fid, pid);
   return json(200, { pid, updated: Object.keys(body) });
+}
+
+/**
+ * DELETE /families/{fid}/parents/{pid} — stop looking after someone here: their reminders, phones,
+ * medicines and history all go. Owners only, and the app asks them to type the name first.
+ */
+export async function removeParent(event: APIGatewayProxyEventV2) {
+  const { fid, pid, parent } = await parentFor(event);
+  const { confirmName } = parseBody(event, z.object({ confirmName: z.string().trim().min(1).max(60) }));
+  const { entity } = await memberPrincipal(await principalFrom(event));
+  await authorize({ principal: entity, action: "RemoveParent", resource: parentEntity(parent), entities: [familyEntity(fid)] });
+  if (parent.displayName.trim().toLowerCase() !== confirmName.toLowerCase()) throw new HttpError(400, "The name does not match");
+  const counts = await deleteParentRecords(fid, pid);
+  return json(200, { pid, removed: true, ...counts });
 }
 
 const TestDoseSchema = z.object({ slotName: SlotNameSchema.optional() });
