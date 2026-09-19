@@ -4,6 +4,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { Link } from "react-router";
 import { FamilyCircle, type CircleStage } from "../components/FamilyCircle";
 import { Logo } from "../components/Logo";
+import { QrScanner } from "../components/QrScanner";
 import { applyTheme, initialTheme } from "../components/ThemeToggle";
 import { DemoStory } from "../components/DemoStory";
 import { cx } from "../components/ui";
@@ -57,6 +58,7 @@ export function LandingPage() {
   useLightPage();
   const device = pairedDevice();
   const frame = useLoop();
+  const [scanning, setScanning] = useState(false);
   const reduce = useReducedMotion();
   const rise = (delay: number) => (reduce ? {} : { initial: { opacity: 0, y: 14 }, animate: { opacity: 1, y: 0 }, transition: { duration: 0.6, delay, ease: [0.22, 1, 0.36, 1] as const } });
 
@@ -176,9 +178,15 @@ export function LandingPage() {
                   </li>
                 ))}
               </ol>
-              <Link to="/join" className="pressable mt-7 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-blue-50 px-5 sm:w-auto text-[16px] font-semibold text-blue-700 ring-1 ring-blue-100 hover:bg-blue-100">
-                Type a code instead <ArrowRight aria-hidden className="size-4.5" />
-              </Link>
+              <div className="mt-7 flex flex-col gap-2 sm:flex-row">
+                <button type="button" onClick={() => setScanning(true)} className="pressable inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-blue-600 px-5 text-[16px] font-semibold text-white shadow-[0_10px_24px_-12px_rgb(37_99_235/0.8)] hover:bg-blue-700">
+                  <ScanLine aria-hidden className="size-5" /> Scan the code now
+                </button>
+                <Link to="/join" className="pressable inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-blue-50 px-5 text-[16px] font-semibold text-blue-700 ring-1 ring-blue-100 hover:bg-blue-100">
+                  Type a code instead
+                </Link>
+              </div>
+              {scanning && <QrScanner lang="en" onClose={() => setScanning(false)} />}
             </article>
 
             <article className="flex flex-col rounded-[28px] bg-white p-6 shadow-[0_20px_60px_-30px_rgb(30_58_138/0.3)] ring-1 ring-slate-200 md:p-8">

@@ -1,9 +1,10 @@
 import { LANGUAGES, type LanguageCode } from "@dosecircle/shared";
-import { Bell, BellOff, Camera, CheckCheck, ChevronRight, Loader2 } from "lucide-react";
+import { Bell, BellOff, Camera, CheckCheck, ChevronRight, Loader2, ScanLine } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, Navigate, useNavigate, useParams } from "react-router";
 import { InstallGuide } from "../../components/InstallGuide";
 import { defaultLanguage, LanguageToggle } from "../../components/LanguagePicker";
+import { QrScanner } from "../../components/QrScanner";
 import { Logo } from "../../components/Logo";
 import { ParentDoseScreen } from "../../components/ParentDoseScreen";
 import { Button, cx, SLOT_ICONS } from "../../components/ui";
@@ -111,13 +112,14 @@ export function JoinPage() {
   const [status, setStatus] = useState<"idle" | "busy" | "invalid">("idle");
   const [name, setName] = useState("");
   const [savingName, setSavingName] = useState(false);
+  const [scanning, setScanning] = useState(false);
   const needsInstall = pushSupport() === "needs-install" && !isStandalone();
   const tried = useRef(false);
 
-  const connect = useCallback(async () => {
+  const connect = useCallback(async (scanned?: string) => {
     setStatus("busy");
     try {
-      const device = await pairPhone(code);
+      const device = await pairPhone(scanned ?? code);
       // The parent's own choice wins over what the family set up.
       if (chosen && chosen !== device.lang) {
         await api("/parent/lang", { method: "PUT", auth: "device", body: { lang: chosen } });
@@ -182,11 +184,27 @@ export function JoinPage() {
                   {t("parent.join.invalid")}
                 </p>
               )}
-              <Button tone="ink" size="lg" className="mt-4 min-h-16 w-full text-xl" onClick={connect} disabled={code.replace(/[^A-Z0-9]/g, "").length < 8 || status === "busy"}>
+              <Button tone="ink" size="lg" className="mt-4 min-h-16 w-full text-xl" onClick={() => void connect()} disabled={code.replace(/[^A-Z0-9]/g, "").length < 8 || status === "busy"}>
                 {status === "busy" && <Loader2 aria-hidden className="size-6 animate-spin" />}
                 <span lang={lang}>{status === "busy" ? t("parent.setup.connecting") : t("parent.join.button")}</span>
               </Button>
+              {/* Scanning here connects straight away: no typing an eight-letter code. */}
+              <Button tone="quiet" size="lg" className="mt-3 min-h-16 w-full text-xl" onClick={() => setScanning(true)} disabled={status === "busy"}>
+                <ScanLine aria-hidden className="size-6" />
+                <span lang={lang}>{t("scan.button")}</span>
+              </Button>
             </section>
+            {scanning && (
+              <QrScanner
+                lang={lang}
+                onClose={() => setScanning(false)}
+                onFound={(target) => {
+                  const scanned = new URLSearchParams(target.split("#")[1] ?? "").get("c") ?? "";
+                  setCode(scanned);
+                  void connect(scanned);
+                }}
+              />
+            )}
           </>
         )}
 

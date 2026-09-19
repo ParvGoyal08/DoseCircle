@@ -1,9 +1,10 @@
 import type { LanguageCode } from "@dosecircle/shared";
-import { ArrowLeft, Bell, BellOff, Loader2, X } from "lucide-react";
+import { ArrowLeft, Bell, BellOff, Loader2, ScanLine, X } from "lucide-react";
 import { useEffect, useState, type FormEvent } from "react";
 import { Link, Navigate, useNavigate, useSearchParams } from "react-router";
 import { Field, inputClass } from "../../components/FamilyShell";
 import { defaultLanguage, LanguageToggle } from "../../components/LanguagePicker";
+import { QrScanner } from "../../components/QrScanner";
 import { Logo } from "../../components/Logo";
 import { ShareInvite } from "../../components/ShareInvite";
 import { Button, cx } from "../../components/ui";
@@ -108,6 +109,7 @@ export function SignInPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [resent, setResent] = useState(false);
+  const [scanning, setScanning] = useState(false);
   const next = params.get("next") ?? "/home";
 
   if (state.status === "ready") return <Navigate to={next} replace />;
@@ -256,11 +258,29 @@ export function SignInPage() {
           </div>
         )}
       </form>
+      {/* The other kind of person who lands here: the one taking the medicines, who has no account
+          and needs none. They used to get one grey line telling them to find the link again; now
+          they can scan the family's code right here. */}
       {!recovering && (
-        <p lang={lang} className="mt-6 border-t-2 border-dashed border-ink/20 pt-4 text-[14px] text-muted">
-          {t("auth.parentHint")}
-        </p>
+        <div className="mt-8 rounded-2xl bg-blue-50/70 p-4 ring-1 ring-blue-100">
+          <p lang={lang} className="font-semibold text-ink">
+            {t("auth.forMedicines")}
+          </p>
+          <p lang={lang} className="mt-0.5 text-[14.5px] text-muted">
+            {t("auth.forMedicinesHelp")}
+          </p>
+          <div className="mt-3 flex flex-wrap gap-2">
+            <button type="button" onClick={() => setScanning(true)} className="pressable inline-flex min-h-11 items-center gap-2 rounded-xl bg-blue-600 px-4 text-[15px] font-semibold text-white hover:bg-blue-700">
+              <ScanLine aria-hidden className="size-4.5" />
+              <span lang={lang}>{t("scan.button")}</span>
+            </button>
+            <Link to="/join" className="inline-flex min-h-11 items-center rounded-xl px-3 text-[15px] font-semibold text-blue-700 hover:bg-blue-100/60">
+              <span lang={lang}>{t("scan.typeShort")}</span>
+            </Link>
+          </div>
+        </div>
       )}
+      {scanning && <QrScanner lang={lang} onClose={() => setScanning(false)} />}
     </AuthLayout>
   );
 }
@@ -458,12 +478,6 @@ export function OnboardingPage() {
             {busy && <Loader2 aria-hidden className="size-5 animate-spin" />}
             <span lang={lang}>{t("onboard.create")}</span>
           </Button>
-          {/* A disabled button with no reason is a dead end; say which answer is missing. */}
-          {!form.parentLang && (
-            <p lang={lang} className="mt-2 text-center text-[14px] text-muted">
-              {t("onboard.pickTheirLanguage")}
-            </p>
-          )}
         </form>
       ) : (
         <div className="mt-6 space-y-5">
