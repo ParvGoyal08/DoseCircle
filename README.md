@@ -41,7 +41,7 @@ Built for WeMakeDevs × AWS **First Commit** (Bharat Builds Tour), 17–20 Septe
 | Refill warning when tablets are running low | Built |
 | Printable doctor report (an app record, not a medical record) | Built |
 | Judge demo mode: fictional family, 60× speed, reset | Built |
-| Voice clips for the reminder screen | Waiting on native recordings |
+| Voice clips for the reminder screen | Hindi and English built with Polly; Kannada waiting on native recordings |
 | Kannada and Hindi text | Shipping as drafts, labelled as such, pending a native speaker |
 
 ### Daily checks, without pretending to be a doctor
@@ -59,6 +59,10 @@ extra branch in the state machine — so a forgotten weekly weigh-in is recorded
 someone at night.
 
 ![Scheduling daily checks](docs/images/daily-checks.png)
+
+## Architecture
+
+![How DoseCircle runs on AWS](docs/images/architecture.png)
 
 ## How a missed dose travels
 
@@ -95,7 +99,7 @@ flowchart LR
 - **Races converge.** Every status change is a conditional write, and a workflow step that finds the dose
   already resolved completes itself. Two people tapping "I'll handle it" at the same moment yields one
   winner and a clear "someone else got there first" for the other.
-- **Every action is authorised.** 16 Cedar policies in Amazon Verified Permissions decide who may see a
+- **Every action is authorised.** 18 Cedar policies in Amazon Verified Permissions decide who may see a
   parent, claim a dose, record a reading or remove a family member, and the policy that allowed each action
   is recorded and shown in the timeline.
 
@@ -116,7 +120,7 @@ flowchart LR
 | **Claude Sonnet 4.6 on Bedrock** | Transcribes each medicine exactly as written. The schedule codes (1-0-1, OD, BD, HS, SOS) are decoded by a fixed table in code, never by the model. |
 | **Bedrock Guardrails** | Classic tier, which stays in Mumbai, removes anything resembling medical advice from the model's notes. |
 | **S3** | Prescription photos, private, deleted after 7 days. |
-| **Polly** | Voice clips for Hindi and Indian English. AWS has no Kannada voice, so Kannada uses native recordings. |
+| **Polly** | Voice clips for Hindi and Indian English, made once at build time. AWS has no Kannada voice, so Kannada will use native recordings; until then it shows text only. |
 | **CloudWatch + Budgets** | A dose-funnel dashboard, 7 alarms, and a monthly budget. |
 | **Amplify Hosting** | The web app, with a strict content-security policy and `sw.js` never cached. |
 
