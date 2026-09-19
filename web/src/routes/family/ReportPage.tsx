@@ -3,7 +3,7 @@ import { Printer } from "lucide-react";
 import { useState } from "react";
 import { useParams } from "react-router";
 import { FamilyShell } from "../../components/FamilyShell";
-import { LanguagePicker } from "../../components/LanguagePicker";
+import { LanguageToggle } from "../../components/LanguagePicker";
 import { Button } from "../../components/ui";
 import { OutcomeLegend, OutcomeMark } from "../../components/WeekStrip";
 import { useT } from "../../i18n";
@@ -52,7 +52,7 @@ function ReportView({ fid, pid, myLang }: { fid: string; pid: string; myLang: st
           {ui.t("report.language")}
         </summary>
         <div className="mt-3">
-          <LanguagePicker value={reportLang} onChange={setReportLang} />
+          <LanguageToggle value={reportLang} onChange={setReportLang} lang={ui.lang} />
         </div>
       </details>
 

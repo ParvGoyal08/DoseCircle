@@ -3,7 +3,7 @@ import { CirclePause, CirclePlay, LogOut, MoveDown, MoveUp, Smartphone, UserPlus
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router";
 import { FamilyShell, inputClass } from "../../components/FamilyShell";
-import { LanguagePicker } from "../../components/LanguagePicker";
+import { LanguageToggle } from "../../components/LanguagePicker";
 import { Avatar, Button, Card, SLOT_ICONS } from "../../components/ui";
 import { useT } from "../../i18n";
 import { api } from "../../lib/api";
@@ -205,7 +205,8 @@ function MySettings({ fid, myLang, isOwner }: { fid: string; myLang: LanguageCod
           <h2 lang={lang} className="mb-3 text-xl font-semibold">
             {t("settings.myLanguage")}
           </h2>
-          <LanguagePicker
+          <LanguageToggle
+            lang={lang}
             value={myLang}
             onChange={async (code) => {
               await api("/me/lang", { method: "PUT", auth: "family", body: { lang: code } });

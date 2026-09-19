@@ -3,7 +3,7 @@ import { ChevronRight, Crown, Loader2, LogOut, ShieldCheck, TriangleAlert, UserM
 import { useState } from "react";
 import { Link, useNavigate } from "react-router";
 import { FamilyShell, Field, inputClass } from "../../components/FamilyShell";
-import { LanguagePicker } from "../../components/LanguagePicker";
+import { LanguageToggle } from "../../components/LanguagePicker";
 import { ShareInvite } from "../../components/ShareInvite";
 import { Avatar, Button, Card, cx } from "../../components/ui";
 import { useT } from "../../i18n";
@@ -314,12 +314,7 @@ function AddParent({ fid, lang: myLang, onAdded }: { fid: string; lang: string; 
         <Field label={t("onboard.parentName")} lang={lang}>
           <input className={inputClass} required maxLength={40} value={name} onChange={(e) => setName(e.target.value)} />
         </Field>
-        <div>
-          <p lang={lang} className="mb-2 text-[15px] font-semibold">
-            {t("onboard.parentLanguage")}
-          </p>
-          <LanguagePicker value={parentLang} onChange={setParentLang} />
-        </div>
+        <LanguageToggle value={parentLang} onChange={setParentLang} label={t("onboard.parentLanguage")} lang={lang} />
         {error && (
           <p role="alert" className="rounded-xl bg-missed-tint px-3 py-2 font-medium text-missed">
             {error}

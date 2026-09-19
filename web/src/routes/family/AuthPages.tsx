@@ -1,15 +1,15 @@
 import type { LanguageCode } from "@dosecircle/shared";
-import { Bell, Loader2 } from "lucide-react";
+import { ArrowLeft, Bell, Loader2, X } from "lucide-react";
 import { useEffect, useState, type FormEvent } from "react";
 import { Link, Navigate, useNavigate, useSearchParams } from "react-router";
 import { Field, inputClass } from "../../components/FamilyShell";
-import { defaultLanguage, LanguagePicker } from "../../components/LanguagePicker";
+import { defaultLanguage, LanguageToggle } from "../../components/LanguagePicker";
 import { Logo } from "../../components/Logo";
 import { ShareInvite } from "../../components/ShareInvite";
 import { Button } from "../../components/ui";
 import { useT } from "../../i18n";
 import { api, ApiError, mockApiEnabled } from "../../lib/api";
-import { authConfigured, confirmAccount, createAccount, finishPasswordReset, requestPasswordReset, signInWithEmail } from "../../lib/auth";
+import { authConfigured, confirmAccount, createAccount, finishPasswordReset, requestPasswordReset, signInWithEmail, signOut } from "../../lib/auth";
 import { useFamily } from "../../lib/family";
 import { enableReminders, pushSupport } from "../../lib/push";
 
@@ -17,7 +17,11 @@ function preferredLanguage(): LanguageCode {
   return defaultLanguage() ?? "en";
 }
 
-function AuthLayout({ children }: { children: React.ReactNode }) {
+/**
+ * `exit` is the way out, top right, on every breakpoint. The logo was the only way back before, and
+ * a logo is not where anyone looks for "cancel".
+ */
+function AuthLayout({ children, exit }: { children: React.ReactNode; exit?: React.ReactNode }) {
   return (
     <div className="grid min-h-dvh bg-white lg:grid-cols-[1fr_1.1fr]">
       {/* Same white-and-blue as the landing page, so signing in feels like the next step of the
@@ -35,14 +39,53 @@ function AuthLayout({ children }: { children: React.ReactNode }) {
           <p className="mt-5 max-w-md text-lg leading-relaxed text-slate-600">Reminders in each person's own language, and a family that is asked one person at a time when a dose is missed.</p>
         </div>
       </aside>
-      <main className="flex flex-col px-4 py-8 sm:px-10">
-        <Link to="/" className="flex items-center gap-2.5 lg:hidden">
-          <Logo className="size-9" />
-          <span className="text-lg font-semibold tracking-tight">DoseCircle</span>
-        </Link>
-        <div className="mx-auto my-auto w-full max-w-md py-10">{children}</div>
+      <main className="flex flex-col px-4 py-5 sm:px-10">
+        <div className="flex min-h-11 items-center justify-between gap-3">
+          <Link to="/" className="flex items-center gap-2.5 lg:invisible">
+            <Logo className="size-8 rounded-[9px]" />
+            <span className="text-[17px] font-semibold tracking-tight">DoseCircle</span>
+          </Link>
+          {exit}
+        </div>
+        <div className="mx-auto my-auto w-full max-w-md py-8">{children}</div>
       </main>
     </div>
+  );
+}
+
+const exitClass = "inline-flex min-h-11 items-center gap-1.5 rounded-full px-3 text-[15px] font-semibold text-muted hover:bg-sunken hover:text-ink";
+
+function HomeLink({ label, lang }: { label: string; lang: string }) {
+  return (
+    <Link to="/" className={exitClass}>
+      <ArrowLeft aria-hidden className="size-4.5" />
+      <span lang={lang}>{label}</span>
+    </Link>
+  );
+}
+
+/**
+ * Leaving setup half way signs out as well. Staying signed in with no family would send every later
+ * "Sign in" or "Get started" straight back into this form, which is its own kind of trap.
+ */
+function CancelSetup({ label, lang }: { label: string; lang: string }) {
+  const navigate = useNavigate();
+  const { reload } = useFamily();
+  return (
+    <button
+      type="button"
+      className={exitClass}
+      onClick={async () => {
+        await signOut();
+        // Same order as Settings: leave first, then refresh, so the stale "no family yet" state
+        // cannot bounce the next "Sign in" straight back into this form.
+        navigate("/", { replace: true });
+        await reload();
+      }}
+    >
+      <X aria-hidden className="size-4.5" />
+      <span lang={lang}>{label}</span>
+    </button>
   );
 }
 
@@ -136,9 +179,9 @@ export function SignInPage() {
   const recovering = mode === "forgot" || mode === "reset";
 
   return (
-    <AuthLayout>
+    <AuthLayout exit={<HomeLink label={t("auth.backHome")} lang={lang} />}>
       <form onSubmit={submit} className="space-y-4">
-        <h1 lang={lang} className="font-display text-4xl md:text-[44px]">
+        <h1 lang={lang} className="font-display text-[32px] leading-tight md:text-[38px]">
           {t(title)}
         </h1>
         {mode === "forgot" && (
@@ -154,7 +197,7 @@ export function SignInPage() {
 
         {(mode === "signIn" || mode === "create" || mode === "forgot") && (
           <Field label={t("auth.email")} lang={lang}>
-            <input className={inputClass} type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+            <input className={inputClass} type="email" autoComplete="email" autoCapitalize="none" autoCorrect="off" spellCheck={false} required value={email} onChange={(e) => setEmail(e.target.value)} />
           </Field>
         )}
         {(mode === "signIn" || mode === "create") && (
@@ -332,55 +375,53 @@ export function OnboardingPage() {
   };
 
   return (
-    <AuthLayout>
-      <h1 lang={lang} className="font-display text-4xl md:text-[44px]">
+    <AuthLayout exit={!created ? <CancelSetup label={t("auth.cancel")} lang={lang} /> : undefined}>
+      <h1 lang={lang} className="font-display text-[32px] leading-tight md:text-[38px]">
         {t("onboard.title")}
       </h1>
       {!created ? (
-        <form onSubmit={submit} className="mt-6 space-y-6">
-          <p lang={lang} className="text-[16px] text-muted">
+        <form onSubmit={submit} className="mt-2">
+          <p lang={lang} className="text-[15.5px] leading-relaxed text-muted">
             {t("onboard.intro")}
           </p>
-          <div>
-            <p lang={lang} className="mb-2 text-[15px] font-semibold">
-              {t("lang.choose")}
-            </p>
-            <LanguagePicker value={myLang} onChange={setMyLang} />
-          </div>
-          <section className="space-y-4">
-            <h2 lang={lang} className="text-xl font-semibold">
+          {/* Two short groups instead of one long column: who you are, then who you look after.
+              Each language question sits inside the group it belongs to. */}
+          <section className="mt-7 space-y-4">
+            <h2 lang={lang} className="text-[13px] font-semibold uppercase tracking-[0.12em] text-blue-700">
               {t("onboard.you")}
             </h2>
             <Field label={t("onboard.yourName")} lang={lang}>
-              <input className={inputClass} required maxLength={40} value={form.displayName} onChange={(e) => setForm({ ...form, displayName: e.target.value })} />
+              <input className={inputClass} required maxLength={40} autoComplete="name" value={form.displayName} onChange={(e) => setForm({ ...form, displayName: e.target.value })} />
             </Field>
             <Field label={t("onboard.relation")} lang={lang}>
               <input className={inputClass} maxLength={30} placeholder={t("onboard.relationPlaceholder")} value={form.relation} onChange={(e) => setForm({ ...form, relation: e.target.value })} />
             </Field>
+            <LanguageToggle value={myLang} onChange={setMyLang} label={t("onboard.yourLanguage")} lang={lang} />
           </section>
-          <section className="space-y-4">
-            <h2 lang={lang} className="text-xl font-semibold">
+          <section className="mt-7 space-y-4 border-t border-line pt-7">
+            <h2 lang={lang} className="text-[13px] font-semibold uppercase tracking-[0.12em] text-blue-700">
               {t("onboard.parent")}
             </h2>
             <Field label={t("onboard.parentName")} lang={lang}>
               <input className={inputClass} required maxLength={40} value={form.parentName} onChange={(e) => setForm({ ...form, parentName: e.target.value })} />
             </Field>
-            <div>
-              <p lang={lang} className="mb-2 text-[15px] font-semibold">
-                {t("onboard.parentLanguage")}
-              </p>
-              <LanguagePicker value={form.parentLang} onChange={(code) => setForm({ ...form, parentLang: code })} />
-            </div>
+            <LanguageToggle value={form.parentLang} onChange={(code) => setForm({ ...form, parentLang: code })} label={t("onboard.parentLanguage")} lang={lang} />
           </section>
           {error && (
-            <p role="alert" className="rounded-xl bg-missed-tint px-3 py-2 font-medium text-missed">
+            <p role="alert" className="mt-6 rounded-xl bg-missed-tint px-3 py-2 font-medium text-missed">
               {error}
             </p>
           )}
-          <Button tone="ink" size="lg" type="submit" className="w-full" disabled={busy || !form.parentLang}>
+          <Button tone="ink" size="lg" type="submit" className="mt-8 w-full" disabled={busy || !form.parentLang}>
             {busy && <Loader2 aria-hidden className="size-5 animate-spin" />}
             <span lang={lang}>{t("onboard.create")}</span>
           </Button>
+          {/* A disabled button with no reason is a dead end; say which answer is missing. */}
+          {!form.parentLang && (
+            <p lang={lang} className="mt-2 text-center text-[14px] text-muted">
+              {t("onboard.pickTheirLanguage")}
+            </p>
+          )}
         </form>
       ) : (
         <div className="mt-6 space-y-5">
@@ -422,7 +463,7 @@ export function InviteAcceptPage() {
   if (state.status === "ready") return <Navigate to="/home" replace />;
 
   return (
-    <AuthLayout>
+    <AuthLayout exit={<CancelSetup label={t("auth.cancel")} lang={lang} />}>
       <form
         className="space-y-5"
         onSubmit={async (event) => {
@@ -436,21 +477,16 @@ export function InviteAcceptPage() {
           }
         }}
       >
-        <h1 lang={lang} className="font-display text-4xl md:text-[44px]">
+        <h1 lang={lang} className="font-display text-[32px] leading-tight md:text-[38px]">
           {t("invite.title")}
         </h1>
-        <div>
-          <p lang={lang} className="mb-2 text-[15px] font-semibold">
-            {t("lang.choose")}
-          </p>
-          <LanguagePicker value={myLang} onChange={setMyLang} />
-        </div>
         <Field label={t("onboard.yourName")} lang={lang}>
-          <input className={inputClass} required maxLength={40} value={name} onChange={(e) => setName(e.target.value)} />
+          <input className={inputClass} required maxLength={40} autoComplete="name" value={name} onChange={(e) => setName(e.target.value)} />
         </Field>
         <Field label={t("onboard.relation")} lang={lang}>
           <input className={inputClass} maxLength={30} placeholder={t("onboard.relationPlaceholder")} value={relation} onChange={(e) => setRelation(e.target.value)} />
         </Field>
+        <LanguageToggle value={myLang} onChange={setMyLang} label={t("onboard.yourLanguage")} lang={lang} />
         {error && (
           <p lang={lang} role="alert" className="rounded-xl bg-missed-tint px-3 py-2 font-medium text-missed">
             {t("invite.invalid")}
