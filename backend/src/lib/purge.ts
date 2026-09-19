@@ -19,8 +19,7 @@ async function itemsUnder(pk: string): Promise<{ PK: string; SK: string }[]> {
         TableName: env.tableName,
         KeyConditionExpression: "PK = :pk",
         ExpressionAttributeValues: { ":pk": pk },
-        ProjectionExpression: "PK, SK, doseId, mid, sub, deviceId, pid, #status, executionArn",
-        ExpressionAttributeNames: { "#status": "status" },
+        // Whole items: they are small, and naming fields here tripped over reserved words ("sub", "status").
         ExclusiveStartKey: startKey,
       }),
     );
