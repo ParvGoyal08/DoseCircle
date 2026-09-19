@@ -216,9 +216,13 @@ a native speaker signs it off. Listed here as the hackathon rules require.
 
 ## Credits and licences
 
+Built by **Team Git Happens** (Parv Goyal and Sahitya Sharma, IIIT Delhi).
+
 - Code: MIT, see [LICENSE](LICENSE).
-- [Inter](https://rsms.me/inter/) and the [Anek](https://fonts.google.com/?query=Anek) family (Kannada and
-  Devanagari), both SIL Open Font License 1.1, self-hosted through Fontsource.
-- [lucide](https://lucide.dev) icons, ISC.
+- Fonts: Playfair Display, DM Sans, Inter and the Anek family (Latin, Kannada, Devanagari), all SIL Open Font
+  License 1.1, self-hosted through Fontsource.
+- Libraries: React, Vite, Tailwind CSS, i18next, motion, qrcode, Workbox and vite-plugin-pwa (MIT);
+  lucide icons (ISC); jsQR (Apache-2.0); web-push (MPL-2.0); AWS SDK and AWS CDK (Apache-2.0).
+- Landing-page photos are AI-generated and show no real people.
 - Kannada and Hindi reviewers and the voice speaker will be credited here by name, with their permission.
 - The sample prescription, the demo family and every name in it are fictional.
