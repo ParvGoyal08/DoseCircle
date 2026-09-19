@@ -76,6 +76,19 @@ export async function listDoses(pid: string, fromStamp: string, toStamp: string)
   return items.filter((d) => !isExpired(d));
 }
 
+/**
+ * The same, without "Send a test reminder" runs. A test proves the phone works; it is not a dose the
+ * person was meant to take, so it must never count as taken or missed in what the family is shown.
+ * Test runs carry a run number in their id. Demo families are all runs, so theirs are kept.
+ */
+export async function listRealDoses(pid: string, fromStamp: string, toStamp: string): Promise<DoseItem[]> {
+  return (await listDoses(pid, fromStamp, toStamp)).filter(isRealDose);
+}
+
+export function isRealDose(dose: Pick<DoseItem, "doseId" | "fid">): boolean {
+  return dose.fid.startsWith("demo-") || parseDoseId(dose.doseId).demoRun === undefined;
+}
+
 /** Doses currently escalating in a family (sparse GSI2). */
 export async function listOpenDoses(fid: string): Promise<DoseItem[]> {
   const result = await ddb.send(

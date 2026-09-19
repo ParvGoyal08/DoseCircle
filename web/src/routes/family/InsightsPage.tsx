@@ -26,7 +26,7 @@ function InsightsView({ fid, lang: myLang }: { fid: string; lang: string }) {
   const { t, lang } = useT(myLang);
   const [days, setDays] = useState<7 | 30>(30);
   const dashboard = useApi(() => api<Dashboard>(`/families/${fid}`, { auth: "family" }), [fid]);
-  const insights = useApi(() => api<Insights>(`/families/${fid}/parents/${pid}/insights`, { auth: "family", query: { days: String(days) } }), [fid, pid, days]);
+  const insights = useApi(() => api<Insights>(`/families/${fid}/parents/${pid}/insights`, { auth: "family", query: { days: String(days) } }), [fid, pid, days], 60_000);
   const parent = dashboard.data?.parents.find((p) => p.pid === pid);
 
   return (

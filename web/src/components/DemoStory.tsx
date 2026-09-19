@@ -5,7 +5,6 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useT } from "../i18n";
 import type { DoseView, OpenAlert, TimelineItem } from "../lib/types";
 import { FamilyAlert } from "./FamilyAlert";
-import { FamilyCircle } from "./FamilyCircle";
 import { ParentDoseScreen } from "./ParentDoseScreen";
 import { PhoneFrame } from "./PhoneFrame";
 import { Timeline } from "./Timeline";
@@ -75,6 +74,8 @@ interface Step {
   title: string;
   body: string;
   screen: () => ReactNode;
+  /** What the phone's status bar shows at this point in the story. */
+  clock?: string;
   /** "phone" draws a phone around the screen; "panel" is a view from behind the scenes. */
   frame: "phone" | "panel";
 }
@@ -82,6 +83,7 @@ interface Step {
 const STEPS: Step[] = [
   {
     id: "setup",
+    clock: "7:30",
     who: "Arjun's phone · English",
     title: "Arjun sets up the family",
     body: "From Bengaluru, Arjun adds his mother, picks Kannada for her reminders, and invites his sister Meera.",
@@ -90,6 +92,7 @@ const STEPS: Step[] = [
   },
   {
     id: "join",
+    clock: "7:40",
     who: "Amma's phone · ಕನ್ನಡ",
     title: "Amma joins by scanning",
     body: "She points her camera at Arjun's code and she is in. Nothing to type — Arjun already set her name, language and medicines. Her phone is the key.",
@@ -98,6 +101,7 @@ const STEPS: Step[] = [
   },
   {
     id: "rx",
+    clock: "7:45",
     who: "Arjun's phone · English",
     title: "Her medicines, from one photo",
     body: "Arjun photographs the prescription. Each line is read for him, and nothing is saved until he has checked every one.",
@@ -106,6 +110,7 @@ const STEPS: Step[] = [
   },
   {
     id: "remind",
+    clock: "8:00",
     who: "Amma's phone · ಕನ್ನಡ",
     title: "8:00 — the reminder rings, in Kannada",
     body: "Medicine names exactly as printed on the strip, never translated, and one large button to say she took them.",
@@ -122,30 +127,33 @@ const STEPS: Step[] = [
   },
   {
     id: "ask",
+    clock: "8:30",
     who: "Arjun's phone · English",
     title: "The family is asked, one at a time",
     body: "Arjun first, in English. If he can't respond in time, Meera is asked next, in Hindi — never everyone at once.",
     screen: () => (
       <div className="px-3 pt-3">
-        <FamilyAlert alert={alert("ESCALATING", null)} viewerLang="en" viewerMid="arjun" ladder={LADDER} alertedCount={1} onClaim={async () => "claimed"} onWhy={() => {}} />
+        <FamilyAlert alert={alert("ESCALATING", null)} viewerLang="en" viewerMid="arjun" ladder={LADDER} alertedCount={1} onClaim={async () => "claimed"} onWhy={() => {}} now={Date.parse(at(30))} />
       </div>
     ),
     frame: "phone",
   },
   {
     id: "claim",
+    clock: "8:46",
     who: "Meera's phone · हिन्दी",
     title: "Meera takes it. Arjun stands down.",
     body: "One tap on “I'll handle it”, and everyone else is told she has it. No five worried calls to Amma.",
     screen: () => (
       <div className="px-3 pt-3">
-        <FamilyAlert alert={alert("CLAIMED", "Meera")} viewerLang="hi" viewerMid="meera" ladder={LADDER} alertedCount={2} onClaim={async () => "claimed"} onWhy={() => {}} showDraftLanguage />
+        <FamilyAlert alert={alert("CLAIMED", "Meera")} viewerLang="hi" viewerMid="meera" ladder={LADDER} alertedCount={2} onClaim={async () => "claimed"} onWhy={() => {}} now={Date.parse(at(46))} showDraftLanguage />
       </div>
     ),
     frame: "phone",
   },
   {
     id: "why",
+    clock: "8:50",
     who: "Arjun's phone · English",
     title: "Why was I alerted?",
     body: "Every step, when it happened, and the rule that allowed it. Nobody is left wondering why their phone buzzed.",
@@ -330,11 +338,11 @@ function Stage({ index, height, animate = true }: { index: number; height: numbe
   const body = (
     <div aria-hidden className="pointer-events-none select-none">
       {step.frame === "phone" ? (
-        <PhoneFrame height={height} className="mx-auto">
+        <PhoneFrame height={height} className="mx-auto" clock={step.clock}>
           <div className="h-full overflow-hidden">{step.screen()}</div>
         </PhoneFrame>
       ) : (
-        <div className="mx-auto flex w-full max-w-[340px] flex-col justify-center rounded-[36px] bg-white p-5 shadow-[0_30px_70px_-30px_rgb(31_63_55/0.4)] ring-1 ring-line" style={{ height: height + 20 }}>
+        <div className="mx-auto flex w-full max-w-[340px] flex-col rounded-[36px] bg-white p-6 shadow-[0_30px_70px_-30px_rgb(31_63_55/0.4)] ring-1 ring-line" style={{ height: height + 20 }}>
           {step.screen()}
         </div>
       )}
@@ -496,37 +504,41 @@ function PrescriptionScreen() {
   );
 }
 
+/** Behind the scenes: the one decision this step is about, drawn as a short flow at a readable size. */
 function MissedPanel() {
+  const rows = [
+    { icon: Smartphone, time: "8:00", text: "Reminder delivered to Amma's phone", note: "Her phone confirmed it arrived", tone: "bg-taken-tint text-taken" },
+    { icon: TriangleAlert, time: "8:30", text: "Still no tap after a second reminder", note: "Nudged at 8:20, then 10 more minutes", tone: "bg-due-tint text-due" },
+  ];
   return (
-    <div className="flex h-full flex-col justify-center">
-      <FamilyCircle
-        tone="light"
-        parent={{ id: "amma", name: "Shantha", role: "Amma · Mysuru" }}
-        members={[
-          { id: "arjun", name: "Arjun", role: "Son" },
-          { id: "meera", name: "Meera", role: "Daughter" },
-        ]}
-        stage="checking"
-        alertedIds={[]}
-        claimedById={null}
-        parentOffline={false}
-        missClass="MISSED"
-      />
-      <div className="mt-2 space-y-2.5">
-        <div className="rounded-2xl bg-missed-tint/60 p-3.5 ring-1 ring-missed/25">
-          <p className="flex items-center gap-2 text-[14.5px] font-semibold text-ink">
-            <Smartphone className="size-4.5 shrink-0 text-taken" /> Reached her phone at 8:00
-          </p>
-          <p className="mt-1 flex items-center gap-2 text-[14px] font-semibold text-missed">
-            <ArrowRight className="size-4 shrink-0" /> A missed dose — the family is asked
-          </p>
-        </div>
-        <div className="rounded-2xl bg-sunken p-3.5 ring-1 ring-line">
-          <p className="text-[12.5px] font-semibold uppercase tracking-wider text-muted">If it had never arrived</p>
-          <p className="mt-1 flex items-center gap-2 text-[14px] font-medium text-muted">
-            <WifiOff className="size-4 shrink-0" /> “Her phone seems to be offline”
-          </p>
-        </div>
+    <div className="flex h-full flex-col">
+      <p className="eyebrow">Behind the scenes</p>
+      <p className="font-display mt-2 text-[26px] leading-tight">Missed, or just offline?</p>
+      <ol className="relative mt-6 space-y-4 before:absolute before:bottom-6 before:left-[21px] before:top-6 before:w-0.5 before:bg-line">
+        {rows.map(({ icon: Icon, time, text, note, tone }) => (
+          <li key={time} className="relative flex items-start gap-3">
+            <span className={cx("grid size-11 shrink-0 place-items-center rounded-full ring-4 ring-white", tone)}>
+              <Icon className="size-5" strokeWidth={2.25} />
+            </span>
+            <span className="pt-0.5">
+              <span className="tabular block text-[13px] font-semibold text-muted">{time}</span>
+              <span className="block text-[16px] font-semibold leading-snug text-ink">{text}</span>
+              <span className="block text-[13.5px] text-muted">{note}</span>
+            </span>
+          </li>
+        ))}
+      </ol>
+      <div className="mt-6 rounded-2xl bg-missed-tint/70 p-4 ring-1 ring-missed/25">
+        <p className="flex items-center gap-2 text-[17px] font-semibold text-missed">
+          <ArrowRight className="size-5 shrink-0" /> A missed dose
+        </p>
+        <p className="mt-1 text-[14.5px] text-ink">So the family is asked, one person at a time.</p>
+      </div>
+      <div className="mt-auto rounded-2xl bg-sunken p-4 ring-1 ring-line">
+        <p className="text-[12.5px] font-semibold uppercase tracking-wider text-muted">If it had never arrived</p>
+        <p className="mt-1.5 flex items-center gap-2 text-[14.5px] font-medium text-ink">
+          <WifiOff className="size-4.5 shrink-0 text-offline" /> The family hears “Her phone seems to be offline”
+        </p>
       </div>
     </div>
   );

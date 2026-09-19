@@ -115,7 +115,7 @@
           "Next": "HasNudge"
         }
       ],
-      "Next": "ResetMissStreak"
+      "Next": "IsRealDoseTaken"
     },
     "HasNudge": {
       "Type": "Choice",
@@ -151,7 +151,27 @@
           "Next": "GetDoseDelivery"
         }
       ],
-      "Next": "ResetMissStreak"
+      "Next": "IsRealDoseTaken"
+    },
+    "IsRealDoseTaken": {
+      "Type": "Choice",
+      "Comment": "A test reminder that is taken leaves the miss streak alone.",
+      "Choices": [
+        {
+          "And": [
+            {
+              "Variable": "$.prep.dose.countsTowardStreak",
+              "IsPresent": true
+            },
+            {
+              "Variable": "$.prep.dose.countsTowardStreak",
+              "BooleanEquals": false
+            }
+          ],
+          "Next": "DoseTakenOnTime"
+        }
+      ],
+      "Default": "ResetMissStreak"
     },
     "ResetMissStreak": {
       "Type": "Task",
@@ -268,10 +288,30 @@
           "Next": "DoseTakenJustInTime"
         }
       ],
-      "Next": "IncrementMissStreak"
+      "Next": "IsRealDoseMissed"
     },
     "DoseTakenJustInTime": {
       "Type": "Succeed"
+    },
+    "IsRealDoseMissed": {
+      "Type": "Choice",
+      "Comment": "A test reminder that is missed does not count toward the miss streak.",
+      "Choices": [
+        {
+          "And": [
+            {
+              "Variable": "$.prep.dose.countsTowardStreak",
+              "IsPresent": true
+            },
+            {
+              "Variable": "$.prep.dose.countsTowardStreak",
+              "BooleanEquals": false
+            }
+          ],
+          "Next": "ShouldAlertFamily"
+        }
+      ],
+      "Default": "IncrementMissStreak"
     },
     "IncrementMissStreak": {
       "Type": "Task",

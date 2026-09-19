@@ -115,7 +115,7 @@ export function FamilyAlert({ alert, viewerLang, viewerMid, ladder, alertedCount
         {alert.status === "ESCALATING" && (
           <motion.div key="open" exit={{ opacity: 0 }} className="border-t border-line bg-paper p-4">
             {alert.alertedMe ? (
-              <Button tone="claimed" size="lg" className="w-full" onClick={claim} disabled={claiming}>
+              <Button tone="ink" size="lg" className="w-full" onClick={claim} disabled={claiming}>
                 <Hand aria-hidden className="size-5" strokeWidth={2.5} />
                 <span lang={lang}>{t("alert.claimButton")}</span>
               </Button>

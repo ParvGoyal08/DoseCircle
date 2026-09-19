@@ -7,7 +7,7 @@ import { memberPrincipal } from "../../authz/principal-entity.js";
 import { ddb, logger, sfn } from "../../lib/aws.js";
 import { env } from "../../lib/env.js";
 import { HttpError, json, pathParam, principalFrom } from "../../lib/http.js";
-import { getDose, getParent, listDoses, listMembers } from "../../lib/repository.js";
+import { getDose, getParent, listRealDoses, listMembers } from "../../lib/repository.js";
 import { queryParam } from "../../lib/router.js";
 import { buildDoctorReport } from "../../report/build.js";
 import { istDate } from "../../scheduling/plan.js";
@@ -99,7 +99,7 @@ export async function getReport(event: APIGatewayProxyEventV2) {
   if (spanDays > 31) throw new HttpError(400, "A report can cover at most 31 days");
 
   const [doses, medicines, members, checks, readings] = await Promise.all([
-    listDoses(pid, `${from.replaceAll("-", "")}0000`, `${to.replaceAll("-", "")}2359`),
+    listRealDoses(pid, `${from.replaceAll("-", "")}0000`, `${to.replaceAll("-", "")}2359`),
     listMedicines(pid),
     listMembers(fid),
     listChecks(pid),
@@ -162,7 +162,7 @@ export async function getInsights(event: APIGatewayProxyEventV2) {
   const stamp = (date: string, time: string) => `${date.replaceAll("-", "")}${time}`;
 
   const [doses, medicines, members, checks, readings] = await Promise.all([
-    listDoses(pid, stamp(previousFrom, "0000"), stamp(to, "2359")),
+    listRealDoses(pid, stamp(previousFrom, "0000"), stamp(to, "2359")),
     listMedicines(pid),
     listMembers(fid),
     listChecks(pid),

@@ -37,6 +37,8 @@ export interface PrepareDoseOutput {
     ladderSize: number;
     duplicate: boolean;
     paused: boolean;
+    /** False for "Send a test reminder": a test must not change how fast real doses escalate. */
+    countsTowardStreak: boolean;
   };
   ladders: { standard: LadderTimings; fast: LadderTimings };
 }
@@ -52,6 +54,7 @@ const SKIPPED = (fid: string, pid: string) => ({
   ladderSize: 0,
   duplicate: true,
   paused: false,
+  countsTowardStreak: false,
 });
 
 export async function handler(event: PrepareDoseInput): Promise<PrepareDoseOutput> {
@@ -130,6 +133,7 @@ export async function handler(event: PrepareDoseInput): Promise<PrepareDoseOutpu
       ladderSize: parent.ladder.length,
       duplicate,
       paused: parent.paused,
+      countsTowardStreak: input.mode !== "test",
     },
     ladders,
   };

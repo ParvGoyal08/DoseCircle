@@ -5,7 +5,7 @@ import { formatTime } from "../lib/format";
 import { cx } from "./ui";
 
 /** A phone outline for the demo, so three people's screens can be seen side by side. */
-export function PhoneFrame({ children, offline = false, label, className, height = 680 }: { children: ReactNode; offline?: boolean; label?: ReactNode; className?: string; height?: number }) {
+export function PhoneFrame({ children, offline = false, label, className, height = 680, clock }: { children: ReactNode; offline?: boolean; label?: ReactNode; className?: string; height?: number; /** A fixed time for the status bar, e.g. in a story set at 8:00. */ clock?: string }) {
   const [now, setNow] = useState(() => new Date().toISOString());
   useEffect(() => {
     const timer = setInterval(() => setNow(new Date().toISOString()), 15_000);
@@ -17,7 +17,7 @@ export function PhoneFrame({ children, offline = false, label, className, height
       <div className="relative w-full max-w-[340px] rounded-[48px] bg-[#16211e] p-[10px] shadow-[0_30px_60px_-30px_rgb(31_63_55/0.55),0_0_0_1px_rgb(255_255_255/0.06)_inset]">
         <div className="relative flex flex-col overflow-hidden rounded-[38px] bg-paper" style={{ height }}>
           <div className="flex h-11 shrink-0 items-center justify-between px-7 text-[13px] font-semibold text-ink">
-            <span className="tabular">{formatTime(now, "en-IN").replace(/\s?[ap]m$/i, "")}</span>
+            <span className="tabular">{clock ?? formatTime(now, "en-IN").replace(/\s?[ap]m$/i, "")}</span>
             <span aria-hidden className="absolute left-1/2 top-2.5 h-6 w-24 -translate-x-1/2 rounded-full bg-ink" />
             <span className="flex items-center gap-1">
               {offline ? <WifiOff className="size-3.5 text-missed" strokeWidth={2.5} /> : <Signal className="size-3.5" strokeWidth={2.5} />}

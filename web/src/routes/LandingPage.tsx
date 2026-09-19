@@ -191,7 +191,7 @@ function Landing() {
       <section id="start" className="scroll-mt-20">
         <div className="mx-auto max-w-6xl px-4 py-20 md:px-6 md:py-24">
           <div className="flex items-end justify-between gap-10">
-            <Heading eyebrow="Get started" title="Two ways in, depending on who you are" body="Nobody who takes the medicines ever needs an account. The family sets things up; the person they look after just scans a code." />
+            <Heading eyebrow="Get started" title="Care starts here." body="Set up a circle for someone you love, or join theirs. No account. No passwords. Just one simple scan." />
             <img
               src="/photos/grandmother-phone.webp"
               width={421}

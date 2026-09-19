@@ -4,7 +4,7 @@ import { familyEntity } from "../../authz/entities.js";
 import { memberPrincipal } from "../../authz/principal-entity.js";
 import { json, pathParam, principalFrom } from "../../lib/http.js";
 import type { FamilyItem } from "../../lib/model.js";
-import { get, listDoses, listMembers, listOpenDoses, listParents } from "../../lib/repository.js";
+import { get, listRealDoses, listMembers, listOpenDoses, listParents } from "../../lib/repository.js";
 import { istDate } from "../../scheduling/plan.js";
 import { listMedicines, listSlots } from "../../scheduling/sync-slots.js";
 import { ladderPosition, openAlerts, refillChips, weekStrip } from "../../views/dashboard.js";
@@ -40,7 +40,7 @@ export async function getDashboard(event: APIGatewayProxyEventV2) {
   const parentViews = await Promise.all(
     parents.map(async (parent) => {
       const [doses, medicines, slots] = await Promise.all([
-        listDoses(parent.pid, stampOf(days[0]!, "0000"), stampOf(today, "2359")),
+        listRealDoses(parent.pid, stampOf(days[0]!, "0000"), stampOf(today, "2359")),
         listMedicines(parent.pid),
         listSlots(parent.pid),
       ]);
