@@ -144,9 +144,9 @@ function Landing() {
           </div>
 
           {/* The reference's arched panel, holding the live diagram, with a card floating over it. */}
-          <motion.div {...rise(0.1)} className="relative lg:h-[560px]">
-            <div className="relative overflow-hidden rounded-t-[220px] rounded-b-[26px] bg-[linear-gradient(145deg,rgb(255_255_255/0.35),transparent),#dce4d8] px-4 pb-20 pt-24 sm:px-8 lg:absolute lg:inset-y-2 lg:right-0 lg:w-[88%] dark:bg-indigo-tint">
-              <p className="font-display absolute right-8 top-10 hidden text-right text-[19px] italic leading-snug text-indigo-deep sm:block dark:text-ink">
+          <motion.div {...rise(0.1)} className="relative">
+            <div className="relative overflow-hidden rounded-t-[220px] rounded-b-[26px] bg-[#dce4d8] bg-[image:linear-gradient(145deg,rgb(255_255_255/0.35),transparent)] px-4 pb-24 pt-24 sm:px-8 lg:ml-auto lg:w-[92%] dark:bg-indigo-tint dark:bg-none">
+              <p className="font-display absolute inset-x-0 top-12 hidden whitespace-nowrap text-center text-[18px] italic leading-snug text-indigo-deep sm:block dark:text-ink">
                 Mysuru · Bengaluru · Pune
               </p>
               <FamilyCircle
@@ -166,7 +166,7 @@ function Landing() {
                 {CAPTIONS[frame.stage]}
               </motion.p>
             </div>
-            <div className="float-card relative -mt-12 ml-4 w-[270px] bg-surface/95 p-6 backdrop-blur-sm lg:absolute lg:bottom-8 lg:left-0 lg:m-0">
+            <div className="float-card relative -mt-16 ml-4 w-[270px] bg-surface/95 p-6 backdrop-blur-sm lg:ml-0">
               <p className="font-display text-[21px] leading-snug">
                 Don't just remind.
                 <br />
