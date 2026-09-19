@@ -1,18 +1,13 @@
-import { ArrowRight, BellRing, CalendarClock, Database, Hand, Lock, MessageSquareWarning, Network, ScanText, ShieldCheck, Smartphone, Users, WifiOff, Workflow, type LucideIcon } from "lucide-react";
-import { motion } from "motion/react";
-import { useEffect, useMemo, useState, type ReactNode } from "react";
+import { ArrowDown, ArrowRight, Camera, KeyRound, ScanLine, Smartphone, UserPlus, type LucideIcon } from "lucide-react";
+import { motion, useReducedMotion } from "motion/react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Link } from "react-router";
-import { FamilyAlert } from "../components/FamilyAlert";
 import { FamilyCircle, type CircleStage } from "../components/FamilyCircle";
-import { InsightsGrid, InsightsHero } from "../components/InsightsDashboard";
 import { Logo } from "../components/Logo";
-import { ParentDoseScreen } from "../components/ParentDoseScreen";
-import { PhoneFrame } from "../components/PhoneFrame";
-import { ThemeToggle } from "../components/ThemeToggle";
+import { applyTheme, initialTheme } from "../components/ThemeToggle";
+import { DemoStory } from "../components/DemoStory";
 import { cx } from "../components/ui";
-import { demoInsights } from "../lib/demo-insights";
 import { pairedDevice } from "../lib/device";
-import type { DoseView, OpenAlert } from "../lib/types";
 
 /** The hero loops through a whole escalation so the idea lands before anyone reads a word. */
 const LOOP: { stage: CircleStage; alerted: string[]; claimed: string | null; ms: number }[] = [
@@ -43,293 +38,261 @@ function useLoop() {
   return LOOP[index]!;
 }
 
-const STEPS: { icon: LucideIcon; title: string; body: string }[] = [
-  { icon: BellRing, title: "A reminder, in her language", body: "At the time the family set, with medicine names exactly as printed on the strip and one large button to confirm." },
-  { icon: WifiOff, title: "Missed or offline, told apart", body: "The phone confirms each reminder arrived. If it never did, the family hears “phone seems offline”, not a false alarm." },
-  { icon: Users, title: "One person asked at a time", body: "The family chooses the order. If the first person doesn't respond in time, the next is asked, then everyone." },
-  { icon: Hand, title: "One tap to take responsibility", body: "Whoever says “I'll handle it” claims the dose, and everyone else stands down. No five calls to Amma." },
-];
+/**
+ * The first page anyone sees is always white, whatever theme they chose inside the app: it is one
+ * screen with one job, and it was designed in one light. Their own choice is put back on the way out.
+ */
+function useLightPage() {
+  useEffect(() => {
+    applyTheme("light");
+    return () => applyTheme(initialTheme());
+  }, []);
+}
 
-const minutesAgo = (m: number) => new Date(Date.now() - m * 60_000).toISOString();
-const SHOWCASE_DOSE: DoseView = {
-  doseId: "showcase",
-  status: "PENDING",
-  slotName: "morning",
-  scheduledAt: minutesAgo(2),
-  critical: false,
-  parent: { displayName: "Shantha", lang: "kn" },
-  medicines: [
-    { medId: "a", nameAsPrinted: "Glycomet GP 1", strength: null, count: 1, food: "after", critical: false },
-    { medId: "b", nameAsPrinted: "Telma 40", strength: "40 mg", count: 0.5, food: null, critical: false },
-  ],
-  checks: [],
-  voice: { src: "", thanks: "" },
-};
-const showcaseAlert = (status: OpenAlert["status"]): OpenAlert => ({
-  doseId: "showcase",
-  pid: "p",
-  parentName: "Shantha",
-  slotName: "morning",
-  scheduledAt: minutesAgo(32),
-  status,
-  missClass: "MISSED",
-  critical: false,
-  alertedMe: true,
-  alertedCount: 2,
-  claimedByName: status === "CLAIMED" ? "Meera" : null,
-});
-const LADDER = [
-  { mid: "arjun", displayName: "Arjun" },
-  { mid: "meera", displayName: "Meera" },
-];
+const scrollTo = (id: string) => document.getElementById(id)?.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
 
-const ARCHITECTURE: { icon: LucideIcon; name: string; role: string }[] = [
-  { icon: CalendarClock, name: "EventBridge Scheduler", role: "Starts a workflow for every dose, in India time" },
-  { icon: Workflow, name: "Step Functions", role: "Waits for a tap, then escalates one person at a time" },
-  { icon: Network, name: "Lambda + API Gateway", role: "Sends pushes, records taps and claims" },
-  { icon: Database, name: "DynamoDB", role: "Conditional writes so only one person can claim" },
-  { icon: Lock, name: "Verified Permissions", role: "Cedar policies authorise every action" },
-  { icon: ScanText, name: "Textract + Bedrock", role: "Reads prescriptions; a person confirms every line" },
-];
+const AWS = ["EventBridge Scheduler", "Step Functions", "Lambda", "DynamoDB", "Verified Permissions", "Textract", "Bedrock", "Polly"];
 
 export function LandingPage() {
+  useLightPage();
   const device = pairedDevice();
   const frame = useLoop();
-  const insights = useMemo(() => demoInsights(30), []);
+  const reduce = useReducedMotion();
+  const rise = (delay: number) => (reduce ? {} : { initial: { opacity: 0, y: 14 }, animate: { opacity: 1, y: 0 }, transition: { duration: 0.6, delay, ease: [0.22, 1, 0.36, 1] as const } });
 
   return (
-    <div className="overflow-x-clip bg-paper">
-      {/* Hero */}
-      <section className="hero-surface relative">
-        <div aria-hidden className="hero-grid absolute inset-0" />
-        <header className="relative mx-auto flex max-w-7xl items-center gap-3 px-4 py-4 md:px-8">
-          <Logo className="size-9 rounded-[10px] ring-1 ring-white/20" />
-          <span className="text-lg font-semibold tracking-tight text-white">DoseCircle</span>
+    <div className="min-h-dvh overflow-x-clip bg-white text-ink">
+      <header className="sticky top-0 z-30 border-b border-slate-200/70 bg-white/80 backdrop-blur-md">
+        <div className="mx-auto flex h-16 max-w-6xl items-center gap-3 px-4 md:px-6">
+          <Link to="/" className="flex items-center gap-2.5" aria-label="DoseCircle">
+            <Logo className="size-8 rounded-[9px]" />
+            <span className="hidden text-[17px] font-semibold tracking-tight min-[400px]:inline">DoseCircle</span>
+          </Link>
           <nav className="ml-auto flex items-center gap-1.5">
             {device && (
-              <Link to="/parent" className="hidden min-h-10 items-center gap-1.5 rounded-full px-3 text-[15px] font-semibold text-white hover:bg-white/10 sm:inline-flex">
+              <Link to="/parent" className="hidden min-h-10 items-center gap-1.5 rounded-full px-3 text-[15px] font-semibold text-slate-600 hover:text-ink sm:inline-flex">
                 <Smartphone aria-hidden className="size-4" /> My medicines
               </Link>
             )}
-            <Link to="/signin" className="inline-flex min-h-10 items-center rounded-full px-4 text-[15px] font-semibold text-white ring-1 ring-white/25 hover:bg-white/10">
-              Family sign in
+            <Link to="/signin" className="inline-flex min-h-10 items-center whitespace-nowrap rounded-full px-3 text-[15px] font-semibold text-slate-600 hover:text-ink">
+              Sign in
             </Link>
-            <ThemeToggle className="grid size-10 place-items-center rounded-full text-white hover:bg-white/10" />
+            <button type="button" onClick={() => scrollTo("start")} className="pressable inline-flex min-h-10 items-center whitespace-nowrap rounded-full bg-blue-600 px-4 text-[15px] font-semibold text-white shadow-[0_6px_16px_-8px_rgb(37_99_235/0.8)] hover:bg-blue-700">
+              Get started
+            </button>
           </nav>
-        </header>
+        </div>
+      </header>
 
-        <div className="relative mx-auto grid max-w-7xl items-center gap-12 px-4 pb-20 pt-10 md:px-8 lg:grid-cols-[1.05fr_1fr] lg:pb-28 lg:pt-16">
+      {/* Hero */}
+      <section className="relative">
+        {/* One soft wash of blue behind the headline, and a faint dotted field — enough to give the
+            white some depth without turning it into a gradient poster. */}
+        <div aria-hidden className="pointer-events-none absolute inset-0 bg-[radial-gradient(60%_55%_at_80%_20%,rgb(219_234_254/0.9),transparent_70%),radial-gradient(45%_40%_at_5%_90%,rgb(239_246_255),transparent_70%)]" />
+        <div aria-hidden className="pointer-events-none absolute inset-0 bg-[radial-gradient(rgb(37_99_235/0.10)_1px,transparent_1px)] [background-size:22px_22px] [mask-image:radial-gradient(70%_60%_at_50%_30%,black,transparent_75%)]" />
+
+        <div className="relative mx-auto grid max-w-6xl items-center gap-12 px-4 pb-20 pt-14 md:px-6 md:pt-20 lg:grid-cols-[1.05fr_1fr] lg:gap-10 lg:pb-28">
           <div>
-            <p className="inline-flex flex-wrap items-center gap-2 rounded-full bg-white/8 py-1 pl-1 pr-3 text-[13.5px] font-medium text-hero-muted ring-1 ring-white/15">
-              <span className="rounded-full bg-haldi px-2.5 py-0.5 font-semibold text-[#14133a]">Built on AWS</span>
-              <span lang="kn">ಕನ್ನಡ</span>·<span lang="hi">हिन्दी</span>·<span>English</span>
-            </p>
-            <h1 className="font-display mt-6 text-[48px] text-white sm:text-6xl xl:text-[76px]">
-              When Amma misses her medicine, <span className="text-haldi">the right person knows.</span>
-            </h1>
-            <p className="mt-6 max-w-xl text-lg text-hero-muted md:text-xl">
-              Families spread across cities worry whether their parents took their tablets. DoseCircle reminds Amma in her own language, notices a missed dose, and asks the family one person at a time until someone takes responsibility.
-            </p>
-            <div className="mt-9 flex flex-wrap items-center gap-3">
-              <Link to="/demo" className="pressable inline-flex min-h-14 items-center gap-2.5 rounded-xl bg-haldi px-6 text-[17px] font-semibold text-[#14133a] shadow-[0_10px_30px_-10px_rgb(244_180_0/0.7)]">
-                Watch the live demo <ArrowRight aria-hidden className="size-5" />
-              </Link>
-              <Link to="/signin" className="pressable inline-flex min-h-14 items-center rounded-xl px-6 text-[17px] font-semibold text-white ring-1 ring-white/25 hover:bg-white/10">
-                Set up your family
-              </Link>
-            </div>
-          </div>
-
-          <div className="glass-card relative p-4 md:p-6">
-            <div className="flex items-center justify-between gap-3 px-1">
-              <p className="flex items-center gap-2 text-[13px] font-semibold uppercase tracking-[0.14em] text-hero-muted">
-                <span className="size-2 animate-pulse rounded-full bg-haldi" /> Live escalation
-              </p>
-              <p className="text-[13px] text-hero-muted">Mysuru → Bengaluru → Pune</p>
-            </div>
-            <FamilyCircle
-              parent={{ id: "amma", name: "Shantha", role: "Amma · Mysuru" }}
-              members={[
-                { id: "arjun", name: "Arjun", role: "Son" },
-                { id: "meera", name: "Meera", role: "Daughter" },
-              ]}
-              stage={frame.stage}
-              alertedIds={frame.alerted}
-              claimedById={frame.claimed}
-              parentOffline={false}
-              missClass="MISSED"
-            />
-            <motion.p key={frame.stage} initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="min-h-7 px-1 text-center text-[15px] font-medium text-white">
-              {CAPTIONS[frame.stage]}
+            <motion.p {...rise(0)} className="inline-flex items-center gap-2 rounded-full bg-white py-1 pl-3.5 pr-3.5 text-[13.5px] sm:pl-1.5 font-medium text-slate-600 shadow-sm ring-1 ring-slate-200">
+              <span className="hidden whitespace-nowrap rounded-full bg-blue-50 px-2.5 py-0.5 font-semibold text-blue-700 sm:inline">For families</span>
+              Reminders in <span lang="kn">ಕನ್ನಡ</span>, <span lang="hi">हिन्दी</span> and English
             </motion.p>
+            <motion.h1 {...rise(0.05)} className="font-display mt-6 text-[42px] leading-[1.05] tracking-tight sm:text-6xl xl:text-[68px]">
+              When Amma misses her medicine,{" "}
+              <span className="bg-gradient-to-r from-blue-600 to-indigo-500 bg-clip-text text-transparent">the right person knows.</span>
+            </motion.h1>
+            <motion.p {...rise(0.12)} className="mt-6 max-w-xl text-lg leading-relaxed text-slate-600 md:text-xl">
+              A reminder on her phone, in her own language. If she doesn't confirm it, the family is asked one person at a time until someone takes responsibility.
+            </motion.p>
+            <motion.div {...rise(0.18)} className="mt-9 flex flex-wrap items-center gap-3">
+              <button type="button" onClick={() => scrollTo("demo")} className="pressable inline-flex min-h-14 items-center gap-2.5 rounded-2xl bg-blue-600 px-6 text-[17px] font-semibold text-white shadow-[0_14px_30px_-12px_rgb(37_99_235/0.75)] hover:bg-blue-700">
+                See how it works <ArrowDown aria-hidden className="size-5" />
+              </button>
+              <button type="button" onClick={() => scrollTo("start")} className="pressable inline-flex min-h-14 items-center gap-2 rounded-2xl bg-white px-6 text-[17px] font-semibold text-ink ring-1 ring-slate-300 hover:ring-blue-300">
+                Get started
+              </button>
+            </motion.div>
           </div>
-        </div>
 
-        <div className="relative border-t border-white/10">
-          <dl className="mx-auto grid max-w-7xl grid-cols-2 gap-px px-4 md:grid-cols-4 md:px-8">
-            {[
-              { value: "₹2.5", label: "per parent, per month on AWS" },
-              { value: "1 tap", label: "to take responsibility and stand everyone else down" },
-              { value: "13", label: "Cedar policies checked on every request" },
-              { value: "3", label: "languages, each reviewed by native speakers" },
-            ].map((stat) => (
-              <div key={stat.label} className="py-6 md:py-8">
-                <dt className="tabular text-3xl font-semibold tracking-tight text-white md:text-4xl">{stat.value}</dt>
-                <dd className="mt-1 text-[14px] text-hero-muted">{stat.label}</dd>
+          <motion.div {...rise(0.1)} className="relative">
+            <div aria-hidden className="absolute -inset-4 rounded-[36px] bg-gradient-to-br from-blue-100/70 via-white to-indigo-50/60 blur-2xl" />
+            <div className="relative rounded-[28px] bg-white p-4 shadow-[0_30px_80px_-30px_rgb(30_58_138/0.35)] ring-1 ring-slate-200/80 md:p-6">
+              <div className="flex items-center justify-between gap-3 px-1">
+                <p className="flex items-center gap-2 text-[12.5px] font-semibold uppercase tracking-[0.14em] text-blue-700">
+                  <span className="relative flex size-2">
+                    <span className="absolute inline-flex size-full animate-ping rounded-full bg-blue-400 opacity-60 motion-reduce:hidden" />
+                    <span className="relative inline-flex size-2 rounded-full bg-blue-600" />
+                  </span>
+                  A missed dose, start to finish
+                </p>
+                <p className="hidden text-[13px] text-slate-500 sm:block">Mysuru · Bengaluru · Pune</p>
               </div>
-            ))}
-          </dl>
+              <FamilyCircle
+                tone="light"
+                parent={{ id: "amma", name: "Shantha", role: "Amma · Mysuru" }}
+                members={[
+                  { id: "arjun", name: "Arjun", role: "Son" },
+                  { id: "meera", name: "Meera", role: "Daughter" },
+                ]}
+                stage={frame.stage}
+                alertedIds={frame.alerted}
+                claimedById={frame.claimed}
+                parentOffline={false}
+                missClass="MISSED"
+              />
+              <motion.p key={frame.stage} initial={reduce ? false : { opacity: 0 }} animate={{ opacity: 1 }} className="min-h-7 px-1 text-center text-[15px] font-medium text-slate-700">
+                {CAPTIONS[frame.stage]}
+              </motion.p>
+            </div>
+          </motion.div>
         </div>
       </section>
 
-      {/* How it works */}
-      <Section eyebrow="How it works" title="Built for the moment a dose is missed">
-        <ol className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          {STEPS.map((step, index) => (
-            <li key={step.title} className="sticker relative bg-surface p-6">
-              <div className="flex items-center justify-between">
-                <span className="grid size-11 place-items-center rounded-xl bg-indigo text-white">
-                  <step.icon aria-hidden className="size-5" />
-                </span>
-                <span className="tabular text-[13px] font-semibold text-muted">0{index + 1}</span>
-              </div>
-              <h3 className="mt-5 text-xl font-semibold tracking-tight">{step.title}</h3>
-              <p className="mt-2 text-[15.5px] leading-relaxed text-muted">{step.body}</p>
-            </li>
-          ))}
-        </ol>
-      </Section>
-
-      {/* Analytics */}
-      <section className="border-y border-line bg-sunken/60">
-        <div className="mx-auto max-w-7xl px-4 py-20 md:px-8 md:py-24">
-          <SectionHeading eyebrow="For the family" title="Know how Amma is really doing" body="Thirty days at a glance: doses taken against the 80% clinical benchmark, a dose calendar, timing drift that predicts missed doses, who responds and how fast, and when tablets run out." />
-          <div className="pointer-events-none mt-10 select-none space-y-5" aria-hidden>
-            <InsightsHero parentName="Shantha" lastReceiptAt={minutesAgo(26)} insights={insights} days={30} onDays={() => {}} lang="en" />
-            <div className="relative max-h-[760px] overflow-hidden">
-              <InsightsGrid insights={insights} lang="en" />
-              <div className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-paper to-transparent" />
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Three languages */}
-      <Section
-        eyebrow="Each person, their own language"
-        title="Amma reads Kannada. Arjun reads English. Meera reads Hindi."
-        body="These are the app's real screens, and medicine names are never translated. No sentence has a name or a number spliced into it, because Kannada inflects nouns and a spliced sentence is usually wrong."
-      >
-        {/* These panes always render the real script, whether or not drafts are switched on for the
-            app, so this section can never quietly become three English screens. */}
-        <div className="grid gap-10 md:grid-cols-3" aria-hidden>
-          <Showcase label="Amma · ಕನ್ನಡ">
-            <ParentDoseScreen dose={SHOWCASE_DOSE} onTaken={async () => {}} framed showDraftLanguage />
-          </Showcase>
-          <Showcase label="Arjun · English">
-            <div className="px-3 pt-3">
-              <FamilyAlert alert={showcaseAlert("ESCALATING")} viewerLang="en" viewerMid="arjun" ladder={LADDER} alertedCount={2} onClaim={async () => "claimed"} onWhy={() => {}} />
-            </div>
-          </Showcase>
-          <Showcase label="Meera · हिन्दी">
-            <div className="px-3 pt-3">
-              <FamilyAlert alert={showcaseAlert("CLAIMED")} viewerLang="hi" viewerMid="meera" ladder={LADDER} alertedCount={2} onClaim={async () => "claimed"} onWhy={() => {}} showDraftLanguage />
-            </div>
-          </Showcase>
-        </div>
-        <p className="mt-8 max-w-3xl text-[15px] text-hero-muted">
-          The Kannada and Hindi are <strong className="font-semibold text-white">drafts awaiting a native speaker</strong>. They are offered in the app
-          and labelled &ldquo;draft translation&rdquo; wherever a language is chosen, so nobody is shown unchecked wording as though it
-          were finished. Every string records who reviewed it, and one switch holds drafts back entirely once the review is done.
-        </p>
-      </Section>
-
-      {/* Architecture */}
-      <section className="hero-surface relative">
-        <div aria-hidden className="hero-grid absolute inset-0" />
-        <div className="relative mx-auto max-w-7xl px-4 py-20 md:px-8 md:py-24">
-          <p className="text-[13px] font-semibold uppercase tracking-[0.16em] text-haldi">Built on AWS · Mumbai</p>
-          <h2 className="font-display mt-3 max-w-3xl text-4xl text-white md:text-5xl">A serverless workflow that waits for free</h2>
-          <p className="mt-4 max-w-2xl text-lg text-hero-muted">Each dose is a Step Functions execution. It is billed per step, not per minute, so waiting twenty minutes for Amma to tap costs nothing.</p>
-          <ol className="mt-12 grid gap-3 md:grid-cols-3">
-            {ARCHITECTURE.map((item, index) => (
-              <li key={item.name} className="glass-card flex items-start gap-4 p-5">
-                <span className="grid size-11 shrink-0 place-items-center rounded-xl bg-white/10 text-haldi ring-1 ring-white/15">
-                  <item.icon aria-hidden className="size-5" />
-                </span>
-                <div>
-                  <p className="flex items-center gap-2 text-[16px] font-semibold text-white">
-                    <span className="tabular text-[12px] text-hero-muted">0{index + 1}</span>
-                    {item.name}
-                  </p>
-                  <p className="mt-1 text-[14.5px] text-hero-muted">{item.role}</p>
+      {/* Get started */}
+      <section id="start" className="scroll-mt-20 border-t border-slate-100 bg-gradient-to-b from-slate-50/80 to-white">
+        <div className="mx-auto max-w-6xl px-4 py-20 md:px-6 md:py-24">
+          <Heading eyebrow="Get started" title="Two ways in, depending on who you are" />
+          <div className="mt-12 grid gap-5 lg:grid-cols-[1.1fr_1fr]">
+            {/* The person taking the medicines never makes an account. The family's invite is a QR
+                code that opens /join with the code already filled in, so a phone's own camera app is
+                the scanner — nothing to install, and it works the same on Android and iPhone. */}
+            <article className="relative overflow-hidden rounded-[28px] bg-white p-6 shadow-[0_20px_60px_-30px_rgb(30_58_138/0.3)] ring-1 ring-slate-200 md:p-8">
+              <div className="flex items-start gap-5">
+                <QrArt />
+                <div className="min-w-0">
+                  <p className="text-[13px] font-semibold uppercase tracking-[0.14em] text-blue-700">If you take the medicines</p>
+                  <h3 className="mt-2 text-2xl font-semibold tracking-tight">Scan to join your family</h3>
                 </div>
+              </div>
+              <ol className="mt-6 space-y-3">
+                {[
+                  { icon: Camera, text: "Open your phone's camera and point it at the code your family shows you." },
+                  { icon: ScanLine, text: "Tap the link that appears. Your family's code is already filled in." },
+                  { icon: KeyRound, text: "Type your name. That's all — no account and no password." },
+                ].map((step, index) => (
+                  <li key={step.text} className="flex items-start gap-3.5">
+                    <span className="tabular grid size-8 shrink-0 place-items-center rounded-full bg-blue-50 text-[14px] font-semibold text-blue-700 ring-1 ring-blue-100">{index + 1}</span>
+                    <p className="pt-1 text-[16px] leading-snug text-slate-700">{step.text}</p>
+                  </li>
+                ))}
+              </ol>
+              <Link to="/join" className="pressable mt-7 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-blue-50 px-5 sm:w-auto text-[16px] font-semibold text-blue-700 ring-1 ring-blue-100 hover:bg-blue-100">
+                Type a code instead <ArrowRight aria-hidden className="size-4.5" />
+              </Link>
+            </article>
+
+            <article className="flex flex-col rounded-[28px] bg-white p-6 shadow-[0_20px_60px_-30px_rgb(30_58_138/0.3)] ring-1 ring-slate-200 md:p-8">
+              <p className="text-[13px] font-semibold uppercase tracking-[0.14em] text-blue-700">If you look after someone</p>
+              <h3 className="mt-2 text-2xl font-semibold tracking-tight">Set up your family</h3>
+              <p className="mt-3 text-[16px] leading-relaxed text-slate-600">
+                Add the person you care for and their medicines, then invite the rest of the family. Everyone is alerted in the order you choose.
+              </p>
+              <div className="mt-auto grid gap-3 pt-7">
+                <EntryLink to="/signin?mode=create" icon={UserPlus} primary title="Create a family account" note="Email and password · about two minutes" />
+                <EntryLink to="/signin" icon={KeyRound} title="Sign in" note="Already set up? Welcome back." />
+              </div>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      {/* Demo */}
+      <section id="demo" className="scroll-mt-20">
+        <div className="mx-auto max-w-6xl px-4 pb-10 pt-20 md:px-6 md:pt-24">
+          <Heading eyebrow="How it works" title="One missed dose, from setup to someone taking care of it" body="Amma in Mysuru reads Kannada. Arjun in Bengaluru reads English. Meera in Pune reads Hindi. These are the app's real screens, with an invented family." />
+          <div className="mt-12 lg:mt-4">
+            <DemoStory />
+          </div>
+        </div>
+        <div className="mx-auto max-w-6xl px-4 pb-20 md:px-6 md:pb-24">
+          {/* The walkthrough is a story; this is the same thing actually running. */}
+          <div className="relative overflow-hidden rounded-[28px] bg-gradient-to-br from-blue-600 to-indigo-600 p-7 text-white shadow-[0_30px_70px_-30px_rgb(37_99_235/0.8)] md:p-10">
+            <div aria-hidden className="absolute inset-0 bg-[radial-gradient(rgb(255_255_255/0.14)_1px,transparent_1px)] [background-size:22px_22px] [mask-image:radial-gradient(60%_80%_at_85%_20%,black,transparent_75%)]" />
+            <div className="relative flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
+              <div className="max-w-xl">
+                <p className="text-[13px] font-semibold uppercase tracking-[0.16em] text-blue-100">Now run it for real</p>
+                <p className="font-display mt-2 text-3xl leading-tight tracking-tight md:text-4xl">Three phones, the real AWS workflow, sixty times faster.</p>
+                <p className="mt-3 text-[16.5px] text-blue-100">Send a dose, let it go unanswered, and claim it yourself. Twenty minutes take twenty seconds.</p>
+              </div>
+              <Link to="/demo" className="pressable inline-flex min-h-14 w-full shrink-0 items-center justify-center gap-2.5 whitespace-nowrap rounded-2xl bg-white px-5 text-[17px] md:w-auto md:px-6 font-semibold text-blue-700 shadow-lg hover:bg-blue-50">
+                Open the live demo <ArrowRight aria-hidden className="size-5" />
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* A single line of the architecture — the demo shows what each part does. */}
+      <section className="border-t border-slate-100 bg-slate-50/70">
+        <div className="mx-auto flex max-w-6xl flex-col gap-4 px-4 py-10 md:flex-row md:items-center md:px-6">
+          <p className="shrink-0 text-[13px] font-semibold uppercase tracking-[0.14em] text-slate-500">Built on AWS · Mumbai</p>
+          <ul className="flex flex-wrap gap-2">
+            {AWS.map((name) => (
+              <li key={name} className="rounded-full bg-white px-3 py-1.5 text-[14px] font-medium text-slate-700 ring-1 ring-slate-200">
+                {name}
               </li>
             ))}
-          </ol>
+          </ul>
         </div>
       </section>
 
-      {/* Trust */}
-      <Section eyebrow="Care, not just code" title="Designed to be trusted">
-        <div className="grid gap-4 md:grid-cols-3">
-          {[
-            { icon: ShieldCheck, title: "Every action authorised", body: "Who may see a parent or claim a dose is written as Cedar policies and checked by Amazon Verified Permissions on each request." },
-            { icon: MessageSquareWarning, title: "Never medical advice", body: "Reminders and family alerts only. A guardrail removes anything resembling advice from AI-read prescriptions, and a person confirms every line." },
-            { icon: Users, title: "No passwords for parents", body: "Amma's phone is connected with a one-time code from the family. It can be disconnected from the family app at any time." },
-          ].map((item) => (
-            <div key={item.title} className="sticker bg-surface p-6">
-              <item.icon aria-hidden className="size-6 text-indigo-soft dark:text-haldi" />
-              <h3 className="mt-4 text-lg font-semibold">{item.title}</h3>
-              <p className="mt-2 text-[15.5px] leading-relaxed text-muted">{item.body}</p>
-            </div>
-          ))}
-        </div>
-        <div className="mt-12 flex flex-wrap items-center justify-between gap-4 rounded-2xl bg-indigo p-6 md:p-8">
-          <p className="text-2xl font-semibold tracking-tight text-white">See a missed dose travel through a family.</p>
-          <Link to="/demo" className="pressable inline-flex min-h-12 items-center gap-2 rounded-xl bg-haldi px-5 font-semibold text-[#14133a]">
-            Open the live demo <ArrowRight aria-hidden className="size-5" />
-          </Link>
-        </div>
-      </Section>
-
-      <footer className="border-t border-line bg-surface">
-        <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-3 px-4 py-8 md:px-8">
-          <Logo className="size-8" />
+      <footer className="border-t border-slate-100">
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center gap-3 px-4 py-8 md:px-6">
+          <Logo className="size-7 rounded-[8px]" />
           <p className="font-semibold">DoseCircle</p>
-          <p className="text-[14px] text-muted md:ml-auto">Reminders and family alerts only. DoseCircle does not give medical advice.</p>
+          <p className="text-[14px] text-slate-500 md:ml-auto">Reminders and family alerts only. DoseCircle does not give medical advice.</p>
         </div>
       </footer>
     </div>
   );
 }
 
-function SectionHeading({ eyebrow, title, body }: { eyebrow: string; title: string; body?: string }) {
+function Heading({ eyebrow, title, body }: { eyebrow: string; title: string; body?: string }) {
   return (
-    <div className="max-w-3xl">
-      <p className="text-[13px] font-semibold uppercase tracking-[0.16em] text-indigo-soft dark:text-haldi">{eyebrow}</p>
-      <h2 className="font-display mt-3 text-4xl md:text-5xl">{title}</h2>
-      {body && <p className="mt-4 text-lg text-muted">{body}</p>}
+    <div className="max-w-2xl">
+      <p className="text-[13px] font-semibold uppercase tracking-[0.16em] text-blue-700">{eyebrow}</p>
+      <h2 className="font-display mt-3 text-[34px] leading-tight tracking-tight md:text-5xl">{title}</h2>
+      {body && <p className="mt-4 text-lg leading-relaxed text-slate-600">{body}</p>}
     </div>
   );
 }
 
-function Section({ eyebrow, title, body, children }: { eyebrow: string; title: string; body?: string; children: ReactNode }) {
+function EntryLink({ to, icon: Icon, title, note, primary = false }: { to: string; icon: LucideIcon; title: string; note: string; primary?: boolean }) {
   return (
-    <section className="mx-auto max-w-7xl px-4 py-20 md:px-8 md:py-24">
-      <SectionHeading eyebrow={eyebrow} title={title} body={body} />
-      <div className="mt-12">{children}</div>
-    </section>
+    <Link
+      to={to}
+      className={cx(
+        "pressable group flex min-h-[72px] items-center gap-4 rounded-2xl px-5 py-3",
+        primary ? "bg-blue-600 text-white shadow-[0_14px_30px_-14px_rgb(37_99_235/0.8)] hover:bg-blue-700" : "bg-white text-ink ring-1 ring-slate-300 hover:ring-blue-300",
+      )}
+    >
+      <span className={cx("grid size-10 shrink-0 place-items-center rounded-xl", primary ? "bg-white/15" : "bg-blue-50 text-blue-700")}>
+        <Icon aria-hidden className="size-5" strokeWidth={2.25} />
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block text-[17px] font-semibold leading-tight">{title}</span>
+        <span className={cx("mt-0.5 block text-[14px]", primary ? "text-blue-100" : "text-slate-500")}>{note}</span>
+      </span>
+      <ArrowRight aria-hidden className="size-5 shrink-0 transition-transform group-hover:translate-x-0.5" />
+    </Link>
   );
 }
 
-function Showcase({ label, children }: { label: string; children: ReactNode }) {
+/** A drawn QR mark, not a real code: a scannable code here would lead nowhere useful. */
+function QrArt(): ReactNode {
+  const cells = [
+    "1110111", "1010101", "1110111", "0001000", "1101011", "0110110", "1011101",
+  ];
   return (
-    <div className="flex flex-col items-center gap-4">
-      <span className="rounded-full bg-surface px-3.5 py-1 text-[14px] font-semibold ring-1 ring-line">{label}</span>
-      <div className={cx("pointer-events-none w-full select-none")}>
-        <PhoneFrame>{children}</PhoneFrame>
+    <div aria-hidden className="relative grid size-[84px] shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-blue-600 to-indigo-600 shadow-[0_12px_28px_-12px_rgb(37_99_235/0.8)]">
+      <div className="grid grid-cols-7 gap-[2px] rounded-lg bg-white p-1.5">
+        {cells.join("").split("").map((cell, i) => (
+          <span key={i} className={cx("size-[6px] rounded-[1.5px]", cell === "1" ? "bg-ink" : "bg-transparent")} />
+        ))}
       </div>
+      <span className="absolute -bottom-1.5 -right-1.5 grid size-7 place-items-center rounded-full bg-white text-blue-700 shadow ring-1 ring-blue-100">
+        <Camera className="size-3.5" strokeWidth={2.5} />
+      </span>
     </div>
   );
 }

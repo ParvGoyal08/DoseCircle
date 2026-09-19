@@ -19,18 +19,20 @@ function preferredLanguage(): LanguageCode {
 
 function AuthLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="grid min-h-dvh bg-paper lg:grid-cols-[1fr_1.1fr]">
-      <aside className="hero-surface relative hidden overflow-hidden lg:block">
-        <div aria-hidden className="hero-grid absolute inset-0" />
+    <div className="grid min-h-dvh bg-white lg:grid-cols-[1fr_1.1fr]">
+      {/* Same white-and-blue as the landing page, so signing in feels like the next step of the
+          same place rather than a different app. */}
+      <aside className="relative hidden overflow-hidden border-r border-slate-200 bg-gradient-to-br from-blue-50 via-white to-indigo-50 lg:block">
+        <div aria-hidden className="absolute inset-0 bg-[radial-gradient(rgb(37_99_235/0.10)_1px,transparent_1px)] [background-size:22px_22px] [mask-image:radial-gradient(80%_70%_at_30%_70%,black,transparent_80%)]" />
         <div className="relative flex h-full flex-col p-12">
           <Link to="/" className="flex items-center gap-2.5">
-            <Logo className="size-10 rounded-[10px] ring-1 ring-white/20" />
-            <span className="text-xl font-semibold tracking-tight text-white">DoseCircle</span>
+            <Logo className="size-10 rounded-[10px]" />
+            <span className="text-xl font-semibold tracking-tight text-ink">DoseCircle</span>
           </Link>
-          <p className="font-display mt-auto max-w-md text-5xl text-white">
-            The right person knows, <span className="text-haldi">every time.</span>
+          <p className="font-display mt-auto max-w-md text-5xl leading-[1.08] tracking-tight text-ink">
+            The right person knows, <span className="bg-gradient-to-r from-blue-600 to-indigo-500 bg-clip-text text-transparent">every time.</span>
           </p>
-          <p className="mt-5 max-w-md text-lg text-hero-muted">Reminders in each person's own language, and a family that is asked one person at a time when a dose is missed.</p>
+          <p className="mt-5 max-w-md text-lg leading-relaxed text-slate-600">Reminders in each person's own language, and a family that is asked one person at a time when a dose is missed.</p>
         </div>
       </aside>
       <main className="flex flex-col px-4 py-8 sm:px-10">
@@ -54,7 +56,9 @@ export function SignInPage() {
   const navigate = useNavigate();
   const { state, reload } = useFamily();
   const { t, lang } = useT(preferredLanguage());
-  const [mode, setMode] = useState<"signIn" | "create" | "confirm">("signIn");
+  // The landing page sends new families straight to "create" so they don't land on a sign-in form
+  // for an account they don't have yet.
+  const [mode, setMode] = useState<"signIn" | "create" | "confirm">(params.get("mode") === "create" ? "create" : "signIn");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [code, setCode] = useState("");
