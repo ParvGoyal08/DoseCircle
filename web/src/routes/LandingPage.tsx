@@ -196,29 +196,18 @@ export function LandingPage() {
         </div>
       </section>
 
-      {/* Demo */}
-      <section id="demo" className="scroll-mt-20">
-        <div className="mx-auto max-w-6xl px-4 pb-10 pt-20 md:px-6 md:pt-24">
-          <Heading eyebrow="How it works" title="One missed dose, from setup to someone taking care of it" body="Amma in Mysuru reads Kannada. Arjun in Bengaluru reads English. Meera in Pune reads Hindi. These are the app's real screens, with an invented family." />
-          <div className="mt-12 lg:mt-4">
-            <DemoStory />
-          </div>
-        </div>
-        <div className="mx-auto max-w-6xl px-4 pb-20 md:px-6 md:pb-24">
-          {/* The walkthrough is a story; this is the same thing actually running. */}
-          <div className="relative overflow-hidden rounded-[28px] bg-gradient-to-br from-blue-600 to-indigo-600 p-7 text-white shadow-[0_30px_70px_-30px_rgb(37_99_235/0.8)] md:p-10">
-            <div aria-hidden className="absolute inset-0 bg-[radial-gradient(rgb(255_255_255/0.14)_1px,transparent_1px)] [background-size:22px_22px] [mask-image:radial-gradient(60%_80%_at_85%_20%,black,transparent_75%)]" />
-            <div className="relative flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
-              <div className="max-w-xl">
-                <p className="text-[13px] font-semibold uppercase tracking-[0.16em] text-blue-100">Now run it for real</p>
-                <p className="font-display mt-2 text-3xl leading-tight tracking-tight md:text-4xl">Three phones, the real AWS workflow, sixty times faster.</p>
-                <p className="mt-3 text-[16.5px] text-blue-100">Send a dose, let it go unanswered, and claim it yourself. Twenty minutes take twenty seconds.</p>
+      {/* Demo — heading and walkthrough fit one screen together, so nobody scrolls to follow it. */}
+      <section id="demo" className="scroll-mt-16 border-t border-slate-100">
+        <div className="mx-auto max-w-6xl px-4 py-12 md:px-6 lg:flex lg:min-h-[calc(100svh-4rem)] lg:flex-col lg:justify-center lg:py-6">
+          <DemoStory
+            header={
+              <div>
+                <p className="text-[13px] font-semibold uppercase tracking-[0.16em] text-blue-700">How it works</p>
+                <h2 className="font-display mt-2 text-[30px] leading-tight tracking-tight md:text-[34px]">One missed dose, start to finish</h2>
+                <p className="mt-2 text-[16px] text-slate-600">Amma reads Kannada, Arjun English, Meera Hindi. The app's real screens, with an invented family.</p>
               </div>
-              <Link to="/demo" className="pressable inline-flex min-h-14 w-full shrink-0 items-center justify-center gap-2.5 whitespace-nowrap rounded-2xl bg-white px-5 text-[17px] md:w-auto md:px-6 font-semibold text-blue-700 shadow-lg hover:bg-blue-50">
-                Open the live demo <ArrowRight aria-hidden className="size-5" />
-              </Link>
-            </div>
-          </div>
+            }
+          />
         </div>
       </section>
 

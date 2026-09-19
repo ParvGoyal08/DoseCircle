@@ -1,8 +1,7 @@
-import { ArrowLeft, ArrowRight, Check, CircleAlert, Cloud, MessageCircle, Smartphone, TriangleAlert, WifiOff } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, CircleAlert, Cloud, MessageCircle, RotateCcw, Smartphone, TriangleAlert, WifiOff } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import QRCode from "qrcode";
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { Link } from "react-router";
 import { useT } from "../i18n";
 import type { DoseView, OpenAlert, TimelineItem } from "../lib/types";
 import { FamilyAlert } from "./FamilyAlert";
@@ -17,8 +16,7 @@ import { cx } from "./ui";
  *
  * Every screen here is the app's real component fed fictional data, not a picture of one, so the
  * walkthrough cannot drift from what the app actually does. The names, the family and the
- * prescription are invented. Nothing here talks to a server; the live demo linked at the end runs
- * the same story on the real AWS workflow.
+ * prescription are invented. Nothing here talks to a server.
  */
 
 const at = (minutes: number) => {
@@ -165,55 +163,109 @@ const STEPS: Step[] = [
   },
 ];
 
-export function DemoStory() {
+/** `header` sits above the steps: beside the phone on a desktop, above everything on a phone. */
+export function DemoStory({ header }: { header?: ReactNode }) {
   const [active, setActive] = useState(0);
   return (
     <>
-      <DesktopStory active={active} onActive={setActive} />
-      <MobileStory active={active} onActive={setActive} />
+      <DesktopStory active={active} onActive={setActive} header={header} />
+      <div className="lg:hidden">
+        {header}
+        <div className="mt-8">
+          <MobileStory active={active} onActive={setActive} />
+        </div>
+      </div>
     </>
   );
 }
 
 /**
- * Desktop: the steps scroll on the left and the phone stays pinned on the right, changing to
- * whichever step is at the middle of the screen. Reading and watching happen together.
+ * Desktop: the whole walkthrough on one screen. The eight steps are a short list beside the phone;
+ * the current one opens to show what happens, the others stay one line each. Scrolling eight
+ * screen-heights to reach the end was the old version, and nobody got to step eight.
  */
-function DesktopStory({ active, onActive }: { active: number; onActive: (index: number) => void }) {
-  const refs = useRef<(HTMLLIElement | null)[]>([]);
+function DesktopStory({ active, onActive, header }: { active: number; onActive: (index: number) => void; header?: ReactNode }) {
+  const go = (index: number) => onActive(Math.max(0, Math.min(STEPS.length - 1, index)));
+  const root = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        for (const entry of entries) if (entry.isIntersecting) onActive(Number((entry.target as HTMLElement).dataset.index));
-      },
-      // A thin band across the middle of the viewport: whichever step crosses it is the one shown.
-      { rootMargin: "-48% 0px -48% 0px" },
-    );
-    for (const el of refs.current) if (el) observer.observe(el);
-    return () => observer.disconnect();
-  }, [onActive]);
+    // Arrow keys step through while the walkthrough is on screen, without stealing them elsewhere.
+    const onKey = (event: KeyboardEvent) => {
+      const box = root.current?.getBoundingClientRect();
+      if (!box || box.bottom < 0 || box.top > window.innerHeight) return;
+      if ((event.target as HTMLElement).closest("input,textarea,select")) return;
+      if (event.key === "ArrowRight") go(active + 1);
+      if (event.key === "ArrowLeft") go(active - 1);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  });
 
   return (
-    <div className="hidden gap-16 lg:grid lg:grid-cols-[1fr_400px]">
-      <ol>
-        {STEPS.map((step, index) => (
-          <li
-            key={step.id}
-            ref={(el) => {
-              refs.current[index] = el;
-            }}
-            data-index={index}
-            className="flex min-h-[78vh] items-center"
-          >
-            <StepText step={step} index={index} dim={index !== active} />
-          </li>
-        ))}
-      </ol>
+    <div ref={root} className="hidden items-center gap-12 lg:grid lg:grid-cols-[1fr_340px]">
       <div>
-        <div className="sticky top-[max(88px,calc(50vh-360px))]">
-          <Stage index={active} height={640} />
-        </div>
+        {header}
+        <ol className="mt-5 space-y-1">
+          {STEPS.map((step, index) => {
+            const open = index === active;
+            return (
+              <li key={step.id}>
+                <button
+                  type="button"
+                  onClick={() => go(index)}
+                  aria-current={open ? "step" : undefined}
+                  className={cx("w-full rounded-2xl px-4 text-left transition-colors", open ? "bg-white py-3.5 shadow-[0_14px_36px_-20px_rgb(30_58_138/0.45)] ring-1 ring-slate-200" : "py-1.5 hover:bg-slate-50")}
+                >
+                  <span className="flex items-center gap-3">
+                    <span className={cx("tabular grid size-7 shrink-0 place-items-center rounded-full text-[13.5px] font-semibold", open ? "bg-blue-600 text-white" : index < active ? "bg-blue-50 text-blue-700" : "bg-slate-100 text-slate-500")}>
+                      {index < active ? <Check aria-hidden className="size-4" strokeWidth={3} /> : index + 1}
+                    </span>
+                    <span className={cx("font-semibold tracking-tight", open ? "text-[20px] text-ink" : "text-[15.5px] text-slate-600")}>{step.title}</span>
+                  </span>
+                  {open && (
+                    <span className="mt-1.5 block pl-10">
+                      <span className="block text-[15.5px] leading-relaxed text-slate-600">{step.body}</span>
+                      <span className="mt-3 flex flex-wrap items-center gap-2">
+                        <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-2.5 py-1 text-[13px] font-semibold text-blue-800 ring-1 ring-blue-100">
+                          <Cloud aria-hidden className="size-3.5 shrink-0" />
+                          {step.aws}
+                        </span>
+                        <span className="text-[13px] font-medium text-slate-500">{step.who}</span>
+                      </span>
+                    </span>
+                  )}
+                </button>
+              </li>
+            );
+          })}
+        </ol>
+        <StepControls active={active} go={go} className="mt-4 pl-4" />
       </div>
+      <Stage index={active} height={540} />
+    </div>
+  );
+}
+
+function StepControls({ active, go, className }: { active: number; go: (index: number) => void; className?: string }) {
+  const last = active === STEPS.length - 1;
+  return (
+    <div className={cx("flex items-center gap-3", className)}>
+      <button type="button" onClick={() => go(active - 1)} disabled={active === 0} className="pressable inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl bg-white px-5 text-[16px] font-semibold text-ink ring-1 ring-slate-300 disabled:opacity-40">
+        <ArrowLeft aria-hidden className="size-5" /> Back
+      </button>
+      <button type="button" onClick={() => go(last ? 0 : active + 1)} className="pressable inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl bg-blue-600 px-5 text-[16px] font-semibold text-white shadow-[0_10px_24px_-12px_rgb(37_99_235/0.8)] hover:bg-blue-700">
+        {last ? (
+          <>
+            <RotateCcw aria-hidden className="size-4.5" /> Start again
+          </>
+        ) : (
+          <>
+            Next <ArrowRight aria-hidden className="size-5" />
+          </>
+        )}
+      </button>
+      <span className="tabular ml-1 text-[14px] font-medium text-slate-500">
+        {active + 1} / {STEPS.length}
+      </span>
     </div>
   );
 }
@@ -223,7 +275,6 @@ function MobileStory({ active, onActive }: { active: number; onActive: (index: n
   const reduce = useReducedMotion();
   const touchX = useRef<number | null>(null);
   const go = (index: number) => onActive(Math.max(0, Math.min(STEPS.length - 1, index)));
-  const last = active === STEPS.length - 1;
 
   return (
     <div className="lg:hidden">
@@ -269,20 +320,7 @@ function MobileStory({ active, onActive }: { active: number; onActive: (index: n
         </motion.div>
       </AnimatePresence>
 
-      <div className="mt-6 grid grid-cols-2 gap-3">
-        <button type="button" onClick={() => go(active - 1)} disabled={active === 0} className="pressable inline-flex min-h-13 items-center justify-center gap-2 rounded-2xl bg-white text-[16px] font-semibold text-ink ring-1 ring-slate-300 disabled:opacity-40">
-          <ArrowLeft aria-hidden className="size-5" /> Back
-        </button>
-        {last ? (
-          <Link to="/demo" className="pressable inline-flex min-h-13 items-center justify-center gap-2 rounded-2xl bg-blue-600 text-[16px] font-semibold text-white">
-            Try it live <ArrowRight aria-hidden className="size-5" />
-          </Link>
-        ) : (
-          <button type="button" onClick={() => go(active + 1)} className="pressable inline-flex min-h-13 items-center justify-center gap-2 rounded-2xl bg-blue-600 text-[16px] font-semibold text-white">
-            Next <ArrowRight aria-hidden className="size-5" />
-          </button>
-        )}
-      </div>
+      <StepControls active={active} go={go} className="mt-6 [&>button]:flex-1" />
     </div>
   );
 }
@@ -346,8 +384,8 @@ function SetupScreen() {
   const [qr, setQr] = useState<string | null>(null);
   useEffect(() => {
     let live = true;
-    // A real code, but it opens the live demo rather than a join link that would go nowhere.
-    void QRCode.toDataURL(`${window.location.origin}/demo`, { margin: 1, width: 200, color: { dark: "#14133a", light: "#ffffff" } }).then((url) => live && setQr(url));
+    // A real-looking code that holds plain text, not a link: there is no family behind it to join.
+    void QRCode.toDataURL("DOSECIRCLE-SAMPLE-K7Q4M2XP", { margin: 1, width: 200, color: { dark: "#14133a", light: "#ffffff" } }).then((url) => live && setQr(url));
     return () => {
       live = false;
     };
