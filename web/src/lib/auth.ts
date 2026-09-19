@@ -95,4 +95,22 @@ export async function signOut(): Promise<void> {
   await amplifySignOut();
 }
 
-export { confirmResetPassword, resetPassword };
+/**
+ * Step one of a forgotten password: email a code. The app client hides whether an account exists
+ * (preventUserExistenceErrors), so this succeeds for any address and the screen says "if an account
+ * uses this email" rather than confirming who has signed up.
+ */
+export async function requestPasswordReset(email: string): Promise<void> {
+  if (mockApiEnabled) return;
+  await resetPassword({ username: email.trim() });
+}
+
+/** Step two: the emailed code and a new password, then straight in rather than back to a form. */
+export async function finishPasswordReset(email: string, code: string, newPassword: string): Promise<void> {
+  if (mockApiEnabled) {
+    (await mock()).mockSignIn();
+    return;
+  }
+  await confirmResetPassword({ username: email.trim(), confirmationCode: code.trim(), newPassword });
+  await signIn({ username: email.trim(), password: newPassword });
+}

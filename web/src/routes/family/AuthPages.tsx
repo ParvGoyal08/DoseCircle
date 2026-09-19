@@ -9,7 +9,7 @@ import { ShareInvite } from "../../components/ShareInvite";
 import { Button } from "../../components/ui";
 import { useT } from "../../i18n";
 import { api, ApiError, mockApiEnabled } from "../../lib/api";
-import { authConfigured, confirmAccount, createAccount, signInWithEmail } from "../../lib/auth";
+import { authConfigured, confirmAccount, createAccount, finishPasswordReset, requestPasswordReset, signInWithEmail } from "../../lib/auth";
 import { useFamily } from "../../lib/family";
 import { enableReminders, pushSupport } from "../../lib/push";
 
@@ -58,23 +58,40 @@ export function SignInPage() {
   const { t, lang } = useT(preferredLanguage());
   // The landing page sends new families straight to "create" so they don't land on a sign-in form
   // for an account they don't have yet.
-  const [mode, setMode] = useState<"signIn" | "create" | "confirm">(params.get("mode") === "create" ? "create" : "signIn");
+  const [mode, setMode] = useState<Mode>(params.get("mode") === "create" ? "create" : "signIn");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [resent, setResent] = useState(false);
   const next = params.get("next") ?? "/home";
 
   if (state.status === "ready") return <Navigate to={next} replace />;
   if (state.status === "noFamily" && !next.startsWith("/invite")) return <Navigate to="/onboarding" replace />;
+
+  const switchTo = (to: Mode) => {
+    setMode(to);
+    setError(null);
+    setCode("");
+    setResent(false);
+    // The old password is useless once someone has said they forgot it, and a browser would
+    // otherwise carry it into the "new password" box.
+    if (to === "forgot" || to === "reset") setPassword("");
+  };
 
   const submit = async (event: FormEvent) => {
     event.preventDefault();
     setBusy(true);
     setError(null);
     try {
-      if (mode === "confirm") await confirmAccount(email, password, code);
+      if (mode === "forgot") {
+        await requestPasswordReset(email);
+        switchTo("reset");
+        return;
+      }
+      if (mode === "reset") await finishPasswordReset(email, code, password);
+      else if (mode === "confirm") await confirmAccount(email, password, code);
       else {
         const result = mode === "signIn" ? await signInWithEmail(email, password) : await createAccount(email, password);
         if (result === "confirm") {
@@ -86,9 +103,19 @@ export function SignInPage() {
       await reload();
       navigate(next, { replace: true });
     } catch (e) {
-      setError(errorText(e));
+      setError(authErrorText(e, t));
     } finally {
       setBusy(false);
+    }
+  };
+
+  const resend = async () => {
+    setError(null);
+    try {
+      await requestPasswordReset(email);
+      setResent(true);
+    } catch (e) {
+      setError(authErrorText(e, t));
     }
   };
 
@@ -104,44 +131,115 @@ export function SignInPage() {
       </AuthLayout>
     );
 
+  const title = { signIn: "auth.title.signIn", create: "auth.title.create", confirm: "auth.confirmTitle", forgot: "auth.forgotTitle", reset: "auth.resetTitle" }[mode];
+  const button = { signIn: "auth.signInButton", create: "auth.createButton", confirm: "auth.confirmButton", forgot: "auth.sendCode", reset: "auth.resetButton" }[mode];
+  const recovering = mode === "forgot" || mode === "reset";
+
   return (
     <AuthLayout>
       <form onSubmit={submit} className="space-y-4">
         <h1 lang={lang} className="font-display text-4xl md:text-[44px]">
-          {mode === "create" ? t("auth.title.create") : mode === "confirm" ? t("auth.confirmTitle") : t("auth.title.signIn")}
+          {t(title)}
         </h1>
-        {mode !== "confirm" ? (
-          <>
-            <Field label={t("auth.email")} lang={lang}>
-              <input className={inputClass} type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
-            </Field>
-            <Field label={t("auth.password")} hint={mode === "create" ? t("auth.passwordHint") : undefined} lang={lang}>
-              <input className={inputClass} type="password" autoComplete={mode === "create" ? "new-password" : "current-password"} minLength={10} required value={password} onChange={(e) => setPassword(e.target.value)} />
-            </Field>
-          </>
-        ) : (
-          <input className={`${inputClass} tabular text-center font-mono text-2xl tracking-[0.3em]`} inputMode="numeric" autoComplete="one-time-code" required value={code} onChange={(e) => setCode(e.target.value)} />
+        {mode === "forgot" && (
+          <p lang={lang} className="text-[16px] text-muted">
+            {t("auth.forgotHelp")}
+          </p>
         )}
+        {mode === "reset" && (
+          <p lang={lang} className="text-[16px] text-muted">
+            {t("auth.resetHelp")} <span className="font-semibold text-ink">{email}</span>
+          </p>
+        )}
+
+        {(mode === "signIn" || mode === "create" || mode === "forgot") && (
+          <Field label={t("auth.email")} lang={lang}>
+            <input className={inputClass} type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} />
+          </Field>
+        )}
+        {(mode === "signIn" || mode === "create") && (
+          <Field label={t("auth.password")} hint={mode === "create" ? t("auth.passwordHint") : undefined} lang={lang}>
+            <input className={inputClass} type="password" autoComplete={mode === "create" ? "new-password" : "current-password"} minLength={10} required value={password} onChange={(e) => setPassword(e.target.value)} />
+          </Field>
+        )}
+        {/* Sits right under the password box, where someone who has just got it wrong is looking. */}
+        {mode === "signIn" && (
+          <button type="button" onClick={() => switchTo("forgot")} className="-mt-1 min-h-10 text-[15px] font-semibold text-claimed underline-offset-2 hover:underline">
+            <span lang={lang}>{t("auth.forgot")}</span>
+          </button>
+        )}
+
+        {(mode === "confirm" || mode === "reset") && (
+          <Field label={t("auth.resetCode")} lang={lang}>
+            <input className={`${inputClass} tabular text-center font-mono text-2xl tracking-[0.3em]`} inputMode="numeric" autoComplete="one-time-code" maxLength={8} required value={code} onChange={(e) => setCode(e.target.value.replace(/\s/g, ""))} />
+          </Field>
+        )}
+        {mode === "reset" && (
+          <Field label={t("auth.newPassword")} hint={t("auth.passwordHint")} lang={lang}>
+            <input className={inputClass} type="password" autoComplete="new-password" minLength={10} required value={password} onChange={(e) => setPassword(e.target.value)} />
+          </Field>
+        )}
+
         {error && (
-          <p role="alert" className="rounded-xl bg-missed-tint px-3 py-2 text-[15px] font-medium text-missed">
+          <p role="alert" lang={lang} className="rounded-xl bg-missed-tint px-3 py-2 text-[15px] font-medium text-missed">
             {error}
+          </p>
+        )}
+        {resent && (
+          <p role="status" lang={lang} className="rounded-xl bg-taken-tint px-3 py-2 text-[15px] font-medium text-taken">
+            {t("auth.codeResent")}
           </p>
         )}
         <Button tone="ink" size="lg" type="submit" className="w-full" disabled={busy}>
           {busy && <Loader2 aria-hidden className="size-5 animate-spin" />}
-          <span lang={lang}>{mode === "create" ? t("auth.createButton") : mode === "confirm" ? t("auth.confirmButton") : t("auth.signInButton")}</span>
+          <span lang={lang}>{t(button)}</span>
         </Button>
-        {mode !== "confirm" && (
-          <button type="button" onClick={() => setMode(mode === "signIn" ? "create" : "signIn")} className="block min-h-11 w-full text-center text-[15px] font-semibold text-claimed">
+
+        {(mode === "signIn" || mode === "create") && (
+          <button type="button" onClick={() => switchTo(mode === "signIn" ? "create" : "signIn")} className="block min-h-11 w-full text-center text-[15px] font-semibold text-claimed">
             <span lang={lang}>{mode === "signIn" ? t("auth.switchToCreate") : t("auth.switchToSignIn")}</span>
           </button>
         )}
+        {recovering && (
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <button type="button" onClick={() => switchTo("signIn")} className="min-h-11 text-[15px] font-semibold text-claimed">
+              <span lang={lang}>{t("auth.backToSignIn")}</span>
+            </button>
+            {mode === "reset" && (
+              <button type="button" onClick={() => void resend()} className="min-h-11 text-[15px] font-semibold text-claimed">
+                <span lang={lang}>{t("auth.resendCode")}</span>
+              </button>
+            )}
+          </div>
+        )}
       </form>
-      <p lang={lang} className="mt-6 border-t-2 border-dashed border-ink/20 pt-4 text-[14px] text-muted">
-        {t("auth.parentHint")}
-      </p>
+      {!recovering && (
+        <p lang={lang} className="mt-6 border-t-2 border-dashed border-ink/20 pt-4 text-[14px] text-muted">
+          {t("auth.parentHint")}
+        </p>
+      )}
     </AuthLayout>
   );
+}
+
+type Mode = "signIn" | "create" | "confirm" | "forgot" | "reset";
+
+/**
+ * Cognito's own messages are English and written for developers ("Invalid verification code
+ * provided, please try again."). The ones a person hits while recovering an account get a reviewed
+ * sentence in their language; anything rarer falls through as Cognito wrote it.
+ */
+function authErrorText(error: unknown, t: (key: string) => string): string {
+  const name = (error as { name?: string } | null)?.name;
+  const key = {
+    CodeMismatchException: "auth.error.wrongCode",
+    ExpiredCodeException: "auth.error.expiredCode",
+    InvalidPasswordException: "auth.passwordHint",
+    LimitExceededException: "auth.error.tooMany",
+    TooManyRequestsException: "auth.error.tooMany",
+    NotAuthorizedException: "auth.error.wrongPassword",
+  }[name ?? ""];
+  return key ? t(key) : errorText(error);
 }
 
 /** Shows the phone-pairing link as a WhatsApp share, a copy button and a QR code. */
