@@ -142,7 +142,8 @@ function StatusHeader({ parents, openAlerts, name, myLang }: { parents: ParentCa
   const active = parents.filter((p) => !p.paused);
   const doses = active.flatMap((p) => p.today);
   const taken = doses.filter((d) => d.status === "TAKEN" || d.status === "TAKEN_LATE").length;
-  const missed = doses.filter((d) => d.status === "UNRESOLVED" || (d.status === "CLAIMED" && d.missClass === "MISSED")).length;
+  // Same rule as the week ring and the report: a phone that never got the reminder is "unknown", not missed.
+  const missed = doses.filter((d) => (d.status === "UNRESOLVED" || d.status === "CLAIMED") && d.missClass !== "OFFLINE").length;
   // Counted off the slots, not the dose records: a slot later today has no dose row yet, and the
   // list underneath shows it as "later today". An escalating dose is left out of all three — the
   // headline and the alert below are about that dose, and counting it here too would say it twice.
