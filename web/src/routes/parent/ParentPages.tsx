@@ -1,9 +1,9 @@
 import { LANGUAGES, type LanguageCode } from "@dosecircle/shared";
-import { Bell, BellOff, Camera, CheckCheck, ChevronRight, Globe, Loader2 } from "lucide-react";
+import { Bell, BellOff, Camera, CheckCheck, ChevronRight, Loader2 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, Navigate, useNavigate, useParams } from "react-router";
 import { InstallGuide } from "../../components/InstallGuide";
-import { defaultLanguage, LanguagePicker } from "../../components/LanguagePicker";
+import { defaultLanguage, LanguageToggle } from "../../components/LanguagePicker";
 import { Logo } from "../../components/Logo";
 import { ParentDoseScreen } from "../../components/ParentDoseScreen";
 import { Button, cx, SLOT_ICONS } from "../../components/ui";
@@ -142,35 +142,35 @@ export function JoinPage() {
 
         {step === "connect" && (
           <>
-            <LanguagePicker value={chosen} onChange={setChosen} large />
-            {chosen && (
-              <section className="sticker bg-surface p-5">
-                <label htmlFor="code" lang={lang} className="block text-2xl font-semibold leading-snug">
-                  {t("parent.join.title")}
-                </label>
-                <input
-                  id="code"
-                  inputMode="text"
-                  autoCapitalize="characters"
-                  autoComplete="one-time-code"
-                  spellCheck={false}
-                  maxLength={12}
-                  value={code}
-                  onChange={(e) => setCode(e.target.value.toUpperCase())}
-                  aria-label={t("parent.join.codeLabel")}
-                  className="tabular mt-4 h-20 w-full rounded-2xl border border-line-strong bg-paper text-center font-mono text-4xl font-semibold tracking-[0.25em] focus:border-indigo focus:bg-surface focus:outline-none"
-                />
-                {status === "invalid" && (
-                  <p lang={lang} role="alert" className="mt-3 text-lg font-medium text-missed">
-                    {t("parent.join.invalid")}
-                  </p>
-                )}
-                <Button tone="ink" size="lg" className="mt-4 min-h-16 w-full text-xl" onClick={connect} disabled={code.replace(/[^A-Z0-9]/g, "").length < 8 || status === "busy"}>
-                  {status === "busy" && <Loader2 aria-hidden className="size-6 animate-spin" />}
-                  <span lang={lang}>{status === "busy" ? t("parent.setup.connecting") : t("parent.join.button")}</span>
-                </Button>
-              </section>
-            )}
+            {/* The language rides in the family's link, so this is a correction, not a first step:
+                small, above the code, and the code box is there whether or not anyone touches it. */}
+            <LanguageToggle value={chosen} onChange={setChosen} lang={lang} size="lg" />
+            <section className="sticker bg-surface p-5">
+              <label htmlFor="code" lang={lang} className="block text-2xl font-semibold leading-snug">
+                {t("parent.join.title")}
+              </label>
+              <input
+                id="code"
+                inputMode="text"
+                autoCapitalize="characters"
+                autoComplete="one-time-code"
+                spellCheck={false}
+                maxLength={12}
+                value={code}
+                onChange={(e) => setCode(e.target.value.toUpperCase())}
+                aria-label={t("parent.join.codeLabel")}
+                className="tabular mt-4 h-20 w-full rounded-2xl border border-line-strong bg-paper text-center font-mono text-4xl font-semibold tracking-[0.25em] focus:border-indigo focus:bg-surface focus:outline-none"
+              />
+              {status === "invalid" && (
+                <p lang={lang} role="alert" className="mt-3 text-lg font-medium text-missed">
+                  {t("parent.join.invalid")}
+                </p>
+              )}
+              <Button tone="ink" size="lg" className="mt-4 min-h-16 w-full text-xl" onClick={connect} disabled={code.replace(/[^A-Z0-9]/g, "").length < 8 || status === "busy"}>
+                {status === "busy" && <Loader2 aria-hidden className="size-6 animate-spin" />}
+                <span lang={lang}>{status === "busy" ? t("parent.setup.connecting") : t("parent.join.button")}</span>
+              </Button>
+            </section>
           </>
         )}
 
@@ -344,7 +344,6 @@ function NothingToday({ hasSchedule, lang: parentLang }: { hasSchedule: boolean;
 /** /parent — the calm "today" screen. */
 export function ParentHomePage() {
   const device = pairedDevice() ?? (mockApiEnabled ? { token: "mock", displayName: "Shantha", lang: "kn" as const } : null);
-  const [changingLanguage, setChangingLanguage] = useState(false);
   const today = useApi(device ? () => api<ParentToday>("/parent/today", { auth: "device" }) : null, [], 60_000);
   // The phone's push subscription can be replaced by the browser; re-register it if so.
   useEffect(() => {
@@ -357,7 +356,6 @@ export function ParentHomePage() {
   const setLanguage = async (code: LanguageCode) => {
     await api("/parent/lang", { method: "PUT", auth: "device", body: { lang: code } });
     updateStoredLanguage(code);
-    setChangingLanguage(false);
     await today.reload();
   };
 
@@ -365,17 +363,13 @@ export function ParentHomePage() {
     <main className="mx-auto flex min-h-dvh max-w-xl flex-col gap-5 px-4 pb-10 pt-6">
       <header>
         <div className="flex justify-end">
-          <button type="button" onClick={() => setChangingLanguage((v) => !v)} aria-expanded={changingLanguage} className="inline-flex min-h-12 items-center gap-2 rounded-full border border-line-strong bg-surface px-3.5 text-[16px] font-semibold">
-            <Globe aria-hidden className="size-5" strokeWidth={2.25} />
-            <span lang={lang}>{t("parent.home.changeLanguage")}</span>
-          </button>
+          {/* Always visible and one tap, instead of a button that unfolded three large cards. */}
+          <LanguageToggle value={(today.data?.parent.lang ?? device.lang) as LanguageCode} onChange={setLanguage} lang={lang} size="lg" />
         </div>
         <h1 lang={lang} className="font-display mt-2 text-[40px]">
           {t("parent.today.title")}
         </h1>
       </header>
-
-      {changingLanguage && <LanguagePicker value={(today.data?.parent.lang ?? device.lang) as LanguageCode} onChange={setLanguage} large />}
 
       <InstallGuide lang={lang} />
       <RemindersCard lang={lang} />

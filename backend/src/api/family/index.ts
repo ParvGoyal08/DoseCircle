@@ -4,7 +4,7 @@ import { getDashboard } from "./dashboard.js";
 import { getInsights, getReport, getTimeline } from "./insights.js";
 import { createInvite, listDevices, revokeDevice, saveMemberSubscription, sendTestDose, setLadder, updateParent } from "./manage.js";
 import { deleteFamily, leaveFamily, listFamilyMembers, removeMember, updateMember } from "./members.js";
-import { confirmPrescription, createPrescription, getPrescription } from "./prescriptions.js";
+import { confirmPrescription, createPrescription, getPrescription, listPendingPrescriptions } from "./prescriptions.js";
 import { addMedicine, listParentMedicines, refillMedicine, stopMedicine, updateMedicine } from "./medicines.js";
 import { acceptInvite, addParent, createFamily, getMe, setMyLanguage } from "./setup.js";
 
@@ -43,6 +43,7 @@ export const FAMILY_ROUTES = {
   "GET /families/{fid}/parents/{pid}/insights": getInsights,
   "POST /families/{fid}/prescriptions": createPrescription,
   "GET /families/{fid}/prescriptions/{rxId}": getPrescription,
+  "GET /families/{fid}/parents/{pid}/prescriptions": listPendingPrescriptions,
   "POST /families/{fid}/prescriptions/{rxId}/confirm": confirmPrescription,
   "GET /doses/{doseId}/timeline": getTimeline,
   "POST /push/subscriptions": saveMemberSubscription,

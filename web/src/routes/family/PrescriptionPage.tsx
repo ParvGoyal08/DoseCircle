@@ -1,6 +1,6 @@
 import { Camera, CircleCheck, Loader2, ShieldCheck } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { Link, useNavigate, useParams } from "react-router";
+import { Link, useNavigate, useParams, useSearchParams } from "react-router";
 import { FamilyShell } from "../../components/FamilyShell";
 import { PrescriptionReview, type Decision } from "../../components/PrescriptionReview";
 import { Button, Card, cx } from "../../components/ui";
@@ -8,30 +8,66 @@ import { useT } from "../../i18n";
 import { api, ApiError } from "../../lib/api";
 import { RequireFamily } from "../../lib/family";
 import { toJpeg, upload, VARIANTS } from "../../lib/prescription-upload";
-import type { Prescription, PresignedPost } from "../../lib/types";
+import type { Dashboard, Prescription, PresignedPost } from "../../lib/types";
+import { useApi } from "../../lib/useApi";
 
 export function PrescriptionPage() {
   const { pid = "" } = useParams();
   return <RequireFamily>{(me) => <PrescriptionFlow fid={me.fid} pid={pid} lang={me.lang} />}</RequireFamily>;
 }
 
-type Step = "consent" | "choose" | "upload" | "reading" | "review" | "failed" | "saved";
+type Step = "opening" | "consent" | "choose" | "upload" | "reading" | "review" | "failed" | "saved" | "alreadySaved" | "gone";
+
+/** Reading normally takes ten to twenty seconds. Past this, stop spinning and offer a way on. */
+const READING_TIMEOUT_MS = 90_000;
 
 function PrescriptionFlow({ fid, pid, lang: myLang }: { fid: string; pid: string; lang: string }) {
   const { t, lang } = useT(myLang);
   const navigate = useNavigate();
-  const [step, setStep] = useState<Step>("consent");
+  const [params] = useSearchParams();
+  // Opened from "a prescription is waiting" (a notification, or the Medicines page): show that one.
+  // Without this the page always started a new upload, so a prescription the parent photographed
+  // could never be reviewed.
+  const openRx = params.get("rx");
+  const [step, setStep] = useState<Step>(openRx ? "opening" : "consent");
   const [rx, setRx] = useState<(Prescription & { rxId: string }) | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [timedOut, setTimedOut] = useState(false);
   const [saving, setSaving] = useState(false);
   const [elapsed, setElapsed] = useState(0);
   const input = useRef<HTMLInputElement>(null);
+  // The parent's clock times, so each medicine's "when" shows when the phone will actually ring.
+  const dashboard = useApi(() => api<Dashboard>(`/families/${fid}`, { auth: "family" }), [fid]);
+  const slotTimes = dashboard.data?.parents.find((p) => p.pid === pid)?.slotTimes;
+
+  useEffect(() => {
+    if (!openRx) return;
+    let live = true;
+    api<Prescription & { rxId: string }>(`/families/${fid}/prescriptions/${openRx}`, { auth: "family" }).then(
+      (found) => {
+        if (!live) return;
+        setRx(found);
+        setStep(found.status === "READY" ? "review" : found.status === "FAILED" ? "failed" : found.status === "CONFIRMED" ? "alreadySaved" : "reading");
+      },
+      () => live && setStep("gone"),
+    );
+    return () => {
+      live = false;
+    };
+  }, [openRx, fid]);
 
   useEffect(() => {
     if (step !== "reading" || !rx) return;
     const started = Date.now();
     const timer = setInterval(async () => {
-      setElapsed(Date.now() - started);
+      const waited = Date.now() - started;
+      setElapsed(waited);
+      if (waited > READING_TIMEOUT_MS) {
+        clearInterval(timer);
+        setTimedOut(true);
+        setStep("failed");
+        return;
+      }
       try {
         const next = await api<Prescription & { rxId: string }>(`/families/${fid}/prescriptions/${rx.rxId}`, { auth: "family" });
         if (next.status === "READY") {
@@ -50,6 +86,11 @@ function PrescriptionFlow({ fid, pid, lang: myLang }: { fid: string; pid: string
 
   const choose = async (file: File) => {
     setError(null);
+    setTimedOut(false);
+    // A second photo must not inherit the first one's progress: the steps are driven by elapsed
+    // time, and a stale value showed "Safety check" ticking the moment the new upload began.
+    setElapsed(0);
+    setRx(null);
     setStep("upload");
     try {
       const [model, original] = await Promise.all([toJpeg(file, VARIANTS.model.edge, VARIANTS.model.maxBytes), toJpeg(file, VARIANTS.original.edge, VARIANTS.original.maxBytes)]);
@@ -129,10 +170,16 @@ function PrescriptionFlow({ fid, pid, lang: myLang }: { fid: string; pid: string
       {step === "failed" && (
         <Card className="max-w-xl p-5">
           <p lang={lang} className="text-lg font-medium text-missed">
-            {t(rx?.failure === "unreadable" ? "rx.failed.unreadable" : rx?.failure === "no_medicines" ? "rx.failed.no_medicines" : "rx.failed.other")}
+            {t(timedOut ? "rx.failed.timeout" : rx?.failure === "unreadable" ? "rx.failed.unreadable" : rx?.failure === "no_medicines" ? "rx.failed.no_medicines" : "rx.failed.other")}
           </p>
           <div className="mt-4 flex flex-wrap gap-2">
-            <Button tone="ink" onClick={() => setStep("choose")}>
+            <Button
+              tone="ink"
+              onClick={() => {
+                setError(null);
+                setStep("choose");
+              }}
+            >
               <span lang={lang}>{t("common.retry")}</span>
             </Button>
             <Link to={`/parents/${pid}/medicines`} className="inline-flex min-h-12 items-center rounded-[var(--radius-button)] border border-line-strong bg-surface px-5 font-semibold">
@@ -149,8 +196,29 @@ function PrescriptionFlow({ fid, pid, lang: myLang }: { fid: string; pid: string
               {error}
             </p>
           )}
-          <PrescriptionReview prescription={rx} lang={myLang} onSave={save} saving={saving} />
+          {/* Keyed by prescription, so nothing ticked or edited on one can carry over to another. */}
+          <PrescriptionReview key={rx.rxId} prescription={rx} lang={myLang} onSave={save} saving={saving} slotTimes={slotTimes} />
         </>
+      )}
+
+      {step === "opening" && <Loader2 aria-label={t("common.loading")} className="size-8 animate-spin text-muted" />}
+
+      {(step === "alreadySaved" || step === "gone") && (
+        <Card className="max-w-xl p-5">
+          <p lang={lang} className={cx("text-lg font-medium", step === "alreadySaved" ? "text-taken" : "text-muted")}>
+            {t(step === "alreadySaved" ? "rx.alreadySaved" : "rx.gone")}
+          </p>
+          <div className="mt-4 flex flex-wrap gap-2">
+            <Button tone="ink" onClick={() => navigate(`/parents/${pid}/medicines`)}>
+              <span lang={lang}>{t("meds.title")}</span>
+            </Button>
+            {step === "gone" && (
+              <Button tone="quiet" onClick={() => navigate(`/parents/${pid}/prescription`, { replace: true })}>
+                <span lang={lang}>{t("meds.scan")}</span>
+              </Button>
+            )}
+          </div>
+        </Card>
       )}
 
       {step === "saved" && (

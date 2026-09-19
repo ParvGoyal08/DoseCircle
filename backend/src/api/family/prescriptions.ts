@@ -1,14 +1,14 @@
 import { GetObjectCommand, S3Client } from "@aws-sdk/client-s3";
 import { createPresignedPost } from "@aws-sdk/s3-presigned-post";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-import { PutCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
+import { PutCommand, QueryCommand, UpdateCommand } from "@aws-sdk/lib-dynamodb";
 import { keys } from "@dosecircle/shared";
 import type { APIGatewayProxyEventV2 } from "aws-lambda";
 import { z } from "zod";
 import { authorize } from "../../authz/avp.js";
-import { familyEntity, prescriptionEntity } from "../../authz/entities.js";
+import { familyEntity, parentEntity, prescriptionEntity } from "../../authz/entities.js";
 import { memberPrincipal } from "../../authz/principal-entity.js";
-import { ddb, metrics, ttlInDays } from "../../lib/aws.js";
+import { ddb, isExpired, metrics, ttlInDays } from "../../lib/aws.js";
 import { env, requireEnv } from "../../lib/env.js";
 import { HttpError, json, parseBody, pathParam, principalFrom } from "../../lib/http.js";
 import { newId } from "../../lib/ids.js";
@@ -97,6 +97,29 @@ async function authorizedPrescription(event: APIGatewayProxyEventV2): Promise<{ 
   const { entity, member } = await memberPrincipal(await principalFrom(event));
   await authorize({ principal: entity, action: "ReviewPrescription", resource: prescriptionEntity(rx), entities: [familyEntity(rx.fid)] });
   return { rx, mid: member.mid };
+}
+
+/**
+ * GET /families/{fid}/parents/{pid}/prescriptions — prescriptions still waiting for someone to check.
+ *
+ * A parent can photograph their own prescription, and the family is sent a notification to review
+ * it. That notification was the only way in: miss it and the photo sat unread until it expired. The
+ * Medicines page lists these now.
+ */
+export async function listPendingPrescriptions(event: APIGatewayProxyEventV2) {
+  const fid = pathParam(event, "fid");
+  const pid = pathParam(event, "pid");
+  const parent = await getParent(fid, pid);
+  if (!parent) throw new HttpError(404, "Not found");
+  const { entity } = await memberPrincipal(await principalFrom(event));
+  await authorize({ principal: entity, action: "ManageMedicines", resource: parentEntity(parent), entities: [familyEntity(fid)] });
+  const result = await ddb.send(
+    new QueryCommand({ TableName: env.tableName, KeyConditionExpression: "PK = :pk AND begins_with(SK, :rx)", ExpressionAttributeValues: { ":pk": `FAM#${fid}`, ":rx": "RX#" } }),
+  );
+  const pending = ((result.Items ?? []) as PrescriptionItem[])
+    .filter((rx) => rx.pid === pid && (rx.status === "READY" || rx.status === "EXTRACTING") && !isExpired(rx))
+    .sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  return json(200, { prescriptions: pending.map((rx) => ({ rxId: rx.rxId, status: rx.status, createdAt: rx.createdAt })) });
 }
 
 /** GET /families/{fid}/prescriptions/{rxId} — polled while reading, then drives the review screen. */

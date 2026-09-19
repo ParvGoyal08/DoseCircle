@@ -448,7 +448,10 @@ async function handle(pathWithQuery: string, method: string, body: Body): Promis
     return { pid: theParent().pid, updated: Object.keys(body!) };
   }
   if (/^POST \/families\/[^/]+\/parents\/[^/]+\/test-dose$/.test(route)) {
-    if (s.testDosesToday >= 3) throw new ApiError(429, { message: "You can send three test reminders a day." });
+    if (theParent().paused) throw new ApiError(409, { message: "Reminders are paused for this person", reason: "paused" });
+    if (!s.medicines.some((m) => m.active && !m.asNeeded)) throw new ApiError(400, { message: "Add a medicine first", reason: "no_medicines" });
+    if (s.devices.length === 0) throw new ApiError(409, { message: "Their phone is not connected yet", reason: "no_phone" });
+    if (s.testDosesToday >= 3) throw new ApiError(429, { message: "You can send three test reminders a day.", reason: "limit" });
     s.testDosesToday++;
     return { executionArn: "mock", slotName: "morning" };
   }
@@ -587,6 +590,10 @@ async function handle(pathWithQuery: string, method: string, body: Body): Promis
     s.prescriptions[rxId] = { pid: String(body!.pid), confirmed: false };
     const upload = { url: "mock://upload", fields: {} };
     return { rxId, uploads: { model: upload, original: upload }, uploadOrder: ["model", "original"], expiresInSeconds: 300 };
+  }
+  if (/^GET \/families\/[^/]+\/parents\/[^/]+\/prescriptions$/.test(route)) {
+    const pid = path!.split("/")[4]!;
+    return { prescriptions: Object.entries(s.prescriptions).filter(([, rx]) => rx.pid === pid && !rx.confirmed).map(([rxId]) => ({ rxId, status: "READY", createdAt: new Date().toISOString() })) };
   }
   if (/^GET \/families\/[^/]+\/prescriptions\/[^/]+$/.test(route)) {
     const rxId = path!.split("/").pop()!;

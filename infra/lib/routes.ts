@@ -36,6 +36,7 @@ export const FAMILY_ROUTE_KEYS = [
   "GET /families/{fid}/parents/{pid}/insights",
   "POST /families/{fid}/prescriptions",
   "GET /families/{fid}/prescriptions/{rxId}",
+  "GET /families/{fid}/parents/{pid}/prescriptions",
   "POST /families/{fid}/prescriptions/{rxId}/confirm",
   "GET /doses/{doseId}/timeline",
   "POST /push/subscriptions",

@@ -12,10 +12,12 @@ import { env } from "../../lib/env.js";
 import { HttpError, json, parseBody, pathParam, principalFrom } from "../../lib/http.js";
 import type { DeviceItem, InviteItem, ParentItem } from "../../lib/model.js";
 import { PushSubscriptionSchema } from "../../lib/push-endpoints.js";
+import { subscriptionsFor } from "../../lib/webpush.js";
+import { testReminderSlot } from "./test-reminder.js";
 import { takeFromBudget } from "../../lib/rate-limit.js";
 import { getParent, listMembers } from "../../lib/repository.js";
 import { DisplayNameSchema, LanguageSchema, SlotNameSchema, TimeSchema } from "../../lib/schemas.js";
-import { listSlots, syncSlots } from "../../scheduling/sync-slots.js";
+import { listChecks, listMedicines, listSlots, syncSlots } from "../../scheduling/sync-slots.js";
 
 async function parentFor(event: APIGatewayProxyEventV2): Promise<{ fid: string; pid: string; parent: ParentItem }> {
   const fid = pathParam(event, "fid");
@@ -138,11 +140,17 @@ export async function sendTestDose(event: APIGatewayProxyEventV2) {
   const { entity } = await memberPrincipal(await principalFrom(event));
   await authorize({ principal: entity, action: "SendTestReminder", resource: parentEntity(parent), entities: [familyEntity(fid)] });
 
-  const slots = await listSlots(pid);
-  const slot = body.slotName ? slots.find((s) => s.slotName === body.slotName) : slots[0];
-  if (!slot) throw new HttpError(400, "Add a medicine for that time of day first");
+  // Every reason a test reminder would never reach the phone is checked before starting the workflow,
+  // and none of them spends one of the three tests a day. See testReminderSlot.
+  const [slots, medicines, checks, phones] = await Promise.all([listSlots(pid), listMedicines(pid), listChecks(pid), devicesOf(pid)]);
+  const live = phones.filter((d) => !d.revoked);
+  const subscribed = (await Promise.all(live.map((d) => subscriptionsFor(d.deviceId)))).some((list) => list.length > 0);
+  const choice = testReminderSlot({ paused: parent.paused === true, slots, medicines, checks, phones: live.length, subscribed, slotName: body.slotName, now: new Date() });
+  if ("reason" in choice) throw new HttpError(choice.status, choice.message, { reason: choice.reason });
+  const slot = choice.slot;
+
   if (!(await takeFromBudget(`test-dose#${pid}#${new Date().toISOString().slice(0, 10)}`, 3, 86_400))) {
-    throw new HttpError(429, "You can send 3 test reminders a day");
+    throw new HttpError(429, "You can send 3 test reminders a day", { reason: "limit" });
   }
 
   const execution = await sfn.send(

@@ -38,11 +38,25 @@ const LEVEL_LOOK = {
  * Human review of what the AI read. Every row must be checked or removed before saving, and the
  * server checks the same rule again. The photo stays beside the rows with the source line highlighted.
  */
-export function PrescriptionReview({ prescription, lang: viewerLang, onSave, saving }: { prescription: Prescription; lang: string; onSave: (decisions: Decision[]) => void; saving: boolean }) {
+export function PrescriptionReview({
+  prescription,
+  lang: viewerLang,
+  onSave,
+  saving,
+  slotTimes,
+}: {
+  prescription: Prescription;
+  lang: string;
+  onSave: (decisions: Decision[]) => void;
+  saving: boolean;
+  slotTimes?: Record<SlotName, string>;
+}) {
   const { t, lang } = useT(viewerLang);
   const [drafts, setDrafts] = useState<Record<string, MedicineInput>>(() => Object.fromEntries(prescription.rows.map((row) => [row.rowId, draftFromRow(row)])));
   const [checked, setChecked] = useState<Record<string, boolean>>({});
   const [removed, setRemoved] = useState<Record<string, boolean>>({});
+  // Rows whose tick was cleared because they changed after it: "check it again", not a silent reset.
+  const [recheck, setRecheck] = useState<Record<string, boolean>>({});
   const [focused, setFocused] = useState<string | null>(prescription.rows[0]?.rowId ?? null);
   const image = prescription.imageUrl ?? prescription.imagePath ?? null;
 
@@ -166,14 +180,42 @@ export function PrescriptionReview({ prescription, lang: viewerLang, onSave, sav
                   {!isRemoved && (
                     <>
                       <div className="mt-4">
-                        <MedicineFields value={drafts[row.rowId]!} onChange={(next) => setDrafts({ ...drafts, [row.rowId]: next })} lang={viewerLang} />
+                        <MedicineFields
+                          value={drafts[row.rowId]!}
+                          onChange={(next) => {
+                            setDrafts({ ...drafts, [row.rowId]: next });
+                            // "I checked this" vouches for what was on screen when it was ticked. Once
+                            // the name, dose or times change, it no longer does, and saving would record
+                            // a check nobody made of the new values.
+                            if (checked[row.rowId]) {
+                              setChecked({ ...checked, [row.rowId]: false });
+                              setRecheck({ ...recheck, [row.rowId]: true });
+                            }
+                          }}
+                          lang={viewerLang}
+                          slotTimes={slotTimes}
+                          explain={false}
+                        />
                       </div>
                       <label className={cx("mt-4 flex min-h-14 cursor-pointer items-center gap-3 rounded-xl border-2 px-3", checked[row.rowId] ? "border-taken bg-taken-tint" : "border-ink")}>
-                        <input type="checkbox" className="size-6 accent-[var(--color-taken)]" checked={Boolean(checked[row.rowId])} onChange={(e) => setChecked({ ...checked, [row.rowId]: e.target.checked })} />
+                        <input
+                          type="checkbox"
+                          className="size-6 accent-[var(--color-taken)]"
+                          checked={Boolean(checked[row.rowId])}
+                          onChange={(e) => {
+                            setChecked({ ...checked, [row.rowId]: e.target.checked });
+                            if (e.target.checked) setRecheck({ ...recheck, [row.rowId]: false });
+                          }}
+                        />
                         <span lang={lang} className="font-semibold">
                           {t("rx.checkedLabel")}
                         </span>
                       </label>
+                      {recheck[row.rowId] && !checked[row.rowId] && (
+                        <p lang={lang} role="status" className="mt-2 text-[14px] font-medium text-due">
+                          {t("rx.checkAgain")}
+                        </p>
+                      )}
                       {checked[row.rowId] && !hasSchedule(drafts[row.rowId]!) && (
                         <p lang={lang} className="mt-2 text-[14px] font-medium text-missed">
                           {t("meds.needsWhen")}

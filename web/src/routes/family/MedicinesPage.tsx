@@ -1,5 +1,5 @@
 import { dailyUse, daysLeft as daysOfTabletsLeft, FAST_LADDER, SLOT_NAMES, STANDARD_LADDER, type SlotName } from "@dosecircle/shared";
-import { BellRing, Camera, HeartPulse, Loader2, Minus, PackagePlus, Pill, Plus, Utensils } from "lucide-react";
+import { BellRing, Camera, FileClock, HeartPulse, Loader2, Minus, PackagePlus, Pill, Plus, Utensils } from "lucide-react";
 import { useState, type FormEvent } from "react";
 import { Link, useParams } from "react-router";
 import { Field, FamilyShell, inputClass } from "../../components/FamilyShell";
@@ -27,6 +27,7 @@ export function MedicineFields({
   lang: viewerLang,
   slotTimes,
   editTimes,
+  explain = true,
 }: {
   value: MedicineInput;
   onChange: (next: MedicineInput) => void;
@@ -35,6 +36,8 @@ export function MedicineFields({
   slotTimes?: Record<SlotName, string>;
   /** Supplied where the times can be changed in place; omitted, they are shown but not editable. */
   editTimes?: { onChange: (slot: SlotName, time: string) => void; onCommit: (slot: SlotName) => void; saved: boolean };
+  /** The "if the reminder is not confirmed" panel. Off in the prescription review, where it would repeat under every row. */
+  explain?: boolean;
 }) {
   const { t, lang } = useT(viewerLang);
   const setSlot = (slot: SlotName, count: number | undefined) => {
@@ -62,9 +65,13 @@ export function MedicineFields({
             editable there, so the person deciding the schedule sets the time while deciding it.
             The warning is not decoration: one time is shared by every medicine in that slot, so a
             family moving breakfast an hour later must know it moves all of them. */}
-        <p lang={lang} className="mt-0.5 text-[14px] text-muted">
-          {t(editTimes ? "meds.whenHelpEditable" : "meds.whenHelp")}
-        </p>
+        {/* Only when the times are actually on the chips: without them this line promised times
+            that were not there. */}
+        {slotTimes && (
+          <p lang={lang} className="mt-0.5 text-[14px] text-muted">
+            {t(editTimes ? "meds.whenHelpEditable" : "meds.whenHelp")}
+          </p>
+        )}
         <div className="mt-2 grid grid-cols-2 gap-2">
           {SLOT_NAMES.map((slot) => {
             const Icon = SLOT_ICONS[slot];
@@ -141,7 +148,7 @@ export function MedicineFields({
         </span>
       </label>
 
-      <EscalationExplainer critical={value.critical} asNeeded={value.asNeeded} lang={viewerLang} />
+      {explain && <EscalationExplainer critical={value.critical} asNeeded={value.asNeeded} lang={viewerLang} />}
 
       <div className="grid gap-3 sm:grid-cols-2">
         <Field label={t("meds.pills")} hint={t("meds.pillsHint")} lang={lang}>
@@ -222,6 +229,9 @@ function Medicines({ fid, pid, lang: myLang }: { fid: string; pid: string; lang:
   // without them, and they belong to the parent rather than to any one medicine.
   const dashboard = useApi(() => api<Dashboard>(`/families/${fid}`, { auth: "family" }), [fid]);
   const saved = dashboard.data?.parents.find((p) => p.pid === pid)?.slotTimes;
+  // Prescriptions the parent photographed, still waiting for someone to check each line.
+  const pending = useApi(() => api<{ prescriptions: { rxId: string; status: "READY" | "EXTRACTING"; createdAt: string }[] }>(`/families/${fid}/parents/${pid}/prescriptions`, { auth: "family" }), [fid, pid]);
+  const waiting = pending.data?.prescriptions ?? [];
   // Typing into a time box has to show what was typed straight away, but it must not send a PATCH
   // per keystroke: every save re-syncs this parent's EventBridge schedules. Edits are held here and
   // committed on blur, and only when the value actually moved.
@@ -288,6 +298,23 @@ function Medicines({ fid, pid, lang: myLang }: { fid: string; pid: string; lang:
         </div>
       }
     >
+      {waiting.length > 0 && (
+        <Card className="mb-6 flex flex-wrap items-center gap-3 border-due/40 bg-due-tint/50 p-4">
+          <FileClock aria-hidden className="size-6 shrink-0 text-due" strokeWidth={2.25} />
+          <div className="min-w-0 flex-1">
+            <p lang={lang} className="font-semibold">
+              {t("rx.pendingTitle")}
+            </p>
+            <p lang={lang} className="text-[14px] text-muted">
+              {t("rx.pendingHelp")}
+            </p>
+          </div>
+          <Link to={`/parents/${pid}/prescription?rx=${waiting[0]!.rxId}`} className="inline-flex min-h-11 items-center gap-1.5 rounded-[var(--radius-button)] bg-ink px-4 font-semibold text-paper">
+            <span lang={lang}>{t("rx.pendingOpen")}</span>
+          </Link>
+        </Card>
+      )}
+
       {adding && (
         <Card className="mb-6 p-4">
           <form onSubmit={save} className="space-y-4">

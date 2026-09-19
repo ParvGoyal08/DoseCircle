@@ -306,16 +306,32 @@ function StandingCard({ parent, myLang }: { parent: ParentCard; myLang: string }
 
 const SLOT_ORDER: SlotName[] = ["morning", "afternoon", "evening", "night"];
 
+/** Why a test reminder could not be sent. The first five come from the server, with the same names. */
+const TEST_FAILURES = ["no_medicines", "nothing_due", "paused", "no_phone", "no_notifications", "limit", "unknown"] as const;
+type TestFailure = (typeof TEST_FAILURES)[number];
+
+/** Where to go to fix it, when there is one place that does. */
+const TEST_FIX: Partial<Record<TestFailure, (pid: string) => string>> = {
+  no_medicines: (pid) => `/parents/${pid}/medicines`,
+  nothing_due: (pid) => `/parents/${pid}/medicines`,
+  paused: (pid) => `/parents/${pid}/settings`,
+  no_phone: () => "/people",
+};
+
 function TodayCard({ parent, fid, myLang }: { parent: ParentCard; fid: string; myLang: string }) {
   const { t, lang } = useT(myLang);
-  const [testState, setTestState] = useState<"idle" | "sent" | "limit">("idle");
+  const [test, setTest] = useState<{ state: "idle" | "busy" | "sent" } | { state: "failed"; reason: TestFailure }>({ state: "idle" });
 
   const sendTest = async () => {
+    setTest({ state: "busy" });
     try {
       await api(`/families/${fid}/parents/${parent.pid}/test-dose`, { method: "POST", auth: "family", body: {} });
-      setTestState("sent");
+      setTest({ state: "sent" });
     } catch (error) {
-      setTestState(error instanceof ApiError && error.status === 429 ? "limit" : "idle");
+      // Every failure says why. This used to recognise only the daily limit and quietly reset the
+      // button for anything else, so with no medicines added a tap simply did nothing.
+      const reason = error instanceof ApiError ? (error.body.reason as string | undefined) : undefined;
+      setTest({ state: "failed", reason: TEST_FAILURES.includes(reason as TestFailure) ? (reason as TestFailure) : error instanceof ApiError && error.status === 429 ? "limit" : "unknown" });
     }
   };
 
@@ -397,16 +413,33 @@ function TodayCard({ parent, fid, myLang }: { parent: ParentCard; fid: string; m
         <button
           type="button"
           onClick={sendTest}
-          disabled={testState !== "idle"}
+          disabled={test.state === "busy" || test.state === "sent"}
           className="pressable inline-flex min-h-[76px] flex-col items-start justify-center gap-1.5 rounded-xl py-3 text-left leading-tight sm:min-h-14 sm:flex-row sm:items-center sm:gap-2.5 sm:py-0 bg-surface px-3.5 text-[16px] sm:px-4 sm:text-[16.5px] font-semibold text-ink ring-1 ring-line-strong hover:ring-indigo-soft disabled:opacity-60"
         >
-          <BellRing aria-hidden className="size-5.5 shrink-0 text-muted" strokeWidth={2.25} />
+          {test.state === "busy" ? <Loader2 aria-hidden className="size-5.5 shrink-0 animate-spin text-muted" /> : <BellRing aria-hidden className="size-5.5 shrink-0 text-muted" strokeWidth={2.25} />}
           <span lang={lang}>{t("action.testReminder")}</span>
         </button>
-        {testState !== "idle" && (
-          <p lang={lang} role="status" className="col-span-2 px-1 text-[13.5px] text-muted">
-            {testState === "sent" ? t("action.testSent") : t("action.testLimit")}
+        {test.state === "sent" && (
+          <p lang={lang} role="status" className="col-span-2 flex items-start gap-2 rounded-xl bg-taken-tint px-3 py-2.5 text-[14px] font-medium text-taken">
+            <BellRing aria-hidden className="mt-0.5 size-4 shrink-0" />
+            {t("action.testSent")}
           </p>
+        )}
+        {test.state === "failed" && (
+          <div role="alert" className="col-span-2 flex items-start gap-2 rounded-xl bg-missed-tint px-3 py-2.5 text-[14px] text-missed">
+            <TriangleAlert aria-hidden className="mt-0.5 size-4 shrink-0" />
+            <p lang={lang} className="font-medium">
+              {t(`action.testFailed.${test.reason}`)}
+              {TEST_FIX[test.reason] && (
+                <>
+                  {" "}
+                  <Link to={TEST_FIX[test.reason]!(parent.pid)} className="font-semibold underline underline-offset-2">
+                    {t(`action.testFix.${test.reason}`)}
+                  </Link>
+                </>
+              )}
+            </p>
+          </div>
         )}
         <Link to={`${base}/insights`} className="col-span-2 inline-flex min-h-11 items-center justify-center gap-2 rounded-xl text-[14.5px] font-semibold text-muted hover:text-ink">
           <ChartLine aria-hidden className="size-4.5" strokeWidth={2.25} />
