@@ -11,7 +11,7 @@ import { useT } from "../../i18n";
 import { api, ApiError, mockApiEnabled } from "../../lib/api";
 import { pairedDevice, pairPhone, updateStoredLanguage } from "../../lib/device";
 import { formatCount } from "../../lib/format";
-import { enableReminders, isStandalone, keepSubscriptionFresh, pushSupport } from "../../lib/push";
+import { enableReminders, isStandalone, keepSubscriptionFresh, pushSubject, pushSupport } from "../../lib/push";
 import { uploadBoth } from "../../lib/prescription-upload";
 import type { DoseView, ParentToday, PresignedPost } from "../../lib/types";
 import { useApi } from "../../lib/useApi";
@@ -26,6 +26,13 @@ function RemindersCard({ lang: viewerLang }: { lang: string }) {
   const support = pushSupport();
   const [permission, setPermission] = useState<NotificationPermission | "unsupported">(() => ("Notification" in window ? Notification.permission : "unsupported"));
   const [busy, setBusy] = useState(false);
+  const [failed, setFailed] = useState(false);
+  // "Reminders are on" must be true, not just "permission granted": a phone that granted it before
+  // this pairing has nothing registered for it yet, and used to say "on" regardless.
+  useEffect(() => {
+    const token = pairedDevice()?.token;
+    if (permission === "granted" && token) void keepSubscriptionFresh("device", pushSubject.device(token));
+  }, [permission]);
 
   if (support !== "supported") return null;
   if (permission === "granted")
@@ -55,8 +62,12 @@ function RemindersCard({ lang: viewerLang }: { lang: string }) {
         disabled={busy}
         onClick={async () => {
           setBusy(true);
+          setFailed(false);
           try {
-            setPermission(await enableReminders("device"));
+            setPermission(await enableReminders("device", pushSubject.device(pairedDevice()?.token ?? "unpaired")));
+          } catch {
+            // It used to fail silently here, leaving the button as if nothing had been tapped.
+            setFailed(true);
           } finally {
             setBusy(false);
           }
@@ -65,6 +76,11 @@ function RemindersCard({ lang: viewerLang }: { lang: string }) {
         {busy ? <Loader2 aria-hidden className="size-6 animate-spin" /> : <Bell aria-hidden className="size-6" strokeWidth={2.25} />}
         <span lang={lang}>{t("parent.notify.button")}</span>
       </Button>
+      {failed && (
+        <p lang={lang} role="alert" className="mt-3 text-lg font-medium text-missed">
+          {t("parent.notify.failed")}
+        </p>
+      )}
     </section>
   );
 }
@@ -347,7 +363,7 @@ export function ParentHomePage() {
   const today = useApi(device ? () => api<ParentToday>("/parent/today", { auth: "device" }) : null, [], 60_000);
   // The phone's push subscription can be replaced by the browser; re-register it if so.
   useEffect(() => {
-    if (device) void keepSubscriptionFresh("device");
+    if (device) void keepSubscriptionFresh("device", pushSubject.device(device.token));
   }, [Boolean(device)]);
   const { t, lang } = useT(today.data?.parent.lang ?? device?.lang ?? "en");
 

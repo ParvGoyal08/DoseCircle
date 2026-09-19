@@ -1,17 +1,17 @@
 import type { LanguageCode } from "@dosecircle/shared";
-import { ArrowLeft, Bell, Loader2, X } from "lucide-react";
+import { ArrowLeft, Bell, BellOff, Loader2, X } from "lucide-react";
 import { useEffect, useState, type FormEvent } from "react";
 import { Link, Navigate, useNavigate, useSearchParams } from "react-router";
 import { Field, inputClass } from "../../components/FamilyShell";
 import { defaultLanguage, LanguageToggle } from "../../components/LanguagePicker";
 import { Logo } from "../../components/Logo";
 import { ShareInvite } from "../../components/ShareInvite";
-import { Button } from "../../components/ui";
+import { Button, cx } from "../../components/ui";
 import { useT } from "../../i18n";
 import { api, ApiError, mockApiEnabled } from "../../lib/api";
 import { authConfigured, confirmAccount, createAccount, finishPasswordReset, requestPasswordReset, signInWithEmail, signOut } from "../../lib/auth";
 import { useFamily } from "../../lib/family";
-import { enableReminders, pushSupport } from "../../lib/push";
+import { enableReminders, pushSubject, pushSupport } from "../../lib/push";
 
 function preferredLanguage(): LanguageCode {
   return defaultLanguage() ?? "en";
@@ -320,17 +320,59 @@ export function PhoneInvite({ fid, pid, parentName, lang: viewerLang }: { fid: s
   );
 }
 
+/**
+ * The family member's own alerts. Every state says what is going on: asking, working, blocked by the
+ * browser (with where to unblock it), an iPhone that has to install the app first, or a failure. It
+ * used to show one button whatever happened — blocked, it did nothing; failing, it did nothing.
+ */
 export function EnableMyAlerts({ lang: viewerLang }: { lang: string }) {
   const { t, lang } = useT(viewerLang);
+  const { state } = useFamily();
+  const support = pushSupport();
   const [permission, setPermission] = useState(() => ("Notification" in window ? Notification.permission : "denied"));
-  if (pushSupport() !== "supported" || permission === "granted") return null;
+  const [busy, setBusy] = useState(false);
+  const [failed, setFailed] = useState(false);
+  if (support === "unsupported" || permission === "granted") return null;
+
+  const note = (tone: "info" | "blocked", key: string) => (
+    <p lang={lang} role={tone === "blocked" ? "alert" : undefined} className={cx("sticker flex items-start gap-3 p-4 text-[15px] font-medium", tone === "blocked" ? "bg-missed-tint text-missed" : "bg-surface text-ink")}>
+      {tone === "blocked" ? <BellOff aria-hidden className="mt-0.5 size-5 shrink-0" /> : <Bell aria-hidden className="mt-0.5 size-5 shrink-0 text-muted" />}
+      {t(key)}
+    </p>
+  );
+  if (support === "needs-install") return note("info", "onboard.enableInstall");
+  if (permission === "denied") return note("blocked", "onboard.enableBlocked");
+
   return (
     <div className="sticker flex flex-col items-start gap-3 bg-surface p-4 sm:flex-row sm:items-center sm:gap-4">
-      <p lang={lang} className="min-w-0 flex-1 text-[15.5px] font-medium text-ink">
-        {t("onboard.enableMineHelp")}
-      </p>
-      <Button tone="haldi" onClick={async () => setPermission(await enableReminders("family"))}>
-        <Bell aria-hidden className="size-5" strokeWidth={2.25} />
+      <div className="min-w-0 flex-1">
+        <p lang={lang} className="text-[15.5px] font-medium text-ink">
+          {t("onboard.enableMineHelp")}
+        </p>
+        {failed && (
+          <p lang={lang} role="alert" className="mt-1 text-[14px] font-medium text-missed">
+            {t("onboard.enableFailed")}
+          </p>
+        )}
+      </div>
+      <Button
+        tone="haldi"
+        disabled={busy}
+        onClick={async () => {
+          setBusy(true);
+          setFailed(false);
+          try {
+            // Before the family is created there is no member id yet; the next launch registers
+            // it again under the right one.
+            setPermission(await enableReminders("family", pushSubject.member(state.status === "ready" ? state.me.mid : "pending")));
+          } catch {
+            setFailed(true);
+          } finally {
+            setBusy(false);
+          }
+        }}
+      >
+        {busy ? <Loader2 aria-hidden className="size-5 animate-spin" /> : <Bell aria-hidden className="size-5" strokeWidth={2.25} />}
         <span lang={lang}>{t("onboard.enableMine")}</span>
       </Button>
     </div>
@@ -343,7 +385,7 @@ export function OnboardingPage() {
   const navigate = useNavigate();
   const [myLang, setMyLang] = useState<LanguageCode>(preferredLanguage);
   const { t, lang } = useT(myLang);
-  const [form, setForm] = useState({ displayName: "", relation: "", parentName: "", parentLang: null as LanguageCode | null, familyName: "" });
+  const [form, setForm] = useState({ displayName: "", relation: "", parentName: "", parentLang: "en" as LanguageCode | null, familyName: "" });
   const [created, setCreated] = useState<{ fid: string; pid: string } | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);

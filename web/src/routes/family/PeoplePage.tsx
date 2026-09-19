@@ -254,7 +254,7 @@ function AddParent({ fid, lang: myLang, onAdded }: { fid: string; lang: string; 
   // Opened directly from the "Add someone" chip on the dashboard.
   const [open, setOpen] = useState(() => window.location.hash === "#add");
   const [name, setName] = useState("");
-  const [parentLang, setParentLang] = useState<LanguageCode | null>(null);
+  const [parentLang, setParentLang] = useState<LanguageCode | null>("en");
   const [added, setAdded] = useState<{ pid: string; displayName: string } | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
