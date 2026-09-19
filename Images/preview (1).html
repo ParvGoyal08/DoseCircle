@@ -1,0 +1,1456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>DoseCircle — Your health, made simpler.</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@500;600&display=swap" rel="stylesheet">
+
+<style>
+:root {
+  --green: #245f52;
+  --green-dark: #173f37;
+  --green-light: #e9f1ed;
+  --cream: #f8f7f2;
+  --cream-2: #f1f2ec;
+  --white: #ffffff;
+  --text: #172b2a;
+  --muted: #6d7976;
+  --line: #e6e8e2;
+  --shadow: 0 15px 45px rgba(31, 63, 55, .08);
+  --radius: 18px;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: "DM Sans", sans-serif;
+  background: var(--cream);
+  color: var(--text);
+}
+
+h1, h2, h3, h4 {
+  font-family: "Playfair Display", serif;
+  font-weight: 500;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* ---------------- NAV ---------------- */
+
+.navbar {
+  height: 76px;
+  padding: 0 6%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(248,247,242,.9);
+  border-bottom: 1px solid rgba(0,0,0,.05);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  backdrop-filter: blur(15px);
+}
+
+.logo {
+  font-family: "Playfair Display", serif;
+  font-size: 27px;
+  color: var(--green-dark);
+}
+
+.nav-links {
+  display: flex;
+  gap: 34px;
+  font-size: 13px;
+  color: #4e5d59;
+}
+
+.nav-links a:hover {
+  color: var(--green);
+}
+
+.nav-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.btn {
+  border: 0;
+  border-radius: 999px;
+  padding: 12px 22px;
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.btn-outline {
+  background: transparent;
+  border: 1px solid #d7ddd8;
+  color: var(--text);
+}
+
+.btn-primary {
+  background: var(--green);
+  color: white;
+}
+
+.btn-primary:hover {
+  background: var(--green-dark);
+}
+
+/* ---------------- LANDING ---------------- */
+
+.landing {
+  display: block;
+}
+
+.hero {
+  min-height: 670px;
+  padding: 75px 7%;
+  display: grid;
+  grid-template-columns: 1fr 1.1fr;
+  gap: 60px;
+  align-items: center;
+  overflow: hidden;
+  position: relative;
+}
+
+.hero::before {
+  content: "";
+  position: absolute;
+  width: 600px;
+  height: 600px;
+  background: #e5eee8;
+  border-radius: 50%;
+  right: -180px;
+  bottom: -260px;
+  opacity: .8;
+}
+
+.eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 4px;
+  font-size: 10px;
+  color: var(--green);
+  font-weight: 700;
+  margin-bottom: 24px;
+}
+
+.hero h1 {
+  font-size: clamp(55px, 6vw, 84px);
+  line-height: .98;
+  max-width: 650px;
+  color: #173432;
+}
+
+.hero-copy {
+  margin-top: 25px;
+  max-width: 500px;
+  font-size: 17px;
+  line-height: 1.7;
+  color: var(--muted);
+}
+
+.hero-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 32px;
+}
+
+.hero-features {
+  display: flex;
+  gap: 35px;
+  margin-top: 55px;
+}
+
+.feature-mini {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  font-size: 12px;
+  color: #53625e;
+}
+
+.feature-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #e3eee9;
+  display: grid;
+  place-items: center;
+  color: var(--green);
+}
+
+/* Hero visual */
+
+.hero-visual {
+  height: 540px;
+  position: relative;
+}
+
+.hero-image {
+  position: absolute;
+  right: 5%;
+  top: 20px;
+  width: 75%;
+  height: 470px;
+  border-radius: 220px 220px 25px 25px;
+  background:
+    linear-gradient(145deg, rgba(255,255,255,.2), transparent),
+    #dce4d8;
+  overflow: hidden;
+}
+
+.hero-image::before {
+  content: "✦";
+  position: absolute;
+  font-size: 260px;
+  color: #8a9b76;
+  right: 80px;
+  top: 65px;
+  opacity: .65;
+}
+
+.hero-image::after {
+  content: "A healthier tomorrow,\nstarts today.";
+  white-space: pre;
+  position: absolute;
+  right: 30px;
+  top: 45px;
+  font-family: "Playfair Display";
+  font-size: 20px;
+  line-height: 1.4;
+  color: var(--green-dark);
+  font-style: italic;
+}
+
+.floating-card {
+  position: absolute;
+  background: rgba(255,255,255,.94);
+  border-radius: 20px;
+  box-shadow: var(--shadow);
+  padding: 25px;
+  width: 250px;
+  left: 4%;
+  bottom: 55px;
+  z-index: 2;
+}
+
+.floating-card h3 {
+  font-size: 21px;
+  margin-bottom: 18px;
+}
+
+.check-item {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin: 12px 0;
+  font-size: 12px;
+  color: #55625f;
+}
+
+.check {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #dcece5;
+  color: var(--green);
+  display: grid;
+  place-items: center;
+  font-size: 11px;
+}
+
+/* ---------------- SECTIONS ---------------- */
+
+.section {
+  padding: 90px 7%;
+}
+
+.section-heading {
+  max-width: 650px;
+  margin-bottom: 50px;
+}
+
+.section-heading h2 {
+  font-size: 48px;
+  line-height: 1.05;
+  margin-bottom: 18px;
+}
+
+.section-heading p {
+  color: var(--muted);
+  line-height: 1.7;
+}
+
+/* Feature cards */
+
+.feature-grid {
+  display: grid;
+  grid-template-columns: repeat(3,1fr);
+  gap: 20px;
+}
+
+.feature-card {
+  background: white;
+  border: 1px solid var(--line);
+  padding: 35px;
+  border-radius: var(--radius);
+  min-height: 240px;
+}
+
+.feature-card .icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: var(--green-light);
+  display: grid;
+  place-items: center;
+  color: var(--green);
+  margin-bottom: 25px;
+}
+
+.feature-card h3 {
+  font-size: 22px;
+  margin-bottom: 10px;
+}
+
+.feature-card p {
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.7;
+}
+
+/* CTA */
+
+.cta {
+  margin: 40px 7% 100px;
+  padding: 70px;
+  border-radius: 28px;
+  background: var(--green);
+  color: white;
+  position: relative;
+  overflow: hidden;
+}
+
+.cta::after {
+  content: "◌";
+  position: absolute;
+  right: 50px;
+  top: -100px;
+  font-size: 400px;
+  color: rgba(255,255,255,.04);
+}
+
+.cta h2 {
+  font-size: 48px;
+  max-width: 600px;
+}
+
+.cta p {
+  margin-top: 15px;
+  color: rgba(255,255,255,.72);
+  max-width: 500px;
+}
+
+.cta .btn {
+  margin-top: 28px;
+  background: white;
+  color: var(--green);
+}
+
+/* ---------------- APP ---------------- */
+
+.app {
+  display: none;
+  min-height: 100vh;
+  background: #f8f8f5;
+}
+
+.app.active {
+  display: flex;
+}
+
+.sidebar {
+  width: 245px;
+  background: #fbfbf8;
+  border-right: 1px solid var(--line);
+  padding: 30px 18px;
+  position: fixed;
+  height: 100vh;
+  left: 0;
+  top: 0;
+}
+
+.sidebar-logo {
+  font-family: "Playfair Display";
+  font-size: 24px;
+  margin: 0 15px 45px;
+}
+
+.side-link {
+  display: flex;
+  align-items: center;
+  gap: 13px;
+  padding: 13px 15px;
+  margin: 4px 0;
+  border-radius: 11px;
+  color: #66716f;
+  font-size: 13px;
+}
+
+.side-link:hover,
+.side-link.active {
+  background: #e8f0eb;
+  color: var(--green-dark);
+}
+
+.side-bottom {
+  position: absolute;
+  bottom: 25px;
+  left: 18px;
+  right: 18px;
+  padding: 20px;
+  border-radius: 16px;
+  background: #e8f0eb;
+}
+
+.side-bottom h4 {
+  font-size: 18px;
+  margin-bottom: 8px;
+}
+
+.side-bottom p {
+  font-size: 11px;
+  color: #63716d;
+  line-height: 1.5;
+}
+
+.main {
+  margin-left: 245px;
+  width: calc(100% - 245px);
+}
+
+.topbar {
+  height: 75px;
+  border-bottom: 1px solid var(--line);
+  background: rgba(255,255,255,.7);
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  padding: 0 35px;
+  gap: 25px;
+}
+
+.search {
+  width: 420px;
+  background: white;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 12px 17px;
+  font-size: 12px;
+  outline: none;
+}
+
+.profile {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+}
+
+.avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: var(--green);
+  color: white;
+  display: grid;
+  place-items: center;
+}
+
+.page {
+  padding: 40px;
+  display: none;
+}
+
+.page.active {
+  display: block;
+}
+
+.page-title {
+  margin-bottom: 30px;
+}
+
+.page-title h1 {
+  font-size: 36px;
+}
+
+.page-title p {
+  color: var(--muted);
+  margin-top: 7px;
+  font-size: 13px;
+}
+
+/* Dashboard */
+
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 20px;
+}
+
+.card {
+  background: white;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 25px;
+  box-shadow: 0 5px 20px rgba(0,0,0,.025);
+}
+
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 22px;
+}
+
+.card-header h2 {
+  font-size: 23px;
+}
+
+.small-link {
+  font-size: 12px;
+  color: var(--green);
+}
+
+.medication-list {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.medication {
+  min-height: 72px;
+  border: 1px solid #e8ebe6;
+  border-radius: 13px;
+  padding: 13px 15px;
+  display: grid;
+  grid-template-columns: 55px 1fr auto;
+  align-items: center;
+  gap: 12px;
+}
+
+.med-time {
+  font-family: "Playfair Display";
+  font-size: 14px;
+}
+
+.pill {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: #edf4ef;
+  display: grid;
+  place-items: center;
+  font-size: 18px;
+}
+
+.med-name {
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.med-info {
+  color: var(--muted);
+  font-size: 11px;
+  margin-top: 4px;
+}
+
+.take-btn {
+  border: 0;
+  background: var(--green);
+  color: white;
+  padding: 9px 15px;
+  border-radius: 9px;
+  font-size: 11px;
+}
+
+.taken {
+  color: var(--green);
+  font-size: 11px;
+  font-weight: 600;
+}
+
+/* Adherence */
+
+.adherence {
+  text-align: center;
+}
+
+.progress {
+  width: 145px;
+  height: 145px;
+  border-radius: 50%;
+  margin: 20px auto;
+  background: conic-gradient(var(--green) 78%, #e6ebe7 0);
+  display: grid;
+  place-items: center;
+}
+
+.progress-inner {
+  width: 115px;
+  height: 115px;
+  border-radius: 50%;
+  background: white;
+  display: grid;
+  place-items: center;
+}
+
+.progress-number {
+  font-family: "Playfair Display";
+  font-size: 30px;
+}
+
+.quote {
+  background: #edf4ef;
+  border-radius: 12px;
+  padding: 15px;
+  color: #45645c;
+  font-family: "Playfair Display";
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+/* Stats */
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(3,1fr);
+  gap: 15px;
+  margin-top: 20px;
+}
+
+.stat-card {
+  background: white;
+  border: 1px solid var(--line);
+  padding: 22px;
+  border-radius: 15px;
+}
+
+.stat-card span {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.stat-card strong {
+  display: block;
+  font-family: "Playfair Display";
+  font-size: 30px;
+  margin-top: 5px;
+}
+
+/* Table-style pages */
+
+.table-card {
+  background: white;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+
+.table-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr 80px;
+  align-items: center;
+  padding: 20px 25px;
+  border-bottom: 1px solid var(--line);
+  font-size: 13px;
+}
+
+.table-row:last-child {
+  border-bottom: 0;
+}
+
+.table-head {
+  color: var(--muted);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  background: #fafaf7;
+}
+
+.status {
+  padding: 5px 10px;
+  background: #e7f1eb;
+  color: var(--green);
+  border-radius: 999px;
+  font-size: 10px;
+  width: max-content;
+}
+
+/* Settings */
+
+.settings-grid {
+  max-width: 850px;
+  display: grid;
+  gap: 15px;
+}
+
+.setting {
+  background: white;
+  border: 1px solid var(--line);
+  border-radius: 15px;
+  padding: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.setting h3 {
+  font-family: "DM Sans";
+  font-size: 14px;
+  margin-bottom: 4px;
+}
+
+.setting p {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+/* Responsive */
+
+@media(max-width: 900px) {
+  .nav-links {
+    display: none;
+  }
+
+  .hero {
+    grid-template-columns: 1fr;
+  }
+
+  .hero-visual {
+    display: none;
+  }
+
+  .feature-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .sidebar {
+    width: 70px;
+  }
+
+  .sidebar-logo {
+    font-size: 0;
+  }
+
+  .sidebar-logo::after {
+    content: "D";
+    font-size: 24px;
+  }
+
+  .side-link span:last-child,
+  .side-bottom {
+    display: none;
+  }
+
+  .main {
+    margin-left: 70px;
+    width: calc(100% - 70px);
+  }
+
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media(max-width:600px) {
+  .hero {
+    padding: 60px 25px;
+  }
+
+  .hero h1 {
+    font-size: 48px;
+  }
+
+  .hero-features {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .section {
+    padding: 60px 25px;
+  }
+
+  .cta {
+    margin: 20px;
+    padding: 40px 25px;
+  }
+
+  .cta h2 {
+    font-size: 35px;
+  }
+
+  .page {
+    padding: 20px;
+  }
+
+  .topbar {
+    padding: 0 15px;
+  }
+
+  .search {
+    display: none;
+  }
+
+  .stats {
+    grid-template-columns: 1fr;
+  }
+
+  .table-row {
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+}
+</style>
+</head>
+
+<body>
+
+<!-- ================= LANDING PAGE ================= -->
+
+<div class="landing" id="landing">
+
+<nav class="navbar">
+  <div class="logo">DoseCircle</div>
+
+  <div class="nav-links">
+    <a href="#features">Features</a>
+    <a href="#how">How it works</a>
+    <a href="#families">For Families</a>
+    <a href="#about">About</a>
+  </div>
+
+  <div class="nav-actions">
+    <button class="btn btn-outline" onclick="openApp()">Log in</button>
+    <button class="btn btn-primary" onclick="openApp()">Get started</button>
+  </div>
+</nav>
+
+
+<section class="hero">
+
+  <div>
+    <div class="eyebrow">Small steps. A healthier you.</div>
+
+    <h1>Your health,<br>made simpler.</h1>
+
+    <p class="hero-copy">
+      Manage medications, set reminders, keep records and stay
+      connected with your loved ones — all in one place.
+    </p>
+
+    <div class="hero-actions">
+      <button class="btn btn-primary" onclick="openApp()">
+        Get started →
+      </button>
+
+      <button class="btn btn-outline">
+        ◉ &nbsp; Watch video
+      </button>
+    </div>
+
+    <div class="hero-features">
+
+      <div class="feature-mini">
+        <div class="feature-icon">◷</div>
+        Medication reminders
+      </div>
+
+      <div class="feature-mini">
+        <div class="feature-icon">▤</div>
+        Health records
+      </div>
+
+      <div class="feature-mini">
+        <div class="feature-icon">♧</div>
+        Care circle
+      </div>
+
+    </div>
+  </div>
+
+
+  <div class="hero-visual">
+
+    <div class="hero-image"></div>
+
+    <div class="floating-card">
+
+      <h3>Don't just remember.<br>Stay on track.</h3>
+
+      <div class="check-item">
+        <span class="check">✓</span>
+        Take medications
+      </div>
+
+      <div class="check-item">
+        <span class="check">✓</span>
+        Track your progress
+      </div>
+
+      <div class="check-item">
+        <span class="check">✓</span>
+        Live healthier
+      </div>
+
+    </div>
+
+  </div>
+
+</section>
+
+
+<section class="section" id="features">
+
+  <div class="section-heading">
+    <h2>More than reminders.<br>A healthier you.</h2>
+
+    <p>
+      Everything you need to manage your health, without making
+      healthcare feel complicated.
+    </p>
+  </div>
+
+
+  <div class="feature-grid">
+
+    <div class="feature-card">
+      <div class="icon">◷</div>
+      <h3>Stay on track</h3>
+      <p>
+        Set medication schedules and receive gentle reminders
+        so important doses never slip through the cracks.
+      </p>
+    </div>
+
+    <div class="feature-card">
+      <div class="icon">▤</div>
+      <h3>Keep records</h3>
+      <p>
+        Store prescriptions, reports and health documents
+        securely in one organised place.
+      </p>
+    </div>
+
+    <div class="feature-card">
+      <div class="icon">♧</div>
+      <h3>Stay connected</h3>
+      <p>
+        Keep family members and caregivers in the loop while
+        staying in control of your own health.
+      </p>
+    </div>
+
+  </div>
+
+</section>
+
+
+<section class="cta">
+
+  <h2>Small steps can make a big difference.</h2>
+
+  <p>
+    Take control of your everyday health with a simpler,
+    calmer way to stay consistent.
+  </p>
+
+  <button class="btn" onclick="openApp()">
+    Get started →
+  </button>
+
+</section>
+
+</div>
+
+
+<!-- ================= APP ================= -->
+
+<div class="app" id="app">
+
+<aside class="sidebar">
+
+  <div class="sidebar-logo">DoseCircle</div>
+
+  <a class="side-link active" onclick="showPage('home',this)">
+    <span>⌂</span><span>Home</span>
+  </a>
+
+  <a class="side-link" onclick="showPage('medications',this)">
+    <span>⌁</span><span>Medications</span>
+  </a>
+
+  <a class="side-link" onclick="showPage('reminders',this)">
+    <span>♧</span><span>Reminders</span>
+  </a>
+
+  <a class="side-link" onclick="showPage('records',this)">
+    <span>▤</span><span>Health Records</span>
+  </a>
+
+  <a class="side-link" onclick="showPage('care',this)">
+    <span>♙</span><span>Care Circle</span>
+  </a>
+
+  <a class="side-link" onclick="showPage('settings',this)">
+    <span>⚙</span><span>Settings</span>
+  </a>
+
+  <div class="side-bottom">
+    <h4>Better health, together.</h4>
+    <p>
+      Small steps can make a big difference.
+    </p>
+  </div>
+
+</aside>
+
+
+<main class="main">
+
+<header class="topbar">
+
+  <input
+    class="search"
+    placeholder="Search medications, records, or settings..."
+  />
+
+  <span>♧</span>
+
+  <div class="profile">
+    <div class="avatar">H</div>
+    Heer
+  </div>
+
+</header>
+
+
+<!-- HOME -->
+
+<section class="page active" id="home">
+
+  <div class="page-title">
+    <h1>Good morning, Heer 🌿</h1>
+    <p>Stay consistent. You're doing great.</p>
+  </div>
+
+
+  <div class="dashboard-grid">
+
+    <div class="card">
+
+      <div class="card-header">
+        <h2>Today's Medications</h2>
+        <span class="small-link">View all →</span>
+      </div>
+
+      <div class="medication-list">
+
+        <div class="medication">
+          <div class="med-time">8:00 AM</div>
+          <div>
+            <div class="med-name">Levothyrox 50mcg</div>
+            <div class="med-info">1 tablet · After breakfast</div>
+          </div>
+          <span class="taken">✓ Taken</span>
+        </div>
+
+        <div class="medication">
+          <div class="med-time">12:00 PM</div>
+          <div>
+            <div class="med-name">Vitamin D3 1000 IU</div>
+            <div class="med-info">1 tablet · After lunch</div>
+          </div>
+          <button class="take-btn">Take</button>
+        </div>
+
+        <div class="medication">
+          <div class="med-time">4:00 PM</div>
+          <div>
+            <div class="med-name">Omega-3 500mg</div>
+            <div class="med-info">1 capsule · After snack</div>
+          </div>
+          <button class="take-btn">Take</button>
+        </div>
+
+        <div class="medication">
+          <div class="med-time">9:00 PM</div>
+          <div>
+            <div class="med-name">Magnesium 200mg</div>
+            <div class="med-info">1 tablet · After dinner</div>
+          </div>
+          <button class="take-btn">Take</button>
+        </div>
+
+      </div>
+
+    </div>
+
+
+    <div class="card adherence">
+
+      <div class="card-header">
+        <h2>Your Adherence</h2>
+        <span class="small-link">This week</span>
+      </div>
+
+      <div class="progress">
+        <div class="progress-inner">
+          <div>
+            <div class="progress-number">78%</div>
+            <small>On track</small>
+          </div>
+        </div>
+      </div>
+
+      <div class="quote">
+        “Consistency today builds a healthier tomorrow.”
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <div class="stats">
+
+    <div class="stat-card">
+      <span>Active medications</span>
+      <strong>4</strong>
+    </div>
+
+    <div class="stat-card">
+      <span>Latest records</span>
+      <strong>3</strong>
+    </div>
+
+    <div class="stat-card">
+      <span>Care circle</span>
+      <strong>2</strong>
+    </div>
+
+  </div>
+
+</section>
+
+
+<!-- MEDICATIONS -->
+
+<section class="page" id="medications">
+
+  <div class="page-title">
+    <h1>Medications</h1>
+    <p>Manage your medications in one place.</p>
+  </div>
+
+  <div class="table-card">
+
+    <div class="table-row table-head">
+      <div>Medication</div>
+      <div>Frequency</div>
+      <div>Status</div>
+      <div></div>
+    </div>
+
+    <div class="table-row">
+      <div><b>Levothyrox 50mcg</b><br><small>After breakfast</small></div>
+      <div>Once daily</div>
+      <div><span class="status">Active</span></div>
+      <div>⋮</div>
+    </div>
+
+    <div class="table-row">
+      <div><b>Vitamin D3 1000 IU</b><br><small>After lunch</small></div>
+      <div>Once daily</div>
+      <div><span class="status">Active</span></div>
+      <div>⋮</div>
+    </div>
+
+    <div class="table-row">
+      <div><b>Omega-3 500mg</b><br><small>After snack</small></div>
+      <div>Once daily</div>
+      <div><span class="status">Active</span></div>
+      <div>⋮</div>
+    </div>
+
+    <div class="table-row">
+      <div><b>Magnesium 200mg</b><br><small>After dinner</small></div>
+      <div>Once daily</div>
+      <div><span class="status">Active</span></div>
+      <div>⋮</div>
+    </div>
+
+  </div>
+
+</section>
+
+
+<!-- REMINDERS -->
+
+<section class="page" id="reminders">
+
+  <div class="page-title">
+    <h1>Reminders</h1>
+    <p>Set reminders and never miss a dose.</p>
+  </div>
+
+  <div class="table-card">
+
+    <div class="table-row table-head">
+      <div>Medication</div>
+      <div>Time</div>
+      <div>Frequency</div>
+      <div>Active</div>
+    </div>
+
+    <div class="table-row">
+      <div>Vitamin D3 1000 IU</div>
+      <div>12:00 PM</div>
+      <div>Daily</div>
+      <div>●</div>
+    </div>
+
+    <div class="table-row">
+      <div>Omega-3 500mg</div>
+      <div>4:00 PM</div>
+      <div>Daily</div>
+      <div>●</div>
+    </div>
+
+    <div class="table-row">
+      <div>Magnesium 200mg</div>
+      <div>9:00 PM</div>
+      <div>Daily</div>
+      <div>●</div>
+    </div>
+
+  </div>
+
+</section>
+
+
+<!-- RECORDS -->
+
+<section class="page" id="records">
+
+  <div class="page-title">
+    <h1>Health Records</h1>
+    <p>Keep your important documents safe and accessible.</p>
+  </div>
+
+  <div class="table-card">
+
+    <div class="table-row table-head">
+      <div>Document</div>
+      <div>Date</div>
+      <div>Type</div>
+      <div></div>
+    </div>
+
+    <div class="table-row">
+      <div>Blood Test Report</div>
+      <div>12 Sep 2026</div>
+      <div>Report</div>
+      <div>⋮</div>
+    </div>
+
+    <div class="table-row">
+      <div>Thyroid Report</div>
+      <div>3 Aug 2026</div>
+      <div>Report</div>
+      <div>⋮</div>
+    </div>
+
+    <div class="table-row">
+      <div>Prescription</div>
+      <div>15 Jul 2026</div>
+      <div>Prescription</div>
+      <div>⋮</div>
+    </div>
+
+    <div class="table-row">
+      <div>Vitamin D Test</div>
+      <div>10 Jun 2026</div>
+      <div>Test</div>
+      <div>⋮</div>
+    </div>
+
+  </div>
+
+</section>
+
+
+<!-- CARE CIRCLE -->
+
+<section class="page" id="care">
+
+  <div class="page-title">
+    <h1>Care Circle</h1>
+    <p>Your people, your support.</p>
+  </div>
+
+  <div class="settings-grid">
+
+    <div class="setting">
+      <div>
+        <h3>Mom</h3>
+        <p>View-only access</p>
+      </div>
+      <span>→</span>
+    </div>
+
+    <div class="setting">
+      <div>
+        <h3>Dad</h3>
+        <p>View-only access</p>
+      </div>
+      <span>→</span>
+    </div>
+
+    <div class="setting">
+      <div>
+        <h3>Invite someone</h3>
+        <p>Share your health updates with someone you trust.</p>
+      </div>
+
+      <button class="btn btn-primary">
+        Invite
+      </button>
+    </div>
+
+  </div>
+
+</section>
+
+
+<!-- SETTINGS -->
+
+<section class="page" id="settings">
+
+  <div class="page-title">
+    <h1>Settings</h1>
+    <p>Manage your account and preferences.</p>
+  </div>
+
+  <div class="settings-grid">
+
+    <div class="setting">
+      <div>
+        <h3>Personal Information</h3>
+        <p>Manage your name and account details.</p>
+      </div>
+      <span>→</span>
+    </div>
+
+    <div class="setting">
+      <div>
+        <h3>Reminders & Notifications</h3>
+        <p>Control when DoseCircle reminds you.</p>
+      </div>
+      <span>→</span>
+    </div>
+
+    <div class="setting">
+      <div>
+        <h3>Connected Accounts</h3>
+        <p>Manage connected health services.</p>
+      </div>
+      <span>→</span>
+    </div>
+
+    <div class="setting">
+      <div>
+        <h3>Privacy & Security</h3>
+        <p>Manage your privacy and security settings.</p>
+      </div>
+      <span>→</span>
+    </div>
+
+    <div class="setting">
+      <div>
+        <h3>Help & Support</h3>
+        <p>Get help with DoseCircle.</p>
+      </div>
+      <span>→</span>
+    </div>
+
+  </div>
+
+</section>
+
+</main>
+</div>
+
+
+<script>
+
+function openApp() {
+  document.getElementById("landing").style.display = "none";
+  document.getElementById("app").classList.add("active");
+  window.scrollTo(0,0);
+}
+
+function showPage(page, element) {
+
+  document.querySelectorAll(".page").forEach(p => {
+    p.classList.remove("active");
+  });
+
+  document.querySelectorAll(".side-link").forEach(link => {
+    link.classList.remove("active");
+  });
+
+  document.getElementById(page).classList.add("active");
+
+  if(element) {
+    element.classList.add("active");
+  }
+
+  window.scrollTo(0,0);
+}
+
+/* Interactive medication buttons */
+
+document.addEventListener("click", function(e) {
+
+  if(e.target.classList.contains("take-btn")) {
+
+    e.target.textContent = "✓ Taken";
+    e.target.classList.remove("take-btn");
+    e.target.classList.add("taken");
+
+  }
+
+});
+
+</script>
+
+</body>
+</html>

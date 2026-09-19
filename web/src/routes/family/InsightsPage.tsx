@@ -38,7 +38,7 @@ function InsightsView({ fid, lang: myLang }: { fid: string; lang: string }) {
       actions={
         <Link
           to={`/parents/${pid}/report`}
-          className="pressable inline-flex min-h-12 items-center justify-center gap-2 rounded-[var(--radius-button)] bg-indigo px-5 text-[16px] font-semibold text-white shadow-[0_1px_0_rgb(255_255_255/0.12)_inset,0_6px_16px_-8px_rgb(37_35_110/0.6)] hover:bg-indigo-soft"
+          className="pressable inline-flex min-h-12 items-center justify-center gap-2 rounded-[var(--radius-button)] bg-indigo px-5 text-[16px] font-semibold text-white shadow-[0_1px_0_rgb(255_255_255/0.12)_inset,0_6px_16px_-8px_rgb(37_35_110/0.6)] hover:bg-indigo-deep"
         >
           <FileText aria-hidden className="size-5" />
           <span lang={lang}>{t("action.report")}</span>

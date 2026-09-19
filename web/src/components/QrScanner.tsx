@@ -95,7 +95,7 @@ export function QrScanner({ lang: viewerLang, onClose, onFound }: { lang: string
   }, []);
 
   return (
-    <div role="dialog" aria-modal="true" aria-labelledby="scan-title" className="fixed inset-0 z-50 flex flex-col bg-[#07071a] text-white">
+    <div role="dialog" aria-modal="true" aria-labelledby="scan-title" className="fixed inset-0 z-50 flex flex-col bg-[#0b1311] text-white">
       <div className="flex items-center justify-between px-4 pt-4">
         <h2 id="scan-title" lang={lang} className="text-lg font-semibold">
           {t("scan.title")}
@@ -110,7 +110,7 @@ export function QrScanner({ lang: viewerLang, onClose, onFound }: { lang: string
         {state === "scanning" && (
           // A square to aim at, and a line moving through it so it is obvious the camera is working.
           <div aria-hidden className="pointer-events-none absolute inset-[12%] rounded-2xl ring-2 ring-white/85">
-            <span className="absolute inset-x-3 top-1/2 h-0.5 animate-pulse bg-blue-400 shadow-[0_0_12px_rgb(96_165_250)]" />
+            <span className="absolute inset-x-3 top-1/2 h-0.5 animate-pulse bg-[#9fd4c2] shadow-[0_0_12px_rgb(159_212_194)]" />
           </div>
         )}
         {state === "starting" && (

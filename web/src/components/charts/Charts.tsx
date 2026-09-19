@@ -62,7 +62,7 @@ export function TrendArea({ values, target = 0.8, height = 96, tone = "light", m
     })
     .join(" ");
   const area = `${line} L${width} ${height} L0 ${height} Z`;
-  const stroke = tone === "dark" ? "#F4B400" : "var(--color-indigo-soft)";
+  const stroke = tone === "dark" ? "#E8C26A" : "var(--color-indigo-soft)";
   return (
     <div className="relative" style={{ height }}>
       <svg viewBox={`0 0 ${width} ${height}`} className="absolute inset-0 h-full w-full overflow-visible" preserveAspectRatio="none" aria-hidden>
@@ -77,7 +77,7 @@ export function TrendArea({ values, target = 0.8, height = 96, tone = "light", m
         <path d={line} fill="none" stroke={stroke} strokeWidth="2.5" strokeLinecap="round" vectorEffect="non-scaling-stroke" />
       </svg>
       {points.length > 0 && (
-        <span aria-hidden className="absolute size-3 -translate-x-1/2 -translate-y-1/2 rounded-full ring-2" style={{ left: "100%", top: `${(points[points.length - 1]![1] / height) * 100}%`, background: stroke, ["--tw-ring-color" as string]: tone === "dark" ? "#14133A" : "var(--color-surface)" }} />
+        <span aria-hidden className="absolute size-3 -translate-x-1/2 -translate-y-1/2 rounded-full ring-2" style={{ left: "100%", top: `${(points[points.length - 1]![1] / height) * 100}%`, background: stroke, ["--tw-ring-color" as string]: tone === "dark" ? "#172B2A" : "var(--color-surface)" }} />
       )}
       <span aria-hidden className={cx("tabular absolute left-0 -translate-y-full pb-0.5 text-[12.5px] font-medium", tone === "dark" ? "text-white/70" : "text-muted")} style={{ top: `${(y(target) / height) * 100}%` }}>
         80%

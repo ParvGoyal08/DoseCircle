@@ -98,7 +98,7 @@ export function FamilyAlert({ alert, viewerLang, viewerMid, ladder, alertedCount
                   <span
                     className={cx(
                       "inline-flex items-center gap-1.5 rounded-full py-0.5 pl-0.5 pr-2.5 text-sm font-semibold",
-                      current ? "bg-haldi text-[#14133a]" : asked ? "bg-indigo-tint text-ink" : "bg-sunken text-muted",
+                      current ? "bg-haldi text-[#172b2a]" : asked ? "bg-indigo-tint text-ink" : "bg-sunken text-muted",
                     )}
                   >
                     <Avatar name={person.displayName} size={22} />

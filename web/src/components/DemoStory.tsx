@@ -213,23 +213,23 @@ function DesktopStory({ active, onActive, header }: { active: number; onActive: 
                   type="button"
                   onClick={() => go(index)}
                   aria-current={open ? "step" : undefined}
-                  className={cx("w-full rounded-2xl px-4 text-left transition-colors", open ? "bg-white py-3.5 shadow-[0_14px_36px_-20px_rgb(30_58_138/0.45)] ring-1 ring-slate-200" : "py-1.5 hover:bg-slate-50")}
+                  className={cx("w-full rounded-2xl px-4 text-left transition-colors", open ? "bg-white py-3.5 shadow-[0_14px_36px_-20px_rgb(31_63_55/0.45)] ring-1 ring-line" : "py-1.5 hover:bg-sunken")}
                 >
                   <span className="flex items-center gap-3">
-                    <span className={cx("tabular grid size-7 shrink-0 place-items-center rounded-full text-[13.5px] font-semibold", open ? "bg-blue-600 text-white" : index < active ? "bg-blue-50 text-blue-700" : "bg-slate-100 text-slate-500")}>
+                    <span className={cx("tabular grid size-7 shrink-0 place-items-center rounded-full text-[13.5px] font-semibold", open ? "bg-indigo text-white" : index < active ? "bg-indigo-tint text-indigo-soft" : "bg-sunken text-muted")}>
                       {index < active ? <Check aria-hidden className="size-4" strokeWidth={3} /> : index + 1}
                     </span>
-                    <span className={cx("font-semibold tracking-tight", open ? "text-[20px] text-ink" : "text-[15.5px] text-slate-600")}>{step.title}</span>
+                    <span className={cx("font-semibold tracking-tight", open ? "text-[20px] text-ink" : "text-[15.5px] text-muted")}>{step.title}</span>
                   </span>
                   {open && (
                     <span className="mt-1.5 block pl-10">
-                      <span className="block text-[15.5px] leading-relaxed text-slate-600">{step.body}</span>
+                      <span className="block text-[15.5px] leading-relaxed text-muted">{step.body}</span>
                       <span className="mt-3 flex flex-wrap items-center gap-2">
-                        <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-2.5 py-1 text-[13px] font-semibold text-blue-800 ring-1 ring-blue-100">
+                        <span className="inline-flex items-center gap-1.5 rounded-full bg-indigo-tint px-2.5 py-1 text-[13px] font-semibold text-indigo-soft ring-1 ring-indigo-tint">
                           <Cloud aria-hidden className="size-3.5 shrink-0" />
                           {step.aws}
                         </span>
-                        <span className="text-[13px] font-medium text-slate-500">{step.who}</span>
+                        <span className="text-[13px] font-medium text-muted">{step.who}</span>
                       </span>
                     </span>
                   )}
@@ -249,10 +249,10 @@ function StepControls({ active, go, className }: { active: number; go: (index: n
   const last = active === STEPS.length - 1;
   return (
     <div className={cx("flex items-center gap-3", className)}>
-      <button type="button" onClick={() => go(active - 1)} disabled={active === 0} className="pressable inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl bg-white px-5 text-[16px] font-semibold text-ink ring-1 ring-slate-300 disabled:opacity-40">
+      <button type="button" onClick={() => go(active - 1)} disabled={active === 0} className="pressable inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl bg-white px-5 text-[16px] font-semibold text-ink ring-1 ring-line-strong disabled:opacity-40">
         <ArrowLeft aria-hidden className="size-5" /> Back
       </button>
-      <button type="button" onClick={() => go(last ? 0 : active + 1)} className="pressable inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl bg-blue-600 px-5 text-[16px] font-semibold text-white shadow-[0_10px_24px_-12px_rgb(37_99_235/0.8)] hover:bg-blue-700">
+      <button type="button" onClick={() => go(last ? 0 : active + 1)} className="pressable inline-flex min-h-12 items-center justify-center gap-2 rounded-2xl bg-indigo px-5 text-[16px] font-semibold text-white shadow-[0_10px_24px_-12px_rgb(36_95_82/0.8)] hover:bg-indigo-deep">
         {last ? (
           <>
             <RotateCcw aria-hidden className="size-4.5" /> Start again
@@ -263,7 +263,7 @@ function StepControls({ active, go, className }: { active: number; go: (index: n
           </>
         )}
       </button>
-      <span className="tabular ml-1 text-[14px] font-medium text-slate-500">
+      <span className="tabular ml-1 text-[14px] font-medium text-muted">
         {active + 1} / {STEPS.length}
       </span>
     </div>
@@ -279,7 +279,7 @@ function MobileStory({ active, onActive }: { active: number; onActive: (index: n
   return (
     <div className="lg:hidden">
       <div className="flex items-center justify-between gap-3">
-        <p className="tabular text-[14px] font-semibold text-slate-500">
+        <p className="tabular text-[14px] font-semibold text-muted">
           Step {active + 1} of {STEPS.length}
         </p>
         <div className="flex gap-1.5" role="tablist" aria-label="Demo steps">
@@ -293,7 +293,7 @@ function MobileStory({ active, onActive }: { active: number; onActive: (index: n
               onClick={() => go(index)}
               className="grid size-6 place-items-center"
             >
-              <span className={cx("block h-2 rounded-full transition-all", index === active ? "w-5 bg-blue-600" : "w-2 bg-slate-300")} />
+              <span className={cx("block h-2 rounded-full transition-all", index === active ? "w-5 bg-indigo" : "w-2 bg-line-strong")} />
             </button>
           ))}
         </div>
@@ -329,12 +329,12 @@ function StepText({ step, index, dim }: { step: Step; index: number; dim: boolea
   return (
     <div className={cx("max-w-lg transition-opacity duration-300", dim ? "opacity-30" : "opacity-100")}>
       <p className="flex items-center gap-3">
-        <span className="tabular grid size-9 place-items-center rounded-full bg-blue-600 text-[15px] font-semibold text-white shadow-[0_8px_18px_-8px_rgb(37_99_235/0.9)]">{index + 1}</span>
-        <span className="text-[14px] font-semibold text-slate-500">{step.who}</span>
+        <span className="tabular grid size-9 place-items-center rounded-full bg-indigo text-[15px] font-semibold text-white shadow-[0_8px_18px_-8px_rgb(36_95_82/0.9)]">{index + 1}</span>
+        <span className="text-[14px] font-semibold text-muted">{step.who}</span>
       </p>
       <h3 className="font-display mt-4 text-[28px] leading-tight tracking-tight md:text-[34px]">{step.title}</h3>
-      <p className="mt-3 text-[17px] leading-relaxed text-slate-600">{step.body}</p>
-      <p className="mt-5 inline-flex items-center gap-2 rounded-full bg-blue-50 px-3 py-1.5 text-[13.5px] font-semibold text-blue-800 ring-1 ring-blue-100">
+      <p className="mt-3 text-[17px] leading-relaxed text-muted">{step.body}</p>
+      <p className="mt-5 inline-flex items-center gap-2 rounded-full bg-indigo-tint px-3 py-1.5 text-[13.5px] font-semibold text-indigo-soft ring-1 ring-indigo-tint">
         <Cloud aria-hidden className="size-4 shrink-0" />
         {step.aws}
       </p>
@@ -353,7 +353,7 @@ function Stage({ index, height, animate = true }: { index: number; height: numbe
           <div className="h-full overflow-hidden">{step.screen()}</div>
         </PhoneFrame>
       ) : (
-        <div className="mx-auto flex w-full max-w-[340px] flex-col justify-center rounded-[36px] bg-white p-5 shadow-[0_30px_70px_-30px_rgb(30_58_138/0.4)] ring-1 ring-slate-200" style={{ height: height + 20 }}>
+        <div className="mx-auto flex w-full max-w-[340px] flex-col justify-center rounded-[36px] bg-white p-5 shadow-[0_30px_70px_-30px_rgb(31_63_55/0.4)] ring-1 ring-line" style={{ height: height + 20 }}>
           {step.screen()}
         </div>
       )}
@@ -385,7 +385,7 @@ function SetupScreen() {
   useEffect(() => {
     let live = true;
     // A real-looking code that holds plain text, not a link: there is no family behind it to join.
-    void QRCode.toDataURL("DOSECIRCLE-SAMPLE-K7Q4M2XP", { margin: 1, width: 200, color: { dark: "#14133a", light: "#ffffff" } }).then((url) => live && setQr(url));
+    void QRCode.toDataURL("DOSECIRCLE-SAMPLE-K7Q4M2XP", { margin: 1, width: 200, color: { dark: "#172b2a", light: "#ffffff" } }).then((url) => live && setQr(url));
     return () => {
       live = false;
     };
@@ -402,7 +402,7 @@ function SetupScreen() {
             <div className="min-w-0">
               <p className="text-[17px] font-semibold">Shantha</p>
               <p className="flex flex-wrap gap-1.5 text-[13px]">
-                <span lang="kn" className="rounded-full bg-blue-50 px-2 py-0.5 font-semibold text-blue-800">
+                <span lang="kn" className="rounded-full bg-indigo-tint px-2 py-0.5 font-semibold text-indigo-soft">
                   ಕನ್ನಡ
                 </span>
                 <span className="rounded-full bg-due-tint px-2 py-0.5 font-medium text-due">Phone not connected yet</span>
@@ -507,7 +507,7 @@ function PrescriptionScreen() {
             </div>
           </div>
         ))}
-        <p className="flex items-start gap-2 rounded-xl bg-blue-50 p-2.5 text-[13px] text-blue-900">
+        <p className="flex items-start gap-2 rounded-xl bg-indigo-tint p-2.5 text-[13px] text-indigo-deep">
           <CircleAlert className="mt-0.5 size-4 shrink-0" />
           Save stays off until every line is checked.
         </p>
@@ -541,9 +541,9 @@ function MissedPanel() {
             <ArrowRight className="size-4 shrink-0" /> A missed dose — the family is asked
           </p>
         </div>
-        <div className="rounded-2xl bg-slate-50 p-3.5 ring-1 ring-slate-200">
-          <p className="text-[12.5px] font-semibold uppercase tracking-wider text-slate-500">If it had never arrived</p>
-          <p className="mt-1 flex items-center gap-2 text-[14px] font-medium text-slate-600">
+        <div className="rounded-2xl bg-sunken p-3.5 ring-1 ring-line">
+          <p className="text-[12.5px] font-semibold uppercase tracking-wider text-muted">If it had never arrived</p>
+          <p className="mt-1 flex items-center gap-2 text-[14px] font-medium text-muted">
             <WifiOff className="size-4 shrink-0" /> “Her phone seems to be offline”
           </p>
         </div>

@@ -93,7 +93,7 @@ export function InsightsHero({ parentName, lastReceiptAt, insights, days, onDays
                 role="radio"
                 aria-checked={days === d}
                 onClick={() => onDays(d)}
-                className={cx("min-h-9 rounded-full px-4 text-[14px] font-semibold transition-colors", days === d ? "bg-haldi text-[#14133a]" : "text-white hover:bg-white/10")}
+                className={cx("min-h-9 rounded-full px-4 text-[14px] font-semibold transition-colors", days === d ? "bg-haldi text-[#172b2a]" : "text-white hover:bg-white/10")}
               >
                 <span lang={lang}>{t(`dash.range.${d}`)}</span>
               </button>

@@ -9,13 +9,13 @@ export function cx(...classes: (string | false | null | undefined)[]): string {
 
 type Tone = "ink" | "taken" | "claimed" | "quiet" | "danger" | "haldi" | "ghost";
 
-/** Primary actions are ink blue with white text (13.6:1); haldi buttons always carry ink text (9.6:1). */
+/** Primary actions are sage green with white text (7.4:1); gold buttons always carry dark text (7.4:1). */
 const TONES: Record<Tone, string> = {
-  ink: "bg-indigo text-white shadow-[0_1px_0_rgb(255_255_255/0.12)_inset,0_6px_16px_-8px_rgb(37_35_110/0.6)] hover:bg-indigo-soft disabled:opacity-40",
+  ink: "bg-indigo text-white shadow-[0_8px_20px_-12px_rgb(31_63_55/0.55)] hover:bg-indigo-deep disabled:opacity-40",
   taken: "bg-taken text-white hover:brightness-110 disabled:opacity-40",
   claimed: "bg-claimed text-white hover:brightness-110 disabled:opacity-40 dark:bg-claimed-fill",
   danger: "bg-missed text-white hover:brightness-110",
-  haldi: "bg-haldi text-[#14133a] hover:brightness-105 shadow-[0_6px_16px_-8px_rgb(244_180_0/0.7)] disabled:opacity-60 disabled:shadow-none",
+  haldi: "bg-haldi text-[#172b2a] hover:brightness-105 shadow-[0_8px_20px_-12px_rgb(160_120_40/0.55)] disabled:opacity-60 disabled:shadow-none",
   quiet: "border border-line-strong bg-surface text-ink hover:bg-sunken disabled:opacity-40",
   ghost: "text-ink hover:bg-sunken disabled:opacity-40",
 };

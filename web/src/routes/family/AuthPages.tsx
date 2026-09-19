@@ -27,17 +27,17 @@ function AuthLayout({ children, exit }: { children: React.ReactNode; exit?: Reac
     <div className="grid min-h-dvh bg-white lg:grid-cols-[1fr_1.1fr]">
       {/* Same white-and-blue as the landing page, so signing in feels like the next step of the
           same place rather than a different app. */}
-      <aside className="relative hidden overflow-hidden border-r border-slate-200 bg-gradient-to-br from-blue-50 via-white to-indigo-50 lg:block">
-        <div aria-hidden className="absolute inset-0 bg-[radial-gradient(rgb(37_99_235/0.10)_1px,transparent_1px)] [background-size:22px_22px] [mask-image:radial-gradient(80%_70%_at_30%_70%,black,transparent_80%)]" />
+      <aside className="relative hidden overflow-hidden border-r border-line bg-gradient-to-br from-indigo-tint via-paper to-sunken lg:block">
+        <div aria-hidden className="absolute inset-0 bg-[radial-gradient(rgb(36_95_82/0.10)_1px,transparent_1px)] [background-size:22px_22px] [mask-image:radial-gradient(80%_70%_at_30%_70%,black,transparent_80%)]" />
         <div className="relative flex h-full flex-col p-12">
           <Link to="/" className="flex items-center gap-2.5">
             <Logo className="size-10 rounded-[10px]" />
             <span className="text-xl font-semibold tracking-tight text-ink">DoseCircle</span>
           </Link>
           <p className="font-display mt-auto max-w-md text-5xl leading-[1.08] tracking-tight text-ink">
-            The right person knows, <span className="bg-gradient-to-r from-blue-600 to-indigo-500 bg-clip-text text-transparent">every time.</span>
+            The right person knows, <span className="italic text-indigo-soft">every time.</span>
           </p>
-          <p className="mt-5 max-w-md text-lg leading-relaxed text-slate-600">Reminders in each person's own language, and a family that is asked one person at a time when a dose is missed.</p>
+          <p className="mt-5 max-w-md text-lg leading-relaxed text-muted">Reminders in each person's own language, and a family that is asked one person at a time when a dose is missed.</p>
         </div>
       </aside>
       <main className="flex flex-col px-4 py-5 sm:px-10">
@@ -262,7 +262,7 @@ export function SignInPage() {
           and needs none. They used to get one grey line telling them to find the link again; now
           they can scan the family's code right here. */}
       {!recovering && (
-        <div className="mt-8 rounded-2xl bg-blue-50/70 p-4 ring-1 ring-blue-100">
+        <div className="mt-8 rounded-2xl bg-indigo-tint/70 p-4 ring-1 ring-indigo-tint">
           <p lang={lang} className="font-semibold text-ink">
             {t("auth.forMedicines")}
           </p>
@@ -270,11 +270,11 @@ export function SignInPage() {
             {t("auth.forMedicinesHelp")}
           </p>
           <div className="mt-3 flex flex-wrap gap-2">
-            <button type="button" onClick={() => setScanning(true)} className="pressable inline-flex min-h-11 items-center gap-2 rounded-xl bg-blue-600 px-4 text-[15px] font-semibold text-white hover:bg-blue-700">
+            <button type="button" onClick={() => setScanning(true)} className="pressable inline-flex min-h-11 items-center gap-2 rounded-xl bg-indigo px-4 text-[15px] font-semibold text-white hover:bg-indigo-deep">
               <ScanLine aria-hidden className="size-4.5" />
               <span lang={lang}>{t("scan.button")}</span>
             </button>
-            <Link to="/join" className="inline-flex min-h-11 items-center rounded-xl px-3 text-[15px] font-semibold text-blue-700 hover:bg-blue-100/60">
+            <Link to="/join" className="inline-flex min-h-11 items-center rounded-xl px-3 text-[15px] font-semibold text-indigo-soft hover:bg-indigo-tint">
               <span lang={lang}>{t("scan.typeShort")}</span>
             </Link>
           </div>
@@ -449,7 +449,7 @@ export function OnboardingPage() {
           {/* Two short groups instead of one long column: who you are, then who you look after.
               Each language question sits inside the group it belongs to. */}
           <section className="mt-7 space-y-4">
-            <h2 lang={lang} className="text-[13px] font-semibold uppercase tracking-[0.12em] text-blue-700">
+            <h2 lang={lang} className="text-[13px] font-semibold uppercase tracking-[0.12em] text-indigo-soft">
               {t("onboard.you")}
             </h2>
             <Field label={t("onboard.yourName")} lang={lang}>
@@ -461,7 +461,7 @@ export function OnboardingPage() {
             <LanguageToggle value={myLang} onChange={setMyLang} label={t("onboard.yourLanguage")} lang={lang} />
           </section>
           <section className="mt-7 space-y-4 border-t border-line pt-7">
-            <h2 lang={lang} className="text-[13px] font-semibold uppercase tracking-[0.12em] text-blue-700">
+            <h2 lang={lang} className="text-[13px] font-semibold uppercase tracking-[0.12em] text-indigo-soft">
               {t("onboard.parent")}
             </h2>
             <Field label={t("onboard.parentName")} lang={lang}>

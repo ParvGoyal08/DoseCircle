@@ -166,7 +166,7 @@ export function DemoPage() {
                 { id: "live" as const, label: "Live escalation", icon: Zap },
                 { id: "dashboard" as const, label: "Family dashboard", icon: BarChart3 },
               ].map((tab) => (
-                <button key={tab.id} type="button" role="tab" aria-selected={view === tab.id} onClick={() => setView(tab.id)} className={cx("inline-flex min-h-9 items-center gap-1.5 rounded-full px-3.5 text-[14px] font-semibold transition-colors", view === tab.id ? "bg-haldi text-[#14133a]" : "text-white hover:bg-white/10")}>
+                <button key={tab.id} type="button" role="tab" aria-selected={view === tab.id} onClick={() => setView(tab.id)} className={cx("inline-flex min-h-9 items-center gap-1.5 rounded-full px-3.5 text-[14px] font-semibold transition-colors", view === tab.id ? "bg-haldi text-[#172b2a]" : "text-white hover:bg-white/10")}>
                   <tab.icon aria-hidden className="size-4" />
                   {tab.label}
                 </button>
@@ -402,7 +402,7 @@ function ParentPane({ session, state, offline }: { session: DemoSession; state: 
             {t("parent.today.title")}
           </h2>
           {dose ? (
-            <button type="button" onClick={() => setOpen(true)} className="pressable mt-4 flex items-center gap-3 rounded-2xl bg-haldi p-4 text-left text-[#14133a]">
+            <button type="button" onClick={() => setOpen(true)} className="pressable mt-4 flex items-center gap-3 rounded-2xl bg-haldi p-4 text-left text-[#172b2a]">
               <BellRing className="size-8 text-due" aria-hidden strokeWidth={2.5} />
               <span className="min-w-0 flex-1">
                 <span lang={lang} className="block text-xl font-semibold">
@@ -544,7 +544,7 @@ function DemoIntro({ onStart, busy, error, simulated }: { onStart: () => void; b
                   </p>
                 </div>
               </div>
-              <p className="mt-4 inline-flex rounded-full bg-haldi px-3 py-0.5 text-[15px] font-semibold text-[#14133a]" lang={person.lang}>
+              <p className="mt-4 inline-flex rounded-full bg-haldi px-3 py-0.5 text-[15px] font-semibold text-[#172b2a]" lang={person.lang}>
                 {endonym(person.lang)}
               </p>
               <p className="mt-3 text-[14.5px] text-hero-muted">{person.note}</p>

@@ -1,6 +1,6 @@
 import type { SlotName } from "@dosecircle/shared";
-import { Activity, BellRing, Camera, ChartLine, CirclePause, Loader2, Pill, PillBottle, Plus, Smartphone, TriangleAlert, Users } from "lucide-react";
-import { useState } from "react";
+import { Activity, ArrowRight, BellRing, Camera, CirclePause, Loader2, Pill, PillBottle, Plus, Smartphone, TriangleAlert, Users } from "lucide-react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router";
 import { FamilyAlert } from "../../components/FamilyAlert";
 import { FamilyShell } from "../../components/FamilyShell";
@@ -12,11 +12,12 @@ import { api, ApiError } from "../../lib/api";
 import { RequireFamily } from "../../lib/family";
 import { formatAgo, formatNumber, formatTime } from "../../lib/format";
 import type { Dashboard, ParentCard, RefillChip, Timeline as TimelineData } from "../../lib/types";
+import { currentPerson, rememberPerson } from "../../lib/person";
 import { useApi } from "../../lib/useApi";
 import { EnableMyAlerts } from "./AuthPages";
 
 export function HomePage() {
-  return <RequireFamily>{(me) => <Home fid={me.fid} lang={me.lang} mid={me.mid} role={me.role} />}</RequireFamily>;
+  return <RequireFamily>{(me) => <Home fid={me.fid} lang={me.lang} mid={me.mid} role={me.role} name={me.displayName} />}</RequireFamily>;
 }
 
 function claimDose(doseId: string): Promise<"claimed" | "lost"> {
@@ -29,13 +30,17 @@ function claimDose(doseId: string): Promise<"claimed" | "lost"> {
   );
 }
 
-function Home({ fid, lang: myLang, mid, role }: { fid: string; lang: string; mid: string; role: "owner" | "member" }) {
+function Home({ fid, lang: myLang, mid, role, name }: { fid: string; lang: string; mid: string; role: "owner" | "member"; name: string }) {
   const navigate = useNavigate();
   const { t, lang } = useT(myLang);
   const dashboard = useApi(() => api<Dashboard>(`/families/${fid}`, { auth: "family" }), [fid], 30_000);
   const data = dashboard.data;
-  const [selectedPid, setSelectedPid] = useState<string | null>(null);
+  const [selectedPid, setSelectedPid] = useState<string | null>(currentPerson);
   const parent = data?.parents.find((p) => p.pid === selectedPid) ?? data?.parents[0];
+  // The navigation's Medicines, Checks and "How it is going" follow whoever is chosen here.
+  useEffect(() => {
+    if (parent) rememberPerson(parent.pid);
+  }, [parent?.pid]);
 
   return (
     <FamilyShell lang={myLang} full>
@@ -44,17 +49,47 @@ function Home({ fid, lang: myLang, mid, role }: { fid: string; lang: string; mid
           <Loader2 aria-label={t("common.loading")} className="size-8 animate-spin text-muted" />
         </div>
       ) : (
-        <div className="space-y-6">
-          <StatusWidget parents={data.parents} openAlerts={data.openAlerts.length} selected={parent} onSelect={setSelectedPid} canAdd={role === "owner"} myLang={myLang} />
+        <div className="space-y-7">
+          <StatusHeader parents={data.parents} openAlerts={data.openAlerts.length} name={name} myLang={myLang} />
+
+          {/* Always visible, even with one person: it is how you learn the app holds more than one,
+              and it is where you add the next. Everything below follows whoever is chosen. */}
+          <nav aria-label={t("home.everyone")} className="flex flex-wrap items-center gap-2">
+            <span lang={lang} className="eyebrow mr-2">
+              {t("home.everyone")}
+            </span>
+            <div role="tablist" className="flex flex-wrap gap-2">
+              {data.parents.map((p) => (
+                <button
+                  key={p.pid}
+                  type="button"
+                  role="tab"
+                  aria-selected={p.pid === parent.pid}
+                  onClick={() => setSelectedPid(p.pid)}
+                  className={cx(
+                    "pressable inline-flex min-h-11 items-center gap-2 rounded-full pl-1.5 pr-4 text-[15px] font-semibold transition-colors",
+                    p.pid === parent.pid ? "bg-indigo text-white shadow-[0_8px_20px_-12px_rgb(31_63_55/0.55)]" : "bg-surface text-ink ring-1 ring-line hover:ring-line-strong",
+                  )}
+                >
+                  <Avatar name={p.displayName} size={30} className={p.pid === parent.pid ? "!bg-white/15 !text-white" : undefined} />
+                  {p.displayName}
+                  {p.paused && <CirclePause aria-hidden className="size-4 opacity-70" />}
+                </button>
+              ))}
+            </div>
+            {role === "owner" && (
+              <Link to="/people#add" className="pressable inline-flex min-h-11 items-center gap-1.5 rounded-full border border-dashed border-line-strong px-4 text-[14.5px] font-semibold text-muted hover:border-indigo/40 hover:text-ink">
+                <Plus aria-hidden className="size-4" strokeWidth={2.5} />
+                <span lang={lang}>{t("people.addParent")}</span>
+              </Link>
+            )}
+          </nav>
 
           <EnableMyAlerts lang={myLang} />
 
-          <div className="grid items-start gap-5 lg:grid-cols-12">
-            <div className="space-y-5 lg:col-span-7">
-              {/* Alerts head the main column rather than spanning the page. There is no heading
-                  standing over an empty column when nothing is wrong: the widget has already said
-                  "all calm", and saying it twice made the screen look like it was waiting for
-                  something to happen. */}
+          <div className="grid items-start gap-5 lg:grid-cols-[1.7fr_1fr]">
+            <div className="space-y-5">
+              {/* Alerts head the main column: the most urgent thing on the page, where the eye is. */}
               {data.openAlerts.length > 0 && (
                 <section aria-label={t("home.openAlerts")} className="grid gap-4">
                   {data.openAlerts.map((alert) => {
@@ -78,15 +113,10 @@ function Home({ fid, lang: myLang, mid, role }: { fid: string; lang: string; mid
                   })}
                 </section>
               )}
-              <div>
-                <h2 lang={lang} className="mb-3 text-lg font-semibold">
-                  {t("dash.today")}
-                </h2>
-                <TodayCard parent={parent} fid={fid} myLang={myLang} />
-              </div>
+              <TodayCard parent={parent} fid={fid} myLang={myLang} />
             </div>
-            <div className="space-y-5 lg:col-span-5">
-              {/* Seven empty boxes tell a family that has not added a medicine yet nothing at all. */}
+            <div className="space-y-5">
+              {/* A ring of seven empty days tells a family with no medicines yet nothing at all. */}
               {parent.slots.length > 0 && <WeekCard parent={parent} myLang={myLang} />}
               <StandingCard parent={parent} myLang={myLang} />
             </div>
@@ -98,136 +128,74 @@ function Home({ fid, lang: myLang, mid, role }: { fid: string; lang: string; mid
 }
 
 /**
- * The one thing the home screen owes a family, answered before anything else: is something wrong
- * right now, and if not, what does today look like.
+ * The first thing the home screen owes a family: is something wrong right now.
  *
- * It is one band rather than a heading over a card, because a heading needs its own answer
- * underneath and there frequently is none — on a calm day the old layout was two sentences floating
- * in an empty column. The counts run across everybody, not the person the switcher happens to have
- * selected, since "should I be worried" is not a per-person question; the switcher lives up here
- * too, so choosing a person is next to the state of that person rather than adrift below it.
+ * A greeting, then one sentence with a coloured dot that answers it, then four counts. The counts run
+ * across everybody, not the person the switcher happens to have selected, since "should I be worried"
+ * is not a per-person question.
  *
- * The headline never has a number spliced into it — Kannada and Hindi attach case endings to nouns —
- * so the sentence stays whole and the counts sit in their own elements beside it.
+ * Nothing is spliced into a translated sentence — Kannada and Hindi inflect nouns — so the name sits
+ * beside the greeting and the counts live in their own elements.
  */
-function StatusWidget({
-  parents,
-  openAlerts,
-  selected,
-  onSelect,
-  canAdd,
-  myLang,
-}: {
-  parents: ParentCard[];
-  openAlerts: number;
-  selected: ParentCard;
-  onSelect: (pid: string) => void;
-  canAdd: boolean;
-  myLang: string;
-}) {
+function StatusHeader({ parents, openAlerts, name, myLang }: { parents: ParentCard[]; openAlerts: number; name: string; myLang: string }) {
   const { t, lang } = useT(myLang);
   const active = parents.filter((p) => !p.paused);
   const doses = active.flatMap((p) => p.today);
   const taken = doses.filter((d) => d.status === "TAKEN" || d.status === "TAKEN_LATE").length;
   const missed = doses.filter((d) => d.status === "UNRESOLVED" || (d.status === "CLAIMED" && d.missClass === "MISSED")).length;
   // Counted off the slots, not the dose records: a slot later today has no dose row yet, and the
-  // list underneath already shows it as "later today". An escalating dose is left out of all three
-  // — the headline and the alert beside it are about that dose, and counting it here as well would
-  // say the same thing twice.
+  // list underneath shows it as "later today". An escalating dose is left out of all three — the
+  // headline and the alert below are about that dose, and counting it here too would say it twice.
   const due = active.reduce((n, p) => n + p.slots.filter((s) => (p.today.find((d) => d.slotName === s.slotName)?.status ?? "PENDING") === "PENDING").length, 0);
-  // "ok" chips are in the list so a medicine's stock can be shown anywhere; a medicine with three
-  // weeks left is not running low, and counting it here made the number say something untrue.
+  // "ok" chips are in the list so stock can be shown anywhere; three weeks left is not running low.
   const refills = parents.reduce((n, p) => n + p.refills.filter(isLow).length, 0);
   const allPaused = parents.length > 0 && parents.every((p) => p.paused);
   const noMedicines = parents.every((p) => p.slots.length === 0);
 
   const state = openAlerts > 0 ? "alert" : allPaused ? "paused" : noMedicines ? "empty" : missed > 0 ? "missed" : "calm";
-  const { Icon, headline, dot } = {
-    alert: { Icon: TriangleAlert, headline: t("home.statusNeedsYou"), dot: "bg-[#ff8a80] text-[#4a0d07]" },
-    missed: { Icon: TriangleAlert, headline: t("home.statusMissed"), dot: "bg-haldi text-[#14133a]" },
-    paused: { Icon: CirclePause, headline: t("home.paused"), dot: "bg-white/20 text-white" },
-    empty: { Icon: Pill, headline: t("home.noMedicines"), dot: "bg-white/20 text-white" },
-    calm: { Icon: BellRing, headline: t("home.allCalm"), dot: "bg-[#4ade9a] text-[#03301f]" },
+  const { headline, dot, ink } = {
+    alert: { headline: t("home.statusNeedsYou"), dot: "bg-missed", ink: "text-missed" },
+    missed: { headline: t("home.statusMissed"), dot: "bg-due", ink: "text-due" },
+    paused: { headline: t("home.paused"), dot: "bg-offline", ink: "text-offline" },
+    empty: { headline: t("home.noMedicines"), dot: "bg-line-strong", ink: "text-muted" },
+    calm: { headline: t("home.allCalm"), dot: "bg-taken-fill", ink: "text-taken" },
   }[state];
+  const hour = new Date().getHours();
+  const greeting = t(hour < 12 ? "home.greeting.morning" : hour < 17 ? "home.greeting.afternoon" : "home.greeting.evening");
 
   return (
-    <section aria-labelledby="status-headline" className="hero-surface relative overflow-hidden rounded-[24px]">
-      <div aria-hidden className="hero-grid absolute inset-0" />
-      <div className="relative p-5 md:p-7">
-        <div className="flex flex-wrap items-start justify-between gap-x-6 gap-y-4">
-          <div className="flex min-w-0 items-center gap-3.5">
-            <span aria-hidden className={cx("grid size-12 shrink-0 place-items-center rounded-full", dot)}>
-              <Icon className="size-6" strokeWidth={2.4} />
-            </span>
-            <div className="min-w-0">
-              <h1 id="status-headline" lang={lang} className="text-balance text-[22px] font-semibold leading-tight tracking-tight text-white md:text-[27px]">
-                {headline}
-              </h1>
-              {/* Two items, not four: as four flex children this wrapped into ragged columns on a
-                  phone. The time keeps its own element so the sentence is never spliced. */}
-              <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[13.5px] text-hero-muted">
-                <span className="inline-flex items-center gap-1.5 font-semibold text-white">
-                  <Smartphone aria-hidden className="size-4 shrink-0" />
-                  {selected.displayName}
-                </span>
-                {selected.lastReceiptAt ? (
-                  <span lang={lang}>
-                    {t("home.lastReachable")} <span className="tabular font-semibold text-white">{formatAgo(selected.lastReceiptAt, lang)}</span>
-                  </span>
-                ) : (
-                  <span lang={lang}>{t("home.neverReachable")}</span>
-                )}
-              </p>
-            </div>
-          </div>
-
-          <nav aria-label={t("home.everyone")} className="flex flex-wrap items-center gap-2">
-            <div role="tablist" className="flex flex-wrap gap-2">
-              {parents.map((p) => (
-                <button
-                  key={p.pid}
-                  type="button"
-                  role="tab"
-                  aria-selected={p.pid === selected.pid}
-                  onClick={() => onSelect(p.pid)}
-                  className={cx(
-                    "pressable inline-flex min-h-10 items-center gap-2 rounded-full pl-1.5 pr-3.5 text-[14.5px] font-semibold transition-colors",
-                    p.pid === selected.pid ? "bg-white text-[#14133a]" : "bg-white/10 text-white ring-1 ring-white/20 hover:bg-white/15",
-                  )}
-                >
-                  <Avatar name={p.displayName} size={26} className={p.pid === selected.pid ? undefined : "!bg-white/15 !text-white"} />
-                  {p.displayName}
-                  {p.paused && <CirclePause aria-hidden className="size-4 opacity-70" />}
-                </button>
-              ))}
-            </div>
-            {canAdd && (
-              <Link to="/people#add" className="pressable inline-flex min-h-10 items-center gap-1.5 rounded-full border border-dashed border-white/30 px-3.5 text-[14px] font-semibold text-hero-muted hover:border-white/60 hover:text-white">
-                <Plus aria-hidden className="size-4" strokeWidth={2.5} />
-                <span lang={lang}>{t("people.addParent")}</span>
-              </Link>
-            )}
-          </nav>
-        </div>
-
-        {state !== "empty" && (
-          <dl className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
-            {[
-              { label: t("home.statTaken"), value: taken, accent: false },
-              { label: t("home.statDue"), value: due, accent: false },
-              { label: t("home.statMissed"), value: missed, accent: missed > 0 },
-              { label: t("home.refills"), value: refills, accent: refills > 0 },
-            ].map(({ label, value, accent }) => (
-              <div key={label} className={cx("rounded-2xl px-4 py-3 ring-1", accent ? "bg-haldi/15 ring-haldi/40" : "bg-white/8 ring-white/12")}>
-                <dt lang={lang} className={cx("text-[13px] font-medium", accent ? "text-haldi" : "text-hero-muted")}>
-                  {label}
-                </dt>
-                <dd className={cx("tabular mt-0.5 text-[30px] font-semibold leading-none tracking-tight", accent ? "text-haldi" : "text-white")}>{formatNumber(value, lang)}</dd>
-              </div>
-            ))}
-          </dl>
-        )}
+    <section aria-labelledby="status-headline" className="space-y-6">
+      <div>
+        <h1 className="font-display text-[34px] md:text-[42px]">
+          <span lang={lang}>{greeting}</span>, {name}
+        </h1>
+        <p id="status-headline" className="mt-2 flex items-center gap-2.5 text-[16px]">
+          <span aria-hidden className="relative flex size-2.5 shrink-0">
+            {state === "alert" && <span className={cx("absolute inline-flex size-full animate-ping rounded-full opacity-60 motion-reduce:hidden", dot)} />}
+            <span className={cx("relative inline-flex size-2.5 rounded-full", dot)} />
+          </span>
+          <span lang={lang} className={cx("font-medium", ink)}>
+            {headline}
+          </span>
+        </p>
       </div>
+      {state !== "empty" && (
+        <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
+          {[
+            { label: t("home.statTaken"), value: taken, warn: false },
+            { label: t("home.statDue"), value: due, warn: false },
+            { label: t("home.statMissed"), value: missed, warn: missed > 0 },
+            { label: t("home.refills"), value: refills, warn: refills > 0 },
+          ].map(({ label, value, warn }) => (
+            <div key={label} className={cx("sticker px-5 py-4", warn ? "border-due/30 bg-due-tint/60" : "bg-surface")}>
+              <dt lang={lang} className={cx("text-[13.5px]", warn ? "font-medium text-due" : "text-muted")}>
+                {label}
+              </dt>
+              <dd className={cx("font-serif-num mt-1 text-[32px] leading-none", warn ? "text-due" : "text-ink")}>{formatNumber(value, lang)}</dd>
+            </div>
+          ))}
+        </dl>
+      )}
     </section>
   );
 }
@@ -235,14 +203,44 @@ function StatusWidget({
 /** A refill chip only counts as a warning once it has actually dropped below its own threshold. */
 const isLow = (refill: RefillChip) => refill.level !== "ok";
 
-/** The last seven days at a glance — the cheapest honest answer to "is this getting better". */
+/**
+ * This week at a glance: the share of doses taken as a ring, then the days themselves. Unknown
+ * (phone offline) doses count neither way — they are not a miss.
+ */
 function WeekCard({ parent, myLang }: { parent: ParentCard; myLang: string }) {
   const { t, lang } = useT(myLang);
+  const outcomes = parent.week.flatMap((d) => d.outcomes);
+  const took = outcomes.filter((o) => o === "on_time" || o === "late").length;
+  const known = took + outcomes.filter((o) => o === "missed").length;
+  const share = known > 0 ? took / known : null;
   return (
-    <section className="sticker bg-surface p-4">
-      <h2 lang={lang} className="mb-3 text-[15px] font-semibold">
-        {t("home.week")}
-      </h2>
+    <section className="sticker bg-surface p-5">
+      <div className="flex items-center justify-between gap-3">
+        <h2 lang={lang} className="font-display text-[23px]">
+          {t("home.week")}
+        </h2>
+        <Link to={`/parents/${parent.pid}/insights`} className="inline-flex min-h-10 items-center gap-1 text-[14px] font-semibold text-indigo-soft hover:underline">
+          <span lang={lang}>{t("action.insights")}</span>
+          <ArrowRight aria-hidden className="size-4" />
+        </Link>
+      </div>
+      <div className="my-5 flex flex-col items-center">
+        <div
+          role="img"
+          aria-label={`${t("dash.adherence")}: ${share === null ? "–" : formatNumber(share, lang, { style: "percent" })}`}
+          className="grid size-[148px] place-items-center rounded-full"
+          style={{ background: `conic-gradient(var(--color-indigo) ${(share ?? 0) * 100}%, var(--color-sunken) 0)` }}
+        >
+          <div className="grid size-[118px] place-items-center rounded-full bg-surface text-center">
+            <div>
+              <p className="font-serif-num text-[32px] leading-none">{share === null ? "–" : formatNumber(share, lang, { style: "percent" })}</p>
+              <p lang={lang} className="mt-1 text-[12.5px] text-muted">
+                {t("dash.adherence")}
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
       <WeekStrip week={parent.week} t={t} lang={lang} />
       <div className="mt-3">
         <OutcomeLegend t={t} lang={lang} />
@@ -337,21 +335,37 @@ function TodayCard({ parent, fid, myLang }: { parent: ParentCard; fid: string; m
 
   const base = `/parents/${parent.pid}`;
   const empty = parent.slots.length === 0;
+  const pill = "pressable inline-flex min-h-12 items-center justify-center gap-1.5 rounded-2xl px-3 text-center text-[15px] font-semibold leading-tight sm:gap-2 sm:px-4";
   return (
     <section className="sticker overflow-hidden bg-surface">
+      <div className="flex flex-wrap items-end justify-between gap-x-4 gap-y-1 px-5 pb-4 pt-5">
+        <h2 lang={lang} className="font-display text-[23px]">
+          {t("home.todayMeds")}
+        </h2>
+        {/* The phone's last word, so "no tap yet" can be read against "is the phone even on". */}
+        <p className="flex items-center gap-1.5 text-[13.5px] text-muted">
+          <Smartphone aria-hidden className="size-4 shrink-0" />
+          {parent.lastReceiptAt ? (
+            <span lang={lang}>
+              {t("home.lastReachable")} <span className="tabular font-semibold text-ink">{formatAgo(parent.lastReceiptAt, lang)}</span>
+            </span>
+          ) : (
+            <span lang={lang}>{t("home.neverReachable")}</span>
+          )}
+        </p>
+      </div>
       {parent.paused && (
-        <p lang={lang} className="flex items-center gap-2 border-b border-line bg-offline-tint px-4 py-2.5 font-medium text-offline">
+        <p lang={lang} className="mx-5 mb-3 flex items-center gap-2 rounded-xl bg-offline-tint px-4 py-2.5 font-medium text-offline">
           <CirclePause aria-hidden className="size-5" /> {t("home.paused")}
         </p>
       )}
       {empty ? (
-        /* A new family lands here, and the widget above has already said there are no medicines.
-           Repeating the sentence taught them nothing, so this is the one way to fix it instead —
-           and it stands in for the "Medicines" tile below, which in this state opens a page whose
-           only content is this same button. */
-        <div className="p-5">
-          <Link to={`${base}/prescription`} className="pressable inline-flex min-h-14 w-full items-center justify-center gap-2.5 rounded-xl bg-indigo px-4 text-[16.5px] font-semibold text-white shadow-[0_8px_20px_-12px_rgb(37_35_110/0.9)]">
-            <Camera aria-hidden className="size-5.5" strokeWidth={2.25} />
+        /* A new family lands here; the header has already said there are no medicines, so this is
+           the one way to fix it — and it stands in for the "Medicines" button, which in this state
+           opens a page whose only content is this same button. */
+        <div className="px-5 pb-5">
+          <Link to={`${base}/prescription`} className={cx(pill, "w-full bg-indigo text-white shadow-[0_8px_20px_-12px_rgb(31_63_55/0.6)] hover:bg-indigo-deep")}>
+            <Camera aria-hidden className="size-5" strokeWidth={2.25} />
             <span lang={lang}>{t("meds.scan")}</span>
           </Link>
           <Link to={`${base}/medicines`} className="mt-2 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl text-[15px] font-semibold text-muted hover:text-ink">
@@ -360,24 +374,26 @@ function TodayCard({ parent, fid, myLang }: { parent: ParentCard; fid: string; m
           </Link>
         </div>
       ) : (
-        <ul className="divide-y divide-line">
+        <ul className="space-y-2 px-5 pb-5">
           {[...parent.slots]
             .sort((a, b) => SLOT_ORDER.indexOf(a.slotName) - SLOT_ORDER.indexOf(b.slotName))
             .map((slot) => {
               const dose = parent.today.find((d) => d.slotName === slot.slotName);
               const Icon = SLOT_ICONS[slot.slotName];
               return (
-                <li key={slot.slotName} className="flex items-center gap-3 px-5 py-3.5">
-                  <span className="grid size-9 place-items-center rounded-lg bg-sunken">
-                    <Icon aria-hidden className="size-4.5 text-ink" strokeWidth={2.25} />
-                  </span>
+                <li key={slot.slotName} className="grid min-h-[72px] grid-cols-[58px_1fr_auto] items-center gap-3 rounded-[13px] border border-line px-4 py-3">
+                  <span className="font-serif-num text-[17px]">{`${slot.compactTime.slice(0, 2)}:${slot.compactTime.slice(2)}`}</span>
                   <span className="min-w-0">
-                    <span lang={lang} className="block font-semibold">
-                      {t(`slot.${slot.slotName}`)}
+                    <span className="flex items-center gap-1.5 font-semibold">
+                      <Icon aria-hidden className="size-4 shrink-0 text-muted" strokeWidth={2.25} />
+                      <span lang={lang}>{t(`slot.${slot.slotName}`)}</span>
                     </span>
-                    <span className="tabular block text-[13.5px] text-muted">{`${slot.compactTime.slice(0, 2)}:${slot.compactTime.slice(2)}`}</span>
+                    <span className="mt-0.5 flex items-center gap-1 text-[13px] text-muted">
+                      <Pill aria-hidden className="size-3.5" strokeWidth={2.25} />
+                      <span className="tabular">{formatNumber(slot.medicineCount, lang)}</span>
+                    </span>
                   </span>
-                  <span className="ml-auto">
+                  <span className="justify-self-end">
                     {dose ? (
                       <Link to={`/alerts/${encodeURIComponent(dose.doseId)}`}>
                         <StatusPill status={dose.status} missClass={dose.missClass} t={t} lang={lang} />
@@ -393,30 +409,21 @@ function TodayCard({ parent, fid, myLang }: { parent: ParentCard; fid: string; m
             })}
         </ul>
       )}
-      {/* Four things a family does from here, all at a size an older reader can hit without aiming.
-          On a phone each tile puts its icon above the label: side by side, a 147px tile left
-          "Daily checks" about 85px and every label but one folded onto two lines.
-          Settings moved to the header, where it is on every screen, and the charts and the doctor's
-          report moved to their own page — neither belongs in the list you reach for when you are
-          checking whether Amma took her tablet. */}
-      <nav className="grid grid-cols-2 gap-2 border-t border-line bg-paper/60 p-3">
+      {/* Four things a family does from here, at a size an older reader can hit without aiming:
+          medicines and daily checks first and filled, the family and a test reminder beside them. */}
+      <nav className="grid grid-cols-2 gap-2 border-t border-line bg-sunken/50 p-4">
         {[...(empty ? [] : [{ to: `${base}/medicines`, icon: Pill, label: t("action.medicines") }]), { to: `${base}/checks`, icon: Activity, label: t("action.checks") }].map(({ to, icon: Icon, label }) => (
-          <Link key={to} to={to} className="pressable inline-flex min-h-[76px] flex-col items-start justify-center gap-1.5 rounded-xl py-3 text-left leading-tight sm:min-h-14 sm:flex-row sm:items-center sm:gap-2.5 sm:py-0 bg-indigo px-3.5 text-[16px] sm:px-4 sm:text-[16.5px] font-semibold text-white shadow-[0_8px_20px_-12px_rgb(37_35_110/0.9)]">
-            <Icon aria-hidden className="size-5.5 shrink-0" strokeWidth={2.25} />
+          <Link key={to} to={to} className={cx(pill, "bg-indigo text-white shadow-[0_8px_20px_-12px_rgb(31_63_55/0.6)] hover:bg-indigo-deep")}>
+            <Icon aria-hidden className="size-5 shrink-0" strokeWidth={2.25} />
             <span lang={lang}>{label}</span>
           </Link>
         ))}
-        <Link to="/people" className="pressable inline-flex min-h-[76px] flex-col items-start justify-center gap-1.5 rounded-xl py-3 text-left leading-tight sm:min-h-14 sm:flex-row sm:items-center sm:gap-2.5 sm:py-0 bg-surface px-3.5 text-[16px] sm:px-4 sm:text-[16.5px] font-semibold text-ink ring-1 ring-line-strong hover:ring-indigo-soft">
-          <Users aria-hidden className="size-5.5 shrink-0 text-muted" strokeWidth={2.25} />
+        <Link to="/people" className={cx(pill, "bg-surface text-ink ring-1 ring-line-strong hover:ring-indigo/40")}>
+          <Users aria-hidden className="size-5 shrink-0 text-muted" strokeWidth={2.25} />
           <span lang={lang}>{t("action.people")}</span>
         </Link>
-        <button
-          type="button"
-          onClick={sendTest}
-          disabled={test.state === "busy" || test.state === "sent"}
-          className="pressable inline-flex min-h-[76px] flex-col items-start justify-center gap-1.5 rounded-xl py-3 text-left leading-tight sm:min-h-14 sm:flex-row sm:items-center sm:gap-2.5 sm:py-0 bg-surface px-3.5 text-[16px] sm:px-4 sm:text-[16.5px] font-semibold text-ink ring-1 ring-line-strong hover:ring-indigo-soft disabled:opacity-60"
-        >
-          {test.state === "busy" ? <Loader2 aria-hidden className="size-5.5 shrink-0 animate-spin text-muted" /> : <BellRing aria-hidden className="size-5.5 shrink-0 text-muted" strokeWidth={2.25} />}
+        <button type="button" onClick={sendTest} disabled={test.state === "busy" || test.state === "sent"} className={cx(pill, "bg-surface text-ink ring-1 ring-line-strong hover:ring-indigo/40 disabled:opacity-60")}>
+          {test.state === "busy" ? <Loader2 aria-hidden className="size-5 shrink-0 animate-spin text-muted" /> : <BellRing aria-hidden className="size-5 shrink-0 text-muted" strokeWidth={2.25} />}
           <span lang={lang}>{t("action.testReminder")}</span>
         </button>
         {test.state === "sent" && (
@@ -441,10 +448,6 @@ function TodayCard({ parent, fid, myLang }: { parent: ParentCard; fid: string; m
             </p>
           </div>
         )}
-        <Link to={`${base}/insights`} className="col-span-2 inline-flex min-h-11 items-center justify-center gap-2 rounded-xl text-[14.5px] font-semibold text-muted hover:text-ink">
-          <ChartLine aria-hidden className="size-4.5" strokeWidth={2.25} />
-          <span lang={lang}>{t("action.insights")}</span>
-        </Link>
       </nav>
     </section>
   );

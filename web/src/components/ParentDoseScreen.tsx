@@ -169,7 +169,7 @@ export function ParentDoseScreen({ dose, onTaken, autoPlay = false, framed = fal
           <div aria-hidden className="hero-grid absolute inset-0" />
           <div className="relative flex items-start justify-between gap-3">
             <div className="flex items-center gap-3">
-              <span className={cx("grid shrink-0 place-items-center rounded-2xl bg-haldi text-[#14133a]", framed ? "size-12" : "size-14")}>
+              <span className={cx("grid shrink-0 place-items-center rounded-2xl bg-haldi text-[#172b2a]", framed ? "size-12" : "size-14")}>
                 <SlotIcon aria-hidden className={framed ? "size-6" : "size-7"} strokeWidth={2.25} />
               </span>
               <div>
@@ -204,7 +204,7 @@ export function ParentDoseScreen({ dose, onTaken, autoPlay = false, framed = fal
             <li key={medicine.medId} className={cx("sticker flex items-center bg-surface", framed ? "gap-3 p-3" : "gap-4 p-4")}>
               <span
                 aria-label={medicine.count === null ? undefined : String(medicine.count)}
-                className={cx("tabular grid shrink-0 place-items-center rounded-2xl bg-haldi font-semibold text-[#14133a]", framed ? "size-13 text-[28px]" : "size-16 text-[32px]")}
+                className={cx("tabular grid shrink-0 place-items-center rounded-2xl bg-haldi font-semibold text-[#172b2a]", framed ? "size-13 text-[28px]" : "size-16 text-[32px]")}
               >
                 {formatCount(medicine.count)}
               </span>

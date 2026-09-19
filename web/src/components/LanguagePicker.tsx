@@ -57,7 +57,7 @@ export function LanguageToggle({
                 "flex cursor-pointer items-center rounded-full transition-colors",
                 "has-[:focus-visible]:outline-2 has-[:focus-visible]:outline-offset-1 has-[:focus-visible]:outline-indigo",
                 large ? "min-h-12 px-5 text-[18px]" : "min-h-10 px-3.5 text-[14.5px]",
-                selected ? "bg-surface font-semibold text-ink shadow-[0_1px_2px_rgb(20_19_58/0.14)]" : "font-medium text-muted hover:text-ink",
+                selected ? "bg-surface font-semibold text-ink shadow-[0_1px_2px_rgb(31_63_55/0.14)]" : "font-medium text-muted hover:text-ink",
               )}
             >
               <input type="radio" name={group} value={language.code} checked={selected} onChange={() => onChange(language.code)} className="sr-only" />

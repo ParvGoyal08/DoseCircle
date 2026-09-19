@@ -14,7 +14,7 @@ export function PhoneFrame({ children, offline = false, label, className, height
 
   return (
     <figure className={cx("flex flex-col items-center gap-3", className)}>
-      <div className="relative w-full max-w-[340px] rounded-[48px] bg-[#0b0b1e] p-[10px] shadow-[0_30px_60px_-30px_rgb(20_19_58/0.55),0_0_0_1px_rgb(255_255_255/0.06)_inset]">
+      <div className="relative w-full max-w-[340px] rounded-[48px] bg-[#16211e] p-[10px] shadow-[0_30px_60px_-30px_rgb(31_63_55/0.55),0_0_0_1px_rgb(255_255_255/0.06)_inset]">
         <div className="relative flex flex-col overflow-hidden rounded-[38px] bg-paper" style={{ height }}>
           <div className="flex h-11 shrink-0 items-center justify-between px-7 text-[13px] font-semibold text-ink">
             <span className="tabular">{formatTime(now, "en-IN").replace(/\s?[ap]m$/i, "")}</span>
@@ -64,7 +64,7 @@ export function NotificationBanner({ notification, onOpen, onDismiss }: { notifi
             animate={{ y: 0, opacity: 1 }}
             exit={reduceMotion ? { opacity: 0 } : { y: -90, opacity: 0 }}
             transition={{ type: "spring", stiffness: 420, damping: 34 }}
-            className="pointer-events-auto flex w-full items-start gap-3 rounded-[22px] bg-surface/95 p-3 text-left shadow-[0_12px_32px_-12px_rgb(20_19_58/0.35)] ring-1 ring-line backdrop-blur"
+            className="pointer-events-auto flex w-full items-start gap-3 rounded-[22px] bg-surface/95 p-3 text-left shadow-[0_12px_32px_-12px_rgb(31_63_55/0.35)] ring-1 ring-line backdrop-blur"
           >
             <img src="/icons/favicon.svg" alt="" className="mt-0.5 size-9 rounded-[10px]" />
             <span className="min-w-0 flex-1">

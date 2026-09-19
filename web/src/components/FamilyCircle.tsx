@@ -29,8 +29,8 @@ const PARENT = { x: 140, y: 180 };
  * colours are the deep versions of the same hues, each at least 4.5:1 against the page.
  */
 const PALETTES = {
-  dark: { active: "#F4B400", green: "#4ADE9A", blue: "#AFB4FF", red: "#FF8A80", grey: "#B3BCCD", node: "#1F1E55", initial: "#FFFFFF", name: "#FFFFFF", sub: "#C7C8E6", tagFill: "rgb(255 255 255 / 0.08)", tagText: "#FFFFFF", track: "rgb(255 255 255 / 0.12)", quietRing: "rgb(255 255 255 / 0.3)", quietPath: "rgb(255 255 255 / 0.18)", idleParent: "rgb(255 255 255 / 0.35)" },
-  light: { active: "#B45309", green: "#047857", blue: "#1D4ED8", red: "#B91C1C", grey: "#64748B", node: "#FFFFFF", initial: "#14133A", name: "#14133A", sub: "#4A4B68", tagFill: "#FFFFFF", tagText: "#14133A", track: "rgb(20 19 58 / 0.14)", quietRing: "rgb(20 19 58 / 0.2)", quietPath: "rgb(20 19 58 / 0.16)", idleParent: "rgb(20 19 58 / 0.25)" },
+  dark: { active: "#E8C26A", green: "#6FD6A3", blue: "#A9BDF5", red: "#FF9A90", grey: "#B8C2CC", node: "#1C4A41", initial: "#FFFFFF", name: "#FFFFFF", sub: "#CFE1D9", tagFill: "rgb(255 255 255 / 0.08)", tagText: "#FFFFFF", track: "rgb(255 255 255 / 0.12)", quietRing: "rgb(255 255 255 / 0.3)", quietPath: "rgb(255 255 255 / 0.18)", idleParent: "rgb(255 255 255 / 0.35)" },
+  light: { active: "#8A5A10", green: "#1D5C3F", blue: "#2F4A8A", red: "#9F1D12", grey: "#56615F", node: "#FFFFFF", initial: "#172B2A", name: "#172B2A", sub: "#4A5653", tagFill: "#FFFFFF", tagText: "#172B2A", track: "rgb(23 43 42 / 0.14)", quietRing: "rgb(23 43 42 / 0.2)", quietPath: "rgb(23 43 42 / 0.16)", idleParent: "rgb(23 43 42 / 0.25)" },
 } as const;
 type Palette = (typeof PALETTES)[keyof typeof PALETTES];
 

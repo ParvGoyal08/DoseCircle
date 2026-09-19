@@ -361,7 +361,7 @@ function NothingToday({ hasSchedule, lang: parentLang }: { hasSchedule: boolean;
         <ol className="mt-4 space-y-4">
           {steps.map((step, index) => (
             <li key={step} className="flex items-start gap-4">
-              <span aria-hidden className="tabular grid size-10 shrink-0 place-items-center rounded-full bg-haldi text-xl font-semibold text-[#14133a]">
+              <span aria-hidden className="tabular grid size-10 shrink-0 place-items-center rounded-full bg-haldi text-xl font-semibold text-[#172b2a]">
                 {index + 1}
               </span>
               <span lang={lang} className="pt-1 text-lg leading-snug text-ink">

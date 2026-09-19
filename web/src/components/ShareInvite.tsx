@@ -18,7 +18,7 @@ export function ShareInvite({ link, code, message, help, lang: viewerLang }: { l
   useEffect(() => {
     let live = true;
     // Ink on white, so it scans in either theme.
-    void QRCode.toDataURL(link, { margin: 1, width: 220, color: { dark: "#14133a", light: "#ffffff" } }).then((url) => live && setQr(url));
+    void QRCode.toDataURL(link, { margin: 1, width: 220, color: { dark: "#172b2a", light: "#ffffff" } }).then((url) => live && setQr(url));
     return () => {
       live = false;
     };
