@@ -34,7 +34,17 @@ function AuthLayout({ children, exit }: { children: React.ReactNode; exit?: Reac
             <Logo className="size-10 rounded-[10px]" />
             <span className="text-xl font-semibold tracking-tight text-ink">DoseCircle</span>
           </Link>
-          <p className="font-display mt-auto max-w-md text-5xl leading-[1.08] tracking-tight text-ink">
+          {/* One warm photo fills what was an empty panel: this is who the account is for. */}
+          <figure className="my-auto flex justify-center py-8">
+            <img
+              src="/photos/father-daughter.webp"
+              width={421}
+              height={440}
+              alt="A daughter hugs her smiling father. Handwritten: Different lives. Same care."
+              className="h-auto max-h-[40vh] w-auto max-w-[300px] -rotate-2 rounded-[22px] shadow-[0_24px_48px_-24px_rgb(23_63_55/0.45)] ring-8 ring-white"
+            />
+          </figure>
+          <p className="font-display max-w-md text-5xl leading-[1.08] tracking-tight text-ink">
             The right person knows, <span className="italic text-indigo-soft">every time.</span>
           </p>
           <p className="mt-5 max-w-md text-lg leading-relaxed text-muted">Reminders in each person's own language, and a family that is asked one person at a time when a dose is missed.</p>

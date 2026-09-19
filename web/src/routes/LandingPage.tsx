@@ -190,7 +190,17 @@ function Landing() {
       {/* Get started */}
       <section id="start" className="scroll-mt-20">
         <div className="mx-auto max-w-6xl px-4 py-20 md:px-6 md:py-24">
-          <Heading eyebrow="Get started" title="Two ways in, depending on who you are" body="Nobody who takes the medicines ever needs an account. The family sets things up; the person they look after just scans a code." />
+          <div className="flex items-end justify-between gap-10">
+            <Heading eyebrow="Get started" title="Two ways in, depending on who you are" body="Nobody who takes the medicines ever needs an account. The family sets things up; the person they look after just scans a code." />
+            <img
+              src="/photos/grandmother-phone.webp"
+              width={421}
+              height={408}
+              loading="lazy"
+              alt="A grandmother smiles at her phone while her daughter leans in. Handwritten: Technology that feels like family."
+              className="hidden w-[260px] shrink-0 rotate-2 rounded-[22px] shadow-[0_24px_48px_-24px_rgb(23_63_55/0.45)] ring-8 ring-white lg:block"
+            />
+          </div>
           <div className="mt-12 grid gap-5 lg:grid-cols-[1.1fr_1fr]">
             {/* The person taking the medicines never makes an account. The app scans the family's
                 code itself, so it opens in the installed app rather than the browser. */}
@@ -206,7 +216,7 @@ function Landing() {
                 {[
                   "Tap “Scan the code now” and point the camera at the code your family shows you.",
                   "DoseCircle reads it and connects this phone. There is nothing to type.",
-                  "Type your name. That's all — no account and no password.",
+                  "That's all. No account, no password, nothing to set up — your family has done it.",
                 ].map((text, index) => (
                   <li key={text} className="flex items-start gap-3.5">
                     <span className="font-serif-num grid size-8 shrink-0 place-items-center rounded-full bg-indigo-tint text-[15px] text-indigo-soft">{index + 1}</span>
@@ -262,6 +272,14 @@ function Landing() {
       <section className="px-4 pb-16 pt-6 md:px-6">
         <div className="relative mx-auto max-w-6xl overflow-hidden rounded-[28px] bg-indigo px-7 py-12 text-white md:px-14 md:py-16">
           <span aria-hidden className="pointer-events-none absolute -right-24 -top-32 size-[420px] rounded-full border-[48px] border-white/[0.04]" />
+          <img
+            src="/photos/hug-station.webp"
+            width={420}
+            height={408}
+            loading="lazy"
+            alt="A mother hugs her grown son on a railway platform. Handwritten: For the people who are always there for us."
+            className="absolute right-14 top-1/2 hidden w-[280px] -translate-y-1/2 -rotate-2 rounded-[22px] shadow-[0_28px_56px_-20px_rgb(0_0_0/0.5)] ring-8 ring-white/10 lg:block"
+          />
           <h2 className="font-display relative max-w-xl text-[34px] leading-[1.08] md:text-[48px]">Small steps make a big difference.</h2>
           <p className="relative mt-4 max-w-md text-[16px] leading-relaxed text-white/75">Set up your family in two minutes. The person you look after only ever scans a code.</p>
           <Link to="/signin?mode=create" className="pressable relative mt-8 inline-flex min-h-12 items-center gap-2 rounded-full bg-white px-6 text-[15.5px] font-semibold text-indigo hover:bg-indigo-tint">
